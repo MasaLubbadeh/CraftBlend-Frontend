@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'signup.dart';
-import 'store_sign_up_page.dart';
 
 class AccountTypeSelectionPage extends StatelessWidget {
   const AccountTypeSelectionPage({super.key});
@@ -17,7 +16,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
           image: const AssetImage("assets/images/craftsBackground.jpg"),
           fit: BoxFit.cover,
           colorFilter:
-          ColorFilter.mode(myColor.withOpacity(0.1), BlendMode.dstATop),
+              ColorFilter.mode(myColor.withOpacity(0.1), BlendMode.dstATop),
         ),
       ),
       child: Scaffold(
@@ -39,11 +38,11 @@ class AccountTypeSelectionPage extends StatelessWidget {
             ),
             // Bottom section moved back with negative bottom position
             Positioned(
-              bottom: -5,  // Negative value to push it back
+              bottom: -5, // Negative value to push it back
               left: -5,
               right: -5,
               child: Transform.translate(
-                offset: Offset(0, 100),  // Translate it downwards if needed
+                offset: Offset(0, 100), // Translate it downwards if needed
                 child: _buildBottom(mediaSize, context),
               ),
             ),
@@ -129,7 +128,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
           "Business Account",
           Icons.store,
           const Color(0xFFF1F8E9),
-          const StoreSignUpPage(),
+          // const StoreSignUpPage(),
         ),
       ],
     );
