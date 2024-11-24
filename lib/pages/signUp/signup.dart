@@ -8,7 +8,6 @@ import '../../configuration/config.dart';
 import '../../models/sign_up_data.dart';
 
 class SignUpPage extends StatefulWidget {
-  // const SignUpPage({super.key});
   final SignUpData signUpData;
 
   const SignUpPage({super.key, required this.signUpData});
@@ -23,12 +22,10 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController =
-      TextEditingController(); // New phone number field
+  TextEditingController phoneController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
-  bool showPassword = false; // Variable to track password visibility
-
+  bool showPassword = false;
   bool _isNotValid = false;
 
   void registerUser() async {
@@ -119,7 +116,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
-      // Makes the page scrollable
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -139,8 +135,8 @@ class _SignUpPageState extends State<SignUpPage> {
           _buildGreyText("Email"),
           _buildInputField(emailController),
           const SizedBox(height: 12),
-          _buildGreyText("Phone Number"), // Phone number label
-          _buildNumberInputField(phoneController), // Phone number input field
+          _buildGreyText("Phone Number"),
+          _buildNumberInputField(phoneController),
           const SizedBox(height: 12),
           _buildGreyText("Password"),
           _buildInputField(passwordController, isPassword: true),
@@ -224,7 +220,6 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
         obscureText: isPassword ? !showPassword : false,
-        //  keyboardType: isPassword ? TextInputType.text : TextInputType.phone,
       ),
     );
   }
@@ -238,10 +233,21 @@ class _SignUpPageState extends State<SignUpPage> {
         String confirmPassword = confirmPasswordController.text;
 
         if (password == confirmPassword) {
-          // Sign-up logic here
+          // Save user data
+          SignUpData signUpData = SignUpData(
+            firstName: firstNameController.text,
+            lastName: lastNameController.text,
+            email: emailController.text,
+            phoneNumber: phoneController.text,
+            password: passwordController.text, // Include the password
+          );
+
+          // Navigate to GenreSelectionPage and pass the data
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => GenreSelectionApp(),
+              builder: (context) => GenreSelectionApp(
+                signUpData: signUpData,
+              ),
             ),
           );
         } else {
@@ -262,7 +268,6 @@ class _SignUpPageState extends State<SignUpPage> {
       child: const Text(
         "Next",
         style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xff456268)),
-        //GenreSelectionPage
       ),
     );
   }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'profilePageState.dart';
-
-void main() {
-  runApp(GenreSelectionApp());
-}
+import '../../models/sign_up_data.dart';
 
 class GenreSelectionApp extends StatelessWidget {
-  const GenreSelectionApp({super.key});
+  //const GenreSelectionApp({super.key});
+  final SignUpData signUpData;
+
+  const GenreSelectionApp({super.key, required this.signUpData});
 
   @override
   Widget build(BuildContext context) {
