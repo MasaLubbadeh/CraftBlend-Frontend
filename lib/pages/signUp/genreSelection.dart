@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'profilePageState.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For jsonEncode and jsonDecode
+import 'profilePageState.dart'; // Assuming ProfilePage exists
+import '../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../models/sign_up_data.dart';
 
 class GenreSelectionApp extends StatelessWidget {
@@ -37,13 +40,75 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
 
   List<String> selectedGenres = [];
 
+  // Function to register user
+  void registerUser() async {
+    if (widget.signUpData.firstName != null &&
+        widget.signUpData.lastName != null &&
+        widget.signUpData.email != null &&
+        widget.signUpData.phoneNumber != null &&
+        widget.signUpData.password != null &&
+        selectedGenres.isNotEmpty) {
+      // Prepare request body using SignUpData model
+      var regbody = {
+        "firstName": widget.signUpData.firstName,
+        "lastName": widget.signUpData.lastName,
+        "email": widget.signUpData.email,
+        "phoneNumber": widget.signUpData.phoneNumber,
+        "password": widget.signUpData.password,
+        "accountType": widget.signUpData.accountType = "U",
+        "selectedGenres": selectedGenres,
+      };
+
+      // Send data to the server
+      var response = await http.post(
+        Uri.parse(registration), // Use your registration endpoint here
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(regbody),
+      );
+
+      // Handle server response
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == "success") {
+          print("Registration successful!");
+          // Navigate to ProfilePage after successful registration
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => ProfilePage()),
+          );
+        } else {
+          widget.signUpData.accountType = "U";
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Registration failed: ${jsonResponse['message']}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Server error: ${response.statusCode}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please fill in all fields!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('What are you interested in?'),
         centerTitle: true,
-        backgroundColor: const Color(0xff456268),
+        backgroundColor: myColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -89,17 +154,11 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
-                // Send the selected genres along with other sign-up data
+                print(widget.signUpData.toString());
+                // Save selected genres to signUpData before registration
                 widget.signUpData.selectedGenres = selectedGenres;
-
-                // Here you can call a function to save the data to the database
-                saveUserData(widget.signUpData);
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ProfilePage(),
-                  ),
-                );
+                // Register user and navigate
+                registerUser();
               },
               style: ElevatedButton.styleFrom(
                 shape: const StadiumBorder(),
@@ -109,21 +168,13 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
               ),
               child: const Text(
                 "Next",
-                style: TextStyle(
-                    fontWeight: FontWeight.w700, color: Color(0xff456268)),
+                style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  void saveUserData(SignUpData signUpData) {
-    // Here you can implement logic to save the user data to the database
-    print(
-        "Saving user data: ${signUpData.firstName}, ${signUpData.email}, ${signUpData.selectedGenres}");
-    // Example: Use an API call or local database to save data
   }
 }
 

@@ -4,10 +4,9 @@ class SignUpData {
   String? email;
   String? phoneNumber;
   String? password;
-  String? accountType; // New field for account type
-  List<String>? selectedGenres; // New field for selected genres
+  String? accountType;
+  List<String>? selectedGenres; // Assuming you have this in your class
 
-  // Constructor to include selectedGenres
   SignUpData({
     this.firstName,
     this.lastName,
@@ -15,10 +14,15 @@ class SignUpData {
     this.phoneNumber,
     this.password,
     this.accountType,
-    this.selectedGenres, // Include selectedGenres in constructor
+    this.selectedGenres,
   });
 
-  // Method to convert the object to JSON
+  // Override the toString method to print the object in a readable format
+  @override
+  String toString() {
+    return 'SignUpData(firstName: $firstName, lastName: $lastName, email: $email, phoneNumber: $phoneNumber, password: $password, accountType: $accountType, selectedGenres: $selectedGenres)';
+  }
+
   Map<String, dynamic> toJson() {
     return {
       "firstName": firstName,
@@ -26,8 +30,8 @@ class SignUpData {
       "email": email,
       "phoneNumber": phoneNumber,
       "password": password,
-      "accountType": accountType, // Add accountType to the map
-      "selectedGenres": selectedGenres, // Add selectedGenres to the map
+      "accountType": accountType,
+      "selectedGenres": selectedGenres,
     };
   }
 }

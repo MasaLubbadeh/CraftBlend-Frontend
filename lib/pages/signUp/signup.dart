@@ -17,7 +17,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  late Color myColor;
+  // late Color myColor;
   late Size mediaSize;
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -28,54 +28,9 @@ class _SignUpPageState extends State<SignUpPage> {
   bool showPassword = false;
   bool _isNotValid = false;
 
-  void registerUser() async {
-    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
-      var regbody = {
-        "email": emailController.text,
-        "password": passwordController.text
-      };
-      var response = await http.post(
-        Uri.parse(registration),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regbody),
-      );
-
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status'] == "success") {
-          print("Registration successful!");
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Registration failed: ${jsonResponse['message']}"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Server error: ${response.statusCode}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } else {
-      setState(() {
-        _isNotValid = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Fields cannot be empty!"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    myColor = const Color(0xff456268);
+    // myColor = const Color(0xff456268);
     mediaSize = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
@@ -90,7 +45,7 @@ class _SignUpPageState extends State<SignUpPage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(children: [
-          Positioned(bottom: 0, child: _buildBottom()),
+          Positioned(bottom: -10, child: _buildBottom()),
         ]),
       ),
     );
@@ -99,7 +54,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _buildBottom() {
     return SizedBox(
       width: mediaSize.width,
-      height: mediaSize.height * .9,
+      height: mediaSize.height * .93,
       child: Card(
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
@@ -119,7 +74,7 @@ class _SignUpPageState extends State<SignUpPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             "Create Account",
             style: TextStyle(
                 color: myColor, fontSize: 28, fontWeight: FontWeight.w500),
@@ -170,7 +125,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ? IconButton(
                   icon: Icon(
                     showPassword ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xff79a3b1),
+                    color: myColor,
                   ),
                   onPressed: () {
                     setState(() {
@@ -180,10 +135,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 )
               : null,
           focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xff79a3b1)),
+            borderSide: BorderSide(color: myColor),
           ),
           enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xff456268)),
+            borderSide: BorderSide(color: myColor),
           ),
         ),
         obscureText: isPassword ? !showPassword : false,
@@ -203,7 +158,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ? IconButton(
                   icon: Icon(
                     showPassword ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xff79a3b1),
+                    color: myColor,
                   ),
                   onPressed: () {
                     setState(() {
@@ -213,10 +168,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 )
               : null,
           focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xff79a3b1)),
+            borderSide: BorderSide(color: myColor),
           ),
           enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xff456268)),
+            borderSide: BorderSide(color: myColor),
           ),
         ),
         obscureText: isPassword ? !showPassword : false,
@@ -227,7 +182,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _buildSignUpButton() {
     return ElevatedButton(
       onPressed: () {
-        registerUser();
+        //registerUser();
 
         String password = passwordController.text;
         String confirmPassword = confirmPasswordController.text;
@@ -250,6 +205,8 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
           );
+          print(signUpData.toString());
+          signUpData.accountType = "U";
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -267,7 +224,7 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
       child: const Text(
         "Next",
-        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xff456268)),
+        style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
       ),
     );
   }
@@ -291,7 +248,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             child: const Text(
               "Log In",
-              style: TextStyle(color: Color(0xff79a3b1)),
+              style: TextStyle(color: myColor),
             ),
           ),
         ],

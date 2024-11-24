@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'signup.dart';
 import 'store_sign_up_page.dart';
 import '../../models/sign_up_data.dart';
+import '../../configuration//config.dart';
 
 class AccountTypeSelectionPage extends StatelessWidget {
   const AccountTypeSelectionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Color myColor = const Color(0xff456268);
+    //  Color myColor = const Color(0xff456268);
     Size mediaSize = MediaQuery.of(context).size;
 
     return Container(
@@ -81,7 +82,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
         const Text(
           "Select Your Account Type",
           style: TextStyle(
-            color: Color(0xff456268),
+            color: myColor,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -93,7 +94,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
           "User Account",
           "Personal Account",
           Icons.person,
-          const Color(0xFFE3F2FD),
+          const Color.fromARGB(255, 148, 132, 160),
           "U", // Pass "U" for user account type
         ),
         const SizedBox(height: 20),
@@ -103,7 +104,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
           "Store Account",
           "Business Account",
           Icons.store,
-          const Color(0xFFF1F8E9),
+          myColor,
           "S", // Pass "S" for store account type
         ),
       ],
@@ -126,8 +127,11 @@ class AccountTypeSelectionPage extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) {
               if (accountType == "U") {
+                print(signUpData);
                 return SignUpPage(signUpData: signUpData);
               } else {
+                // print("account type:");
+                print(signUpData.toString());
                 return StoreSignUpPage(signUpData: signUpData);
               }
             },
@@ -154,7 +158,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 60, color: const Color(0xff456268)),
+            Icon(icon, size: 60, color: Colors.white),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -163,7 +167,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Color(0xff456268),
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -172,7 +176,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
                   Text(
                     description,
                     style: const TextStyle(
-                      color: Color(0xff78909C),
+                      color: Colors.white,
                       fontSize: 14,
                     ),
                   ),
