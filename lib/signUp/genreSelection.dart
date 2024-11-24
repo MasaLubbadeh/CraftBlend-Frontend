@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'profilePageState.dart';
 
 void main() {
   runApp(GenreSelectionApp());
 }
 
 class GenreSelectionApp extends StatelessWidget {
+  const GenreSelectionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,13 +27,15 @@ class GenreSelectionScreen extends StatelessWidget {
     {'title': 'Flowers', 'image': 'assets/images/flowers.png'},
   ];
 
+  GenreSelectionScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('What are you interested in?'),
+        title: const Text('What are you interested in?'),
         centerTitle: true,
-        backgroundColor: Color(0xff456268), // AppBar and background color
+        backgroundColor: const Color(0xff456268), // AppBar and background color
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -47,7 +52,7 @@ class GenreSelectionScreen extends StatelessWidget {
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
@@ -65,7 +70,13 @@ class GenreSelectionScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 shape: const StadiumBorder(),
                 elevation: 20,
@@ -89,7 +100,7 @@ class GenreCard extends StatefulWidget {
   final String title;
   final String imagePath;
 
-  GenreCard({required this.title, required this.imagePath});
+  const GenreCard({super.key, required this.title, required this.imagePath});
 
   @override
   _GenreCardState createState() => _GenreCardState();
@@ -115,19 +126,23 @@ class _GenreCardState extends State<GenreCard> {
                 image: AssetImage(widget.imagePath),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(isSelected ? 0.5 : 0.2), // 0.2 opacity when not selected, 0.5 when selected
+                  Colors.black.withOpacity(isSelected
+                      ? 0.5
+                      : 0.2), // 0.2 opacity when not selected, 0.5 when selected
                   BlendMode.darken,
                 ),
               ),
-              border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
+              border:
+                  isSelected ? Border.all(color: Colors.white, width: 3) : null,
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0), // Padding to the left
               child: Align(
-                alignment: Alignment.bottomLeft, // Align text to the left corner
+                alignment:
+                    Alignment.bottomLeft, // Align text to the left corner
                 child: Text(
                   widget.title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -138,7 +153,7 @@ class _GenreCardState extends State<GenreCard> {
             ),
           ),
           if (isSelected)
-            Positioned(
+            const Positioned(
               top: 8,
               right: 8,
               child: Icon(

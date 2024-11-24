@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'account_type_selection_page.dart';
 import 'welcome.dart';
+
+import 'package:http/http.dart' as http;
+
 void main() {
   runApp(const MyApp());
 }

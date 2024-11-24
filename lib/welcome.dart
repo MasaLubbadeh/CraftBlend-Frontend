@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'account_type_selection_page.dart';
+import 'signUp/account_type_selection_page.dart';
+
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFCFCFC),
+      backgroundColor: const Color(0xFFFCFCFC),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 80),
 
           // Title
-       /*   const Text(
+          /*   const Text(
             "Welcome to",
             style: TextStyle(
               fontSize: 24,
@@ -27,7 +28,7 @@ class WelcomePage extends StatelessWidget {
             height: 100, // Adjust height as needed
             fit: BoxFit.contain,
           ),
-        //  const SizedBox(height: 20),
+          //  const SizedBox(height: 20),
 
           // Centered Illustration
           Image.asset(
@@ -70,10 +71,10 @@ class WelcomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Text(
                     "Agree & Continue",
                     style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup.dart';
+import 'store_sign_up_page.dart';
 
 class AccountTypeSelectionPage extends StatelessWidget {
   const AccountTypeSelectionPage({super.key});
@@ -42,7 +43,8 @@ class AccountTypeSelectionPage extends StatelessWidget {
               left: -5,
               right: -5,
               child: Transform.translate(
-                offset: Offset(0, 100), // Translate it downwards if needed
+                offset:
+                    const Offset(0, 100), // Translate it downwards if needed
                 child: _buildBottom(mediaSize, context),
               ),
             ),
@@ -128,7 +130,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
           "Business Account",
           Icons.store,
           const Color(0xFFF1F8E9),
-          // const StoreSignUpPage(),
+          const StoreSignUpPage(),
         ),
       ],
     );

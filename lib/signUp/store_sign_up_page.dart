@@ -16,7 +16,7 @@ class StoreSignUpPage extends StatelessWidget {
                 ColorFilter.mode(myColor.withOpacity(0.5), BlendMode.dstATop),
           ),
         ),
-        child: Center(
+        child: const Center(
           child: Text(
             "Store Sign Up Page",
             style: TextStyle(color: Colors.white, fontSize: 24),

@@ -1,5 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'genreSelection.dart';
+import 'package:http/http.dart' as http;
+
+import '../config.dart';
+
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -18,6 +24,53 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   bool showPassword = false; // Variable to track password visibility
+
+  bool _isNotValid = false;
+
+  void registerUser() async {
+    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+      var regbody = {
+        "email": emailController.text,
+        "password": passwordController.text
+      };
+      var response = await http.post(
+        Uri.parse(registration),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(regbody),
+      );
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == "success") {
+          print("Registration successful!");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Registration failed: ${jsonResponse['message']}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Server error: ${response.statusCode}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      setState(() {
+        _isNotValid = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Fields cannot be empty!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,19 +228,26 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _buildSignUpButton() {
     return ElevatedButton(
       onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) =>  GenreSelectionApp(),
-          ),
-        );
-       /* String password = passwordController.text;
+        registerUser();
+
+        String password = passwordController.text;
         String confirmPassword = confirmPasswordController.text;
 
         if (password == confirmPassword) {
           // Sign-up logic here
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => GenreSelectionApp(),
+            ),
+          );
         } else {
-          print("Passwords do not match!");
-        }*/
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Passwords do not match!"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       },
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
@@ -195,7 +255,6 @@ class _SignUpPageState extends State<SignUpPage> {
         shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
-
       child: const Text(
         "Next",
         style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xff456268)),
