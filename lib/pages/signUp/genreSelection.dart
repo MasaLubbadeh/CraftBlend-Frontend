@@ -3,7 +3,6 @@ import 'profilePageState.dart';
 import '../../models/sign_up_data.dart';
 
 class GenreSelectionApp extends StatelessWidget {
-  //const GenreSelectionApp({super.key});
   final SignUpData signUpData;
 
   const GenreSelectionApp({super.key, required this.signUpData});
@@ -12,12 +11,21 @@ class GenreSelectionApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: GenreSelectionScreen(),
+      home: GenreSelectionScreen(signUpData: signUpData),
     );
   }
 }
 
-class GenreSelectionScreen extends StatelessWidget {
+class GenreSelectionScreen extends StatefulWidget {
+  final SignUpData signUpData;
+
+  const GenreSelectionScreen({super.key, required this.signUpData});
+
+  @override
+  _GenreSelectionScreenState createState() => _GenreSelectionScreenState();
+}
+
+class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
   final List<Map<String, String>> genres = [
     {'title': 'Pastries', 'image': 'assets/images/pastaries.jpg'},
     {'title': 'Pottery', 'image': 'assets/images/pottery.jpg'},
@@ -27,7 +35,7 @@ class GenreSelectionScreen extends StatelessWidget {
     {'title': 'Flowers', 'image': 'assets/images/flowers.png'},
   ];
 
-  GenreSelectionScreen({super.key});
+  List<String> selectedGenres = [];
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +43,7 @@ class GenreSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('What are you interested in?'),
         centerTitle: true,
-        backgroundColor: const Color(0xff456268), // AppBar and background color
+        backgroundColor: const Color(0xff456268),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -63,6 +71,16 @@ class GenreSelectionScreen extends StatelessWidget {
                 return GenreCard(
                   title: genres[index]['title']!,
                   imagePath: genres[index]['image']!,
+                  isSelected: selectedGenres.contains(genres[index]['title']),
+                  onTap: () {
+                    setState(() {
+                      if (selectedGenres.contains(genres[index]['title'])) {
+                        selectedGenres.remove(genres[index]['title']);
+                      } else {
+                        selectedGenres.add(genres[index]['title']!);
+                      }
+                    });
+                  },
                 );
               },
             ),
@@ -71,6 +89,12 @@ class GenreSelectionScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
+                // Send the selected genres along with other sign-up data
+                widget.signUpData.selectedGenres = selectedGenres;
+
+                // Here you can call a function to save the data to the database
+                saveUserData(widget.signUpData);
+
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ProfilePage(),
@@ -94,41 +118,43 @@ class GenreSelectionScreen extends StatelessWidget {
       ),
     );
   }
+
+  void saveUserData(SignUpData signUpData) {
+    // Here you can implement logic to save the user data to the database
+    print(
+        "Saving user data: ${signUpData.firstName}, ${signUpData.email}, ${signUpData.selectedGenres}");
+    // Example: Use an API call or local database to save data
+  }
 }
 
-class GenreCard extends StatefulWidget {
+class GenreCard extends StatelessWidget {
   final String title;
   final String imagePath;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const GenreCard({super.key, required this.title, required this.imagePath});
-
-  @override
-  _GenreCardState createState() => _GenreCardState();
-}
-
-class _GenreCardState extends State<GenreCard> {
-  bool isSelected = false;
+  const GenreCard({
+    super.key,
+    required this.title,
+    required this.imagePath,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          isSelected = !isSelected;
-        });
-      },
+      onTap: onTap,
       child: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               image: DecorationImage(
-                image: AssetImage(widget.imagePath),
+                image: AssetImage(imagePath),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(isSelected
-                      ? 0.5
-                      : 0.2), // 0.2 opacity when not selected, 0.5 when selected
+                  Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
                   BlendMode.darken,
                 ),
               ),
@@ -136,18 +162,16 @@ class _GenreCardState extends State<GenreCard> {
                   isSelected ? Border.all(color: Colors.white, width: 3) : null,
             ),
             child: Padding(
-              padding: const EdgeInsets.all(8.0), // Padding to the left
+              padding: const EdgeInsets.all(8.0),
               child: Align(
-                alignment:
-                    Alignment.bottomLeft, // Align text to the left corner
+                alignment: Alignment.bottomLeft,
                 child: Text(
-                  widget.title,
+                  title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.left, // Align text left
                 ),
               ),
             ),
