@@ -5,9 +5,13 @@ import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
 
 import '../../configuration/config.dart';
+import '../../models/sign_up_data.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+  // const SignUpPage({super.key});
+  final SignUpData signUpData;
+
+  const SignUpPage({super.key, required this.signUpData});
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();

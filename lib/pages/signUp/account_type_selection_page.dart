@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup.dart';
 import 'store_sign_up_page.dart';
+import '../../models/sign_up_data.dart';
 
 class AccountTypeSelectionPage extends StatelessWidget {
   const AccountTypeSelectionPage({super.key});
@@ -24,56 +25,27 @@ class AccountTypeSelectionPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            // Place the file.png image at the top of the Stack
+            // Top logo
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: Center(
                 child: Image.asset(
-                  "assets/images/logoo.png", // Replace with your image path
-                  height: 400, // Adjust height as needed
+                  "assets/images/logoo.png",
+                  height: 400,
                   fit: BoxFit.contain,
                 ),
               ),
             ),
-            // Bottom section moved back with negative bottom position
+            // Bottom card for account selection
             Positioned(
-              bottom: -5, // Negative value to push it back
+              bottom: -5,
               left: -5,
               right: -5,
               child: Transform.translate(
-                offset:
-                    const Offset(0, 100), // Translate it downwards if needed
+                offset: const Offset(0, 100),
                 child: _buildBottom(mediaSize, context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTop(Size mediaSize) {
-    return SizedBox(
-      width: mediaSize.width,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 30.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.card_giftcard,
-              size: 60,
-              color: Colors.white,
-            ),
-            Text(
-              "CraftBlend",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 28,
-                letterSpacing: 1.5,
               ),
             ),
           ],
@@ -105,7 +77,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 20), // Space between the image and the title
+        const SizedBox(height: 20),
         const Text(
           "Select Your Account Type",
           style: TextStyle(
@@ -115,33 +87,51 @@ class AccountTypeSelectionPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 40),
+        // User Account Option
         _buildAccountOption(
           context,
           "User Account",
           "Personal Account",
           Icons.person,
           const Color(0xFFE3F2FD),
-          const SignUpPage(),
+          "U", // Pass "U" for user account type
         ),
         const SizedBox(height: 20),
+        // Store Account Option
         _buildAccountOption(
           context,
           "Store Account",
           "Business Account",
           Icons.store,
           const Color(0xFFF1F8E9),
-          const StoreSignUpPage(),
+          "S", // Pass "S" for store account type
         ),
       ],
     );
   }
 
-  Widget _buildAccountOption(BuildContext context, String title,
-      String description, IconData icon, Color color, Widget page) {
+  Widget _buildAccountOption(
+    BuildContext context,
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+    String accountType, // New parameter for account type
+  ) {
     return GestureDetector(
       onTap: () {
+        final signUpData =
+            SignUpData(accountType: accountType); // Set account type
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => page),
+          MaterialPageRoute(
+            builder: (context) {
+              if (accountType == "U") {
+                return SignUpPage(signUpData: signUpData);
+              } else {
+                return StoreSignUpPage(signUpData: signUpData);
+              }
+            },
+          ),
         );
       },
       child: Container(

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../models/sign_up_data.dart';
 
 class StoreSignUpPage extends StatelessWidget {
-  const StoreSignUpPage({super.key});
+  //const StoreSignUpPage({super.key});
+
+  final SignUpData signUpData;
+
+  const StoreSignUpPage({super.key, required this.signUpData});
 
   @override
   Widget build(BuildContext context) {
