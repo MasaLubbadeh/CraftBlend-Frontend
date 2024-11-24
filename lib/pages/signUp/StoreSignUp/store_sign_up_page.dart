@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/sign_up_data.dart';
+import '../../../models/sign_up_data.dart';
 
 class StoreSignUpPage extends StatelessWidget {
   //const StoreSignUpPage({super.key});

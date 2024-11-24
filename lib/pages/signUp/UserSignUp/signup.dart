@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
 
-import '../../configuration/config.dart';
-import '../../models/sign_up_data.dart';
+import '../../../configuration/config.dart';
+import '../../../models/sign_up_data.dart';
 
 class SignUpPage extends StatefulWidget {
   final SignUpData signUpData;
