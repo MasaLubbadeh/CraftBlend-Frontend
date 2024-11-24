@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
 
-import '../config.dart';
+import '../../configuration/config.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});

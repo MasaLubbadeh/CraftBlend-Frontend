@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'welcome.dart';
+import 'pages/welcome.dart';
 
 import 'package:http/http.dart' as http;
 
