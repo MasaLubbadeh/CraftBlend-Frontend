@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AddPastryProduct extends StatefulWidget {
+  const AddPastryProduct({super.key});
+
   @override
   _AddPastryProductState createState() => _AddPastryProductState();
 }
@@ -35,6 +37,13 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     ],
   };
 
+  // Available Option Status
+  final Map<String, bool> availableOptionStatus = {
+    'Topping': false,
+    'Filling': false,
+    'Flavor': false, // Example: 'Flavor' is optional by default
+  };
+
   // Selected Options
   final Map<String, List<Map<String, dynamic>>> selectedOptions = {
     'Topping': [],
@@ -59,11 +68,10 @@ class _AddPastryProductState extends State<AddPastryProduct> {
                 int.parse(selectedMinute!))
             : null,
         'inStock': selectedAvailability == 'In Stock',
-        'availableOptions': {
-          'Topping': selectedOptions['Topping']!,
-          'Filling': selectedOptions['Filling']!,
-          'Flavor': selectedOptions['Flavor']!,
-        },
+        'availableOptions': selectedOptions.map((optionGroup, options) {
+          return MapEntry(optionGroup, options);
+        }),
+        'availableOptionStatus': availableOptionStatus,
       };
 
       print("productData SENT:");
@@ -77,7 +85,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Product added successfully!')),
+          const SnackBar(content: Text('Product added successfully!')),
         );
         Navigator.pop(context);
       } else {
@@ -93,32 +101,32 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   }
 
   // Add New Option Method
-  void _addNewOption(String category) {
+  void _addNewOption(String optionGroup) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add New $category'),
+        title: Text('Add New $optionGroup Option'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter new $category',
+              decoration: const InputDecoration(
+                labelText: 'Option Name',
+                hintText: 'Enter new option name',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: priceController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Extra Cost (ILS)',
-                hintText: 'Enter extra cost (e.g., 5)',
+                hintText: 'Enter extra cost (default is 0)',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -129,19 +137,20 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             onPressed: () {
               if (nameController.text.isNotEmpty) {
                 setState(() {
-                  predefinedOptions[category]?.add({
-                    'name': nameController.text,
-                    'extraCost': double.tryParse(priceController.text) ?? 0,
+                  predefinedOptions[optionGroup]?.add({
+                    'name': nameController.text.trim(),
+                    'extraCost':
+                        double.tryParse(priceController.text.trim()) ?? 0,
                   });
                 });
                 Navigator.pop(context);
               }
             },
-            child: Text('Add'),
+            child: const Text('Add'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -151,42 +160,68 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   // Add New Category Method
   void _addNewCategory() {
     final TextEditingController categoryController = TextEditingController();
+    bool isOptional = false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add New Category'),
-        content: TextField(
-          controller: categoryController,
-          decoration: InputDecoration(
-            labelText: 'Category Name',
-            hintText: 'Enter a new category name',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (categoryController.text.isNotEmpty) {
-                setState(() {
-                  predefinedOptions[categoryController.text] = [];
-                  selectedOptions[categoryController.text] = [];
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: Text('Add'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Add New Option Group'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Group Name',
+                    hintText: 'Enter a new option group name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Is Optional?'),
+                    Switch(
+                      value: isOptional,
+                      onChanged: (value) {
+                        setState(() {
+                          isOptional = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (categoryController.text.isNotEmpty) {
+                    setState(() {
+                      availableOptionStatus[categoryController.text] =
+                          isOptional;
+                      predefinedOptions[categoryController.text] = [];
+                      selectedOptions[categoryController.text] = [];
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Add'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  // Build Method
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -197,14 +232,14 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         foregroundColor: Colors.white,
         elevation: 0,
         toolbarHeight: appBarHeight,
-        title: Text('Add Pastry Product'),
+        title: const Text('Add Pastry Product'),
       ),
       body: Stack(
         children: [
           Opacity(
             opacity: 0.2,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('images/pastry.jpg'),
                   fit: BoxFit.cover,
@@ -217,24 +252,24 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             child: Column(
               children: [
                 _buildInputField(titleController, 'Title'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 _buildInputField(priceController, 'Price'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 _buildInputField(descriptionController, 'Description'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 _buildAvailabilityDropdown(),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 if (selectedAvailability == 'In Stock')
                   _buildInputField(stockController, 'Stock Quantity'),
                 if (selectedAvailability == 'Time Required')
                   _buildTimeRequiredDropdown(),
-                SizedBox(height: 16),
-                ...predefinedOptions.keys.map((category) {
-                  return _buildOptionCard(category);
-                }).toList(),
-                SizedBox(height: 24),
+                const SizedBox(height: 16),
+                ...predefinedOptions.keys.map((optionGroup) {
+                  return _buildOptionCard(optionGroup);
+                }),
+                const SizedBox(height: 24),
                 _buildAddNewCategoryButton(),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildSubmitButton(),
               ],
             ),
@@ -250,7 +285,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
       ),
     );
   }
@@ -258,11 +293,11 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   Widget _buildAvailabilityDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedAvailability,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: 'Availability',
         border: OutlineInputBorder(),
       ),
-      items: [
+      items: const [
         DropdownMenuItem(value: 'In Stock', child: Text('In Stock')),
         DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
         DropdownMenuItem(value: 'Time Required', child: Text('Time Required')),
@@ -283,13 +318,13 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             selectedDay = value;
           });
         }),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         _buildDropdownField('Hours', 24, selectedHour, (value) {
           setState(() {
             selectedHour = value;
           });
         }),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         _buildDropdownField('Minutes', 60, selectedMinute, (value) {
           setState(() {
             selectedMinute = value;
@@ -306,7 +341,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         value: selectedValue,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
         ),
         items: List.generate(range, (index) => index.toString())
             .map((value) => DropdownMenuItem(
@@ -319,11 +354,11 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     );
   }
 
-  Widget _buildOptionCard(String category) {
+  Widget _buildOptionCard(String optionGroup) {
     return Card(
       color: myColor,
       elevation: 4,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -333,39 +368,58 @@ class _AddPastryProductState extends State<AddPastryProduct> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Select $category',
-                  style: TextStyle(
+                  'Select $optionGroup',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                     color: Colors.white,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add_circle, color: Colors.white70),
-                  onPressed: () => _addNewOption(category),
+                  icon: const Icon(Icons.add_circle, color: Colors.white70),
+                  onPressed: () => _addNewOption(optionGroup),
                 ),
               ],
             ),
             Wrap(
               spacing: 8.0,
-              children: predefinedOptions[category]!.map((option) {
+              children: predefinedOptions[optionGroup]!.map((option) {
                 return FilterChip(
                   label: Text(
                     '${option['name']} ${option['extraCost'] > 0 ? '(+${option['extraCost']} ILS)' : ''}',
                   ),
                   selected:
-                      selectedOptions[category]?.contains(option) ?? false,
+                      selectedOptions[optionGroup]?.contains(option) ?? false,
                   onSelected: (isSelected) {
                     setState(() {
                       if (isSelected) {
-                        selectedOptions[category]?.add(option);
+                        selectedOptions[optionGroup]?.add(option);
                       } else {
-                        selectedOptions[category]?.remove(option);
+                        selectedOptions[optionGroup]?.remove(option);
                       }
                     });
                   },
                 );
               }).toList(),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Is Optional?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    )),
+                Switch(
+                  activeColor: Colors.grey[300],
+                  value: availableOptionStatus[optionGroup] ?? false,
+                  onChanged: (value) {
+                    setState(() {
+                      availableOptionStatus[optionGroup] = value;
+                    });
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -376,29 +430,29 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   Widget _buildAddNewCategoryButton() {
     return ElevatedButton.icon(
       onPressed: _addNewCategory,
-      icon: Icon(Icons.add_circle_rounded, color: Colors.white70),
-      label: Text(
-        "Add New Category",
+      icon: const Icon(Icons.add_circle_rounded, color: Colors.white70),
+      label: const Text(
+        "Add New Option Group",
         style: TextStyle(color: Colors.white),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: myColor,
-        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
       ),
     );
   }
 
   Widget _buildSubmitButton() {
-    return Container(
+    return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8,
       child: ElevatedButton(
         onPressed: _addProduct,
         style: ElevatedButton.styleFrom(
           backgroundColor: myColor,
           shape: const StadiumBorder(),
-          padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
         ),
-        child: Text(
+        child: const Text(
           'Add Product',
           style: TextStyle(fontSize: 15, color: Colors.white),
         ),

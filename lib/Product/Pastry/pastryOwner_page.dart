@@ -3,8 +3,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'addPastryProduct.dart';
 import '../../config.dart';
+import '../EditPastryProduct.dart';
 
 class PastryOwnerPage extends StatefulWidget {
+  const PastryOwnerPage({super.key});
+
   @override
   _PastryOwnerPageState createState() => _PastryOwnerPageState();
 }
@@ -61,7 +64,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           pastries.add(newProduct); // Update the local list
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Product added successfully!')),
+          const SnackBar(content: Text('Product added successfully!')),
         );
       } else {
         throw Exception('Failed to add product');
@@ -83,13 +86,13 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         elevation: 0,
         toolbarHeight: appBarHeight,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          color: Colors.white,
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white70,
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           businessName,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
@@ -98,7 +101,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.favorite_border),
+            icon: const Icon(Icons.favorite_border),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('$businessName added to favorites')),
@@ -112,7 +115,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           Opacity(
             opacity: 0.2,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('images/pastry.jpg'),
                   fit: BoxFit.cover,
@@ -121,7 +124,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
             ),
           ),
           isLoading
-              ? Center(
+              ? const Center(
                   child:
                       CircularProgressIndicator()) // Show loader if data is being fetched
               : Padding(
@@ -132,8 +135,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                         elevation: 4,
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: ListTile(
-                          leading: Icon(Icons.add, color: myColor),
-                          title: Text(
+                          leading: const Icon(Icons.add, color: myColor),
+                          title: const Text(
                             'Add New Product',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
@@ -166,7 +169,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                       width: 80,
                                       height: 80,
                                       decoration: BoxDecoration(
-                                        image: DecorationImage(
+                                        image: const DecorationImage(
                                           image: AssetImage(
                                               'images/pastry.jpg'), // Static image for now
                                           fit: BoxFit.cover,
@@ -174,7 +177,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    SizedBox(width: 12),
+                                    const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -182,15 +185,15 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                         children: [
                                           Text(
                                             pastry['name'] ?? 'No Name',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          SizedBox(height: 4),
+                                          const SizedBox(height: 4),
                                           Text(
                                             '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -199,9 +202,24 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                       ),
                                     ),
                                     IconButton(
-                                      icon: Icon(Icons.edit),
-                                      onPressed: () {
-                                        // Placeholder for edit functionality
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () async {
+                                        final updatedProduct =
+                                            await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EditPastryProduct(
+                                                    product: pastry),
+                                          ),
+                                        );
+
+                                        if (updatedProduct != null) {
+                                          // Update the local product list with the edited product data
+                                          setState(() {
+                                            pastries[index] = updatedProduct;
+                                          });
+                                        }
                                       },
                                     ),
                                   ],

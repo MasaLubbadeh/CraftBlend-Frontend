@@ -10,7 +10,7 @@ import '../config.dart';
 import 'addCard.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _navigateToEditProfile(BuildContext context) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditProfile()),
+      MaterialPageRoute(builder: (context) => const EditProfile()),
     );
 
     if (result == true) {
@@ -159,18 +159,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icon(isDark ? LineAwesomeIcons.sun : LineAwesomeIcons.moon),
             ),
           ],
-          bottom: TabBar(
+          bottom: const TabBar(
             labelColor: Colors.white, // Selected tab text color
             unselectedLabelColor: Colors.white70, // Unselected tab text color
             indicatorColor: Colors.white, // Indicator color under the tab
-            tabs: const [
+            tabs: [
               Tab(text: "Your Info"),
               Tab(text: "Your Activity"),
             ],
           ),
         ),
         body: isLoading
-            ? Center(
+            ? const Center(
                 child: CircularProgressIndicator()) // Show loading indicator
             : TabBarView(
                 children: [
@@ -178,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SingleChildScrollView(
                     child: Container(
                       padding: const EdgeInsets.all(tDefaultSize),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors
                             .white, //Color.fromARGB( 255, 240, 240, 240), // Off-white background color
 
@@ -305,7 +305,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => AddCardView()),
+                                      builder: (context) =>
+                                          const AddCardView()),
                                 );
                               }, // No navigation or function call
                               style: ElevatedButton.styleFrom(
@@ -468,13 +469,13 @@ class ProfileMenuWidget extends StatelessWidget {
   final bool endIcon;
 
   const ProfileMenuWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.onPress,
     this.textColor,
     this.endIcon = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +487,7 @@ class ProfileMenuWidget extends StatelessWidget {
         style: TextStyle(color: textColor ?? Colors.black),
       ),
       trailing: endIcon
-          ? Icon(LineAwesomeIcons.angle_right, color: Colors.black)
+          ? const Icon(LineAwesomeIcons.angle_right, color: Colors.black)
           : null,
     );
   }

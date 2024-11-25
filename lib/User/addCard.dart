@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-void main() => runApp(MaterialApp(home: AddCardView()));
+void main() => runApp(const MaterialApp(home: AddCardView()));
 
 class AddCardView extends StatefulWidget {
   const AddCardView({super.key});
@@ -35,9 +35,9 @@ class _AddCardViewState extends State<AddCardView> {
       body: Container(
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
         width: media.width,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.only(
+          borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
@@ -52,7 +52,7 @@ class _AddCardViewState extends State<AddCardView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Add Credit/Debit Card Details",
                       style: TextStyle(
                         color: Colors.black,
@@ -64,7 +64,7 @@ class _AddCardViewState extends State<AddCardView> {
                       onPressed: () {
                         Navigator.pop(context, false);
                       },
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.close,
                         color: Colors.black,
                         size: 25,
@@ -115,7 +115,7 @@ class _AddCardViewState extends State<AddCardView> {
                 ),
                 const SizedBox(height: 25),
                 isLoading
-                    ? CircularProgressIndicator() // Show loading indicator
+                    ? const CircularProgressIndicator() // Show loading indicator
                     : _buildSubmitButton(media),
                 const SizedBox(height: 25),
               ],
@@ -145,7 +145,7 @@ class _AddCardViewState extends State<AddCardView> {
   Row _buildExpiryRow() {
     return Row(
       children: [
-        Text(
+        const Text(
           "Expiry",
           style: TextStyle(
             color: Colors.black,
@@ -235,7 +235,7 @@ class _AddCardViewState extends State<AddCardView> {
                     isLoading = false;
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to add card details')),
+                    const SnackBar(content: Text('Failed to add card details')),
                   );
                 }
               } catch (e) {
@@ -251,7 +251,7 @@ class _AddCardViewState extends State<AddCardView> {
                 isLoading = false;
               });
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Token is missing')),
+                const SnackBar(content: Text('Token is missing')),
               );
             }
           }
@@ -295,7 +295,7 @@ class RoundTextfield extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       onSaved: onSaved,
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400),
+      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(10),
         hintText: hintText,
