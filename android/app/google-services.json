@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "718405976085",
+    "project_id": "craftblend-fa31e",
+    "storage_bucket": "craftblend-fa31e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718405976085:android:7d7cde9471eb1452face1c",
+        "android_client_info": {
+          "package_name": "com.example.craft_blend_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuj1hOS73lt6xGetJjTRyuxJBwKdPFRy4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,112 @@
+import 'package:flutter/material.dart';
+import 'User/login_page.dart'; // Adjust the path to your LoginPage
+import 'User/profile.dart';
+import 'config.dart';
+import 'User/editProfile.dart';
+import 'User/addCard.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'Product/Pastry/pastryUser_page.dart';
+import 'Product/Pastry/pastryOwner_page.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  _initializeFirebase();
+  runApp(const MyApp());
+}
+
+_initializeFirebase() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Your App Name',
+      theme: ThemeData(
+        dialogTheme: DialogTheme(
+          backgroundColor: Colors.white,
+          elevation: 12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          titleTextStyle: TextStyle(
+            color: myColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+          contentTextStyle: TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+          ),
+        ),
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: PastryOwnerPage(), // Start with MainScreen
+    );
+  }
+}
+
+// MainScreen handles the navigation and login state
+class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  // Define the pages for the bottom navigation bar
+  final List<Widget> _pages = [
+    const LoginPage(), // Login screen (shown if not logged in)
+    const EditProfile(), // Orders screen
+    const ProfileScreen(), // Profile screen
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: isLoggedIn
+          ? _pages[_selectedIndex] // Show bottom nav content if logged in
+          : const LoginPage(), // Show login page if not logged in
+
+      // Add BottomNavigationBar only if the user is logged in
+      bottomNavigationBar: isLoggedIn
+          ? BottomNavigationBar(
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.shopping_cart),
+                  label: 'Orders',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Colors.blue,
+              onTap: _onItemTapped,
+            )
+          : null, // Don't show BottomNavigationBar if not logged in
+    );
+  }
+}
