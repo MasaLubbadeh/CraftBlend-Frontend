@@ -140,7 +140,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               shadows: [
                 Shadow(
                   color: Colors.black.withOpacity(0.3),
-                  offset: Offset(2, 2),
+                  offset: const Offset(2, 2),
                   blurRadius: 4,
                 ),
               ],
@@ -255,7 +255,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         enabledBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.grey.shade500, width: 1.5),
         ),
-        focusedBorder: UnderlineInputBorder(
+        focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: myColor, width: 2.0),
         ),
         suffixIcon: IconButton(

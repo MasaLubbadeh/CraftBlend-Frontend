@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart';
 
 class EditProfile extends StatefulWidget {
-  const EditProfile({Key? key}) : super(key: key);
+  const EditProfile({super.key});
 
   @override
   _EditProfileState createState() => _EditProfileState();
@@ -189,7 +189,7 @@ class _EditProfileState extends State<EditProfile> {
                 cursorColor: myColor,
                 decoration: InputDecoration(
                   labelText: title,
-                  labelStyle: TextStyle(color: myColor),
+                  labelStyle: const TextStyle(color: myColor),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -257,11 +257,11 @@ class _EditProfileState extends State<EditProfile> {
           _phoneNumberController.text = _originalPhoneNumber!;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
                 'Error saving changes: please make sure that you entered valid data'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
         print('Error saving changes: ${response.body}');

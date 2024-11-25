@@ -36,12 +36,12 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          titleTextStyle: TextStyle(
+          titleTextStyle: const TextStyle(
             color: myColor,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
-          contentTextStyle: TextStyle(
+          contentTextStyle: const TextStyle(
             color: Colors.black87,
             fontSize: 16,
           ),
@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
 
 // MainScreen handles the navigation and login state
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   _MainScreenState createState() => _MainScreenState();

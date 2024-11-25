@@ -78,7 +78,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               shadows: [
                 Shadow(
                   color: Colors.black.withOpacity(0.3),
-                  offset: Offset(2, 2),
+                  offset: const Offset(2, 2),
                   blurRadius: 4,
                 ),
               ],
@@ -143,7 +143,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.grey.shade500, width: 1.5),
               ),
-              focusedBorder: UnderlineInputBorder(
+              focusedBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(
                     color: myColor, width: 2.0), // Accent color on focus
               ),
@@ -204,12 +204,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text("Error"),
-            content: Text("Failed to send reset email. Please try again."),
+            title: const Text("Error"),
+            content:
+                const Text("Failed to send reset email. Please try again."),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("OK"),
+                child: const Text("OK"),
               ),
             ],
           ),
@@ -220,12 +221,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Error"),
-          content: Text("An error occurred. Please try again."),
+          title: const Text("Error"),
+          content: const Text("An error occurred. Please try again."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         ),

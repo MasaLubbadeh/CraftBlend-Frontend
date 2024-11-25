@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-final String url = 'http://192.168.1.17:3000/';
+const String url = 'http://192.168.1.17:3000/';
 bool isLoggedIn = false;
 final String login = '${url}login';
 final String validateTokenEndpoint = '${url}validateToken';
@@ -11,9 +11,9 @@ final String getPersonalInfo = '${url}getPersonalInfo';
 final String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
 final String addCreditCard = '${url}addCreditCard';
 final String getCreditCardData = '${url}getCreditCardData';
-final String addNewPastryProduct =
+const String addNewPastryProduct =
     'http://192.168.1.17:3000/product/addNewPastryProduct';
-final String getAllProducts = 'http://192.168.1.17:3000/product/getAllProducts';
+const String getAllProducts = 'http://192.168.1.17:3000/product/getAllProducts';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

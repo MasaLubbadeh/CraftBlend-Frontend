@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class DetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  DetailPage({required this.product});
+  const DetailPage({super.key, required this.product});
 
   @override
   _DetailPageState createState() => _DetailPageState();
@@ -12,14 +12,17 @@ class DetailPage extends StatefulWidget {
 
 class _DetailPageState extends State<DetailPage> {
   int _quantity = 1;
-  Map<String, String> _selectedOptions = {};
+  final Map<String, Map<String, dynamic>?> _selectedOptions = {};
 
   @override
   void initState() {
     super.initState();
+    // Initialize selected options with null for optional options or first value for required options
     widget.product['availableOptions']?.forEach((key, values) {
       if (values.isNotEmpty) {
-        _selectedOptions[key] = values.first;
+        bool isOptional =
+            widget.product['availableOptionStatus']?[key] ?? false;
+        _selectedOptions[key] = isOptional ? null : values.first;
       }
     });
   }
@@ -41,17 +44,16 @@ class _DetailPageState extends State<DetailPage> {
         elevation: 5,
         toolbarHeight: appBarHeight,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Stack(
         children: [
-          // Background Image with Opacity
           Opacity(
-            opacity: 0.1, // Adjust opacity here
+            opacity: 0.1,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('images/pastriesBackgroundBorder.jpg'),
                   fit: BoxFit.cover,
@@ -59,7 +61,6 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
           ),
-          // Main Content
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -67,7 +68,7 @@ class _DetailPageState extends State<DetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildProductImage(screenWidth),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -80,11 +81,11 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   _buildProductSpecialNote(),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildProductDescription(),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Card(
                     color: myColor,
                     shape: RoundedRectangleBorder(
@@ -97,24 +98,21 @@ class _DetailPageState extends State<DetailPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildQuantitySelector(screenWidth),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           _buildDynamicOptionSelectors(screenWidth),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.transparent, // Fully transparent
-                      borderRadius: BorderRadius.circular(12), // Rounded edges
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(
-                              0.0), // Shadow color with transparency
-                          blurRadius: 6, // Softens the shadow
-                          offset:
-                              Offset(0, 3), // Moves the shadow down slightly
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -163,7 +161,7 @@ class _DetailPageState extends State<DetailPage> {
   Widget _buildProductSpecialNote() {
     return Text(
       widget.product['specialNote'] ?? 'New Product',
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: 18,
         color: myColor,
         fontStyle: FontStyle.italic,
@@ -174,7 +172,7 @@ class _DetailPageState extends State<DetailPage> {
   Widget _buildProductPrice(double screenWidth) {
     return Text(
       '${widget.product['price']?.toStringAsFixed(2) ?? '0.00'} ₪',
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: Colors.black54,
@@ -185,7 +183,7 @@ class _DetailPageState extends State<DetailPage> {
   Widget _buildProductDescription() {
     return Text(
       widget.product['description'] ?? 'No description available.',
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: 16,
         color: Colors.black54,
       ),
@@ -198,7 +196,7 @@ class _DetailPageState extends State<DetailPage> {
       children: [
         Padding(
           padding: EdgeInsets.only(right: padding),
-          child: Text('Quantity: ',
+          child: const Text('Quantity: ',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -214,7 +212,7 @@ class _DetailPageState extends State<DetailPage> {
         }),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: padding),
-          child: Text('$_quantity', style: TextStyle(fontSize: 18)),
+          child: Text('$_quantity', style: const TextStyle(fontSize: 18)),
         ),
         _buildCircleButton(Icons.add, () {
           setState(() {
@@ -229,11 +227,11 @@ class _DetailPageState extends State<DetailPage> {
     return GestureDetector(
       onTap: () => onPressed(),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white70,
           shape: BoxShape.circle,
         ),
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Icon(icon, color: myColor, size: 18),
       ),
     );
@@ -254,39 +252,42 @@ class _DetailPageState extends State<DetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: validOptions.map<Widget>((entry) {
-        return _buildOptionSelector(entry.key, entry.value, screenWidth);
+        return _buildOptionSelector(entry.key, entry.value, screenWidth,
+            isOptional:
+                widget.product['availableOptionStatus']?[entry.key] ?? false);
       }).toList(),
     );
   }
 
   Widget _buildOptionSelector(
-      String optionKey, List<dynamic> optionValues, double screenWidth) {
+      String optionKey, List<dynamic> optionValues, double screenWidth,
+      {required bool isOptional}) {
     return Card(
       color: const Color.fromARGB(202, 255, 255, 255),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       elevation: 3,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '$optionKey:',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8),
-            DropdownButton<String>(
+            const SizedBox(height: 8),
+            DropdownButton<Map<String, dynamic>?>(
               value: _selectedOptions[optionKey],
-              onChanged: (String? newValue) {
+              onChanged: (Map<String, dynamic>? newValue) {
                 setState(() {
-                  _selectedOptions[optionKey] = newValue!;
+                  _selectedOptions[optionKey] = newValue;
                 });
               },
               isExpanded: true,
@@ -295,20 +296,30 @@ class _DetailPageState extends State<DetailPage> {
                 height: 2,
                 color: myColor,
               ),
-              icon: Icon(
+              icon: const Icon(
                 Icons.arrow_drop_down,
                 color: myColor,
               ),
-              items:
-                  optionValues.map<DropdownMenuItem<String>>((dynamic value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(
-                    value,
-                    style: TextStyle(color: Colors.black87),
+              items: [
+                if (isOptional)
+                  const DropdownMenuItem<Map<String, dynamic>?>(
+                    value: null,
+                    child: Text(
+                      'Choose',
+                      style: TextStyle(color: Colors.black87),
+                    ),
                   ),
-                );
-              }).toList(),
+                ...optionValues.map<DropdownMenuItem<Map<String, dynamic>>>(
+                    (dynamic value) {
+                  return DropdownMenuItem<Map<String, dynamic>>(
+                    value: value,
+                    child: Text(
+                      '${value['name']} (${value['extraCost'] > 0 ? '+${value['extraCost']} ₪' : '+0 ₪'})',
+                      style: const TextStyle(color: Colors.black87),
+                    ),
+                  );
+                }).toList(),
+              ],
             )
           ],
         ),
@@ -319,6 +330,17 @@ class _DetailPageState extends State<DetailPage> {
   Widget _buildAddToCartButton() {
     return ElevatedButton(
       onPressed: () {
+        // Validate required options
+        for (final key in _selectedOptions.keys) {
+          bool isOptional =
+              widget.product['availableOptionStatus']?[key] ?? false;
+          if (!isOptional && _selectedOptions[key] == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please select an option for $key.')),
+            );
+            return;
+          }
+        }
         print('Adding to cart:');
         print('Product: ${widget.product['name']}');
         print('Quantity: $_quantity');
@@ -327,13 +349,13 @@ class _DetailPageState extends State<DetailPage> {
           SnackBar(content: Text('${widget.product['name']} added to cart!')),
         );
       },
-      child: Text('Add to Cart'),
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
-        textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         backgroundColor: myColor,
         foregroundColor: Colors.white,
       ),
+      child: const Text('Add to Cart'),
     );
   }
 }

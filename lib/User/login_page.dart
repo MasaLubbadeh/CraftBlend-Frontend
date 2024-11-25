@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
         // Token is valid, proceed to the main app
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfileScreen()),
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
         );
       } else {
         // Token invalid/expired, require re-login
@@ -108,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfileScreen()),
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
         );
       } else {
         setState(() {
