@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'signup.dart';
-import 'store_sign_up_page.dart';
+import 'UserSignUp/signup.dart';
+import 'StoreSignUp/store_sign_up_page.dart';
 import '../../models/sign_up_data.dart';
 import '../../configuration//config.dart';
 
