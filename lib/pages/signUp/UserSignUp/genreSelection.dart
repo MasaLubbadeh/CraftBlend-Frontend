@@ -55,7 +55,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         "email": widget.signUpData.email,
         "phoneNumber": widget.signUpData.phoneNumber,
         "password": widget.signUpData.password,
-        "accountType": widget.signUpData.accountType = "U",
+        "accountType": widget.signUpData.accountType,
         "selectedGenres": selectedGenres,
       };
 
@@ -65,18 +65,21 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(regbody),
       );
-
+      //jsonResponse['message'] == "Registered successfully")
       // Handle server response
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         var jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['status'] == "success") {
+
+        if (jsonResponse['status'] == "success" ||
+            jsonResponse['status'] == 201 ||
+            jsonResponse['status'] == true) {
           print("Registration successful!");
           // Navigate to ProfilePage after successful registration
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => ProfilePage()),
           );
         } else {
-          widget.signUpData.accountType = "U";
+          //widget.signUpData.accountType = "U";
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Registration failed: ${jsonResponse['message']}"),
@@ -141,8 +144,12 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
                     setState(() {
                       if (selectedGenres.contains(genres[index]['title'])) {
                         selectedGenres.remove(genres[index]['title']);
+                        // Save selected genres to signUpData before registration
+                        widget.signUpData.selectedGenres = selectedGenres;
                       } else {
                         selectedGenres.add(genres[index]['title']!);
+                        // Save selected genres to signUpData before registration
+                        widget.signUpData.selectedGenres = selectedGenres;
                       }
                     });
                   },
@@ -155,8 +162,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             child: ElevatedButton(
               onPressed: () {
                 print(widget.signUpData.toString());
-                // Save selected genres to signUpData before registration
-                widget.signUpData.selectedGenres = selectedGenres;
+
                 // Register user and navigate
                 registerUser();
               },

@@ -190,12 +190,12 @@ class _SignUpPageState extends State<SignUpPage> {
         if (password == confirmPassword) {
           // Save user data
           SignUpData signUpData = SignUpData(
-            firstName: firstNameController.text,
-            lastName: lastNameController.text,
-            email: emailController.text,
-            phoneNumber: phoneController.text,
-            password: passwordController.text, // Include the password
-          );
+              firstName: firstNameController.text,
+              lastName: lastNameController.text,
+              email: emailController.text,
+              phoneNumber: phoneController.text,
+              password: passwordController.text, // Include the password
+              accountType: widget.signUpData.accountType);
 
           // Navigate to GenreSelectionPage and pass the data
           Navigator.of(context).push(
@@ -206,7 +206,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           );
           print(signUpData.toString());
-          signUpData.accountType = "U";
+          // signUpData.accountType = "U";
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
