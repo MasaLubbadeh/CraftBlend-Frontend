@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'User/login_page.dart'; // Adjust the path to your LoginPage
 import 'User/profile.dart';
-import 'config.dart';
+import 'configuration/config.dart';
 import 'User/editProfile.dart';
 import 'User/addCard.dart';
 import 'package:firebase_core/firebase_core.dart';

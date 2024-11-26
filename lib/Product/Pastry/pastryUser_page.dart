@@ -1,4 +1,4 @@
-import 'package:craft_blend_project/config.dart';
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;

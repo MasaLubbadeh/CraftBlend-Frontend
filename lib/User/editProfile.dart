@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config.dart';
+import '../configuration/config.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});

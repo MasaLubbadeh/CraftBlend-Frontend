@@ -3,7 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'addPastryProduct.dart';
-import '../../config.dart';
+import '../../configuration/config.dart';
 import '../EditPastryProduct.dart';
 
 class PastryOwnerPage extends StatefulWidget {
