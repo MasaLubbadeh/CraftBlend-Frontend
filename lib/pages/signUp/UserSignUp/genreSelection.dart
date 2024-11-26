@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'profilePageState.dart'; // Assuming ProfilePage exists
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
-import '../../../models/sign_up_data.dart';
+import '../../../models/user_sign_up_data.dart';
 
 class GenreSelectionApp extends StatelessWidget {
   final SignUpData signUpData;

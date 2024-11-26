@@ -5,7 +5,7 @@ import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../configuration/config.dart';
-import '../../../models/sign_up_data.dart';
+import '../../../models/user_sign_up_data.dart';
 
 class SignUpPage extends StatefulWidget {
   final SignUpData signUpData;

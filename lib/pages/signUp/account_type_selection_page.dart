@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'UserSignUp/signup.dart';
-import 'StoreSignUp/store_sign_up_page.dart';
-import '../../models/sign_up_data.dart';
+//import 'StoreSignUp/store_sign_up_page.dart';
+import '../../models/user_sign_up_data.dart';
 import '../../configuration//config.dart';
+import '../signUp/StoreSignUp/storeGenreSelection.dart';
+import '../../models/store_sign_up_data.dart';
 
 class AccountTypeSelectionPage extends StatelessWidget {
   const AccountTypeSelectionPage({super.key});
@@ -121,6 +123,7 @@ class AccountTypeSelectionPage extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: () {
+        final storeSignUpData = StoreSignUpData(accountType: accountType);
         final signUpData =
             SignUpData(accountType: accountType); // Set account type
         Navigator.of(context).push(
@@ -131,8 +134,8 @@ class AccountTypeSelectionPage extends StatelessWidget {
                 return SignUpPage(signUpData: signUpData);
               } else {
                 // print("account type:");
-                print(signUpData.toString());
-                return StoreSignUpPage(signUpData: signUpData);
+                print(storeSignUpData.toString());
+                return StoreGenreSelectionScreen(signUpData: storeSignUpData);
               }
             },
           ),

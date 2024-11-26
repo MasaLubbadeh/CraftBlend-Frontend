@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
-
-class StoreGenreSelectionApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const StoreGenreSelectionScreen(),
-    );
-  }
-}
+import 'package:signup/configuration/config.dart';
+import 'package:signup/models/user_sign_up_data.dart';
+import '../../../models/store_sign_up_data.dart';
+import '../StoreSignUp/store_sign_up_page.dart';
 
 class StoreGenreSelectionScreen extends StatefulWidget {
-  const StoreGenreSelectionScreen({super.key});
+  final StoreSignUpData signUpData;
+
+  const StoreGenreSelectionScreen({super.key, required this.signUpData});
 
   @override
-  _StoreGenreSelectionScreenState createState() =>
-      _StoreGenreSelectionScreenState();
+  _GenreSelectionScreenState createState() => _GenreSelectionScreenState();
 }
 
-class _StoreGenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
+class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
   final List<Map<String, String>> genres = [
-    {'title': 'Pastries', 'image': 'assets/images/pastries.jpg'},
+    {'title': 'Pastries', 'image': 'assets/images/pastaries.jpg'},
     {'title': 'Pottery', 'image': 'assets/images/pottery.jpg'},
     {'title': 'Crochet', 'image': 'assets/images/crochet.png'},
     {'title': 'Build A Bear', 'image': 'assets/images/buildbear.png'},
@@ -30,19 +25,14 @@ class _StoreGenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
 
   String? selectedGenre;
 
-  // Shared variable to hold store genre (use static for demo purposes)
-  static String? storeGenre;
-
   void onNextPressed() {
     if (selectedGenre != null) {
-      // Save the selected genre to the shared variable
-      storeGenre = selectedGenre;
-
-      // Navigate to the next page in the store signup process
+      // Update the SignUpData with the selected genre
+      widget.signUpData.selectedGenre = selectedGenre;
+      print(widget.signUpData.toString());
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) =>
-              const NextSignupPage(), // Replace with your next page
+          builder: (context) => StoreSignUpPage(signUpData: StoreSignUpData()),
         ),
       );
     } else {
@@ -60,9 +50,12 @@ class _StoreGenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Your Store Genre'),
+        title: const Text(
+          'Select Your Store Genre',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: myColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -71,7 +64,7 @@ class _StoreGenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'This helps us customize your store setup',
+              'You must select a genre for you store',
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
@@ -108,8 +101,6 @@ class _StoreGenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
               onPressed: onNextPressed,
               style: ElevatedButton.styleFrom(
                 shape: const StadiumBorder(),
-                elevation: 20,
-                shadowColor: Colors.grey,
                 minimumSize: const Size.fromHeight(50),
               ),
               child: const Text(
@@ -184,8 +175,10 @@ class GenreCard extends StatelessWidget {
   }
 }
 
-class NextSignupPage extends StatelessWidget {
-  const NextSignupPage({super.key});
+class NextSignUpScreen extends StatelessWidget {
+  final StoreSignUpData signUpData;
+
+  const NextSignUpScreen({super.key, required this.signUpData});
 
   @override
   Widget build(BuildContext context) {
@@ -195,8 +188,8 @@ class NextSignupPage extends StatelessWidget {
       ),
       body: Center(
         child: Text(
-          'Selected Store Genre: ${_StoreGenreSelectionScreenState.storeGenre ?? 'None'}',
-          style: const TextStyle(fontSize: 18),
+          'SignUpData: ${signUpData.toString()}',
+          style: const TextStyle(fontSize: 16),
         ),
       ),
     );
