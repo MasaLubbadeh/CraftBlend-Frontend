@@ -44,7 +44,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
   Future<void> _updateProduct() async {
     try {
       final updatedProduct = {
-        'id': widget.product['id'], // Include the product ID for update
+        '_id': widget.product['_id'], // Use the MongoDB product ID
         'name': nameController.text,
         'price': double.tryParse(priceController.text) ?? 0,
         'description': descriptionController.text,
@@ -53,7 +53,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
       };
 
       final response = await http.put(
-        Uri.parse('http://192.168.1.17:3000/product/updateProduct'),
+        Uri.parse(updateProductInfo),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(updatedProduct),
       );
@@ -213,6 +213,70 @@ class _EditPastryProductState extends State<EditPastryProduct> {
     );
   }
 
+  void _addNewGroup() {
+    final TextEditingController groupController = TextEditingController();
+    bool isOptional = false; // Default to required
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Add New Group'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: groupController,
+                  decoration: const InputDecoration(
+                    labelText: 'Group Name',
+                    hintText: 'Enter a new group name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Add switch for optional group status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Is Optional?'),
+                    Switch(
+                      value: isOptional,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          isOptional =
+                              value; // Update the switch value within the dialog
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (groupController.text.isNotEmpty) {
+                    setState(() {
+                      // Add the new group to availableOptions with an empty list of options
+                      availableOptions[groupController.text] = [];
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Add'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -265,6 +329,8 @@ class _EditPastryProductState extends State<EditPastryProduct> {
                 const SizedBox(height: 24),
                 _buildOptionsSection(),
                 const SizedBox(height: 24),
+                _buildAddNewGroupButton(),
+                const SizedBox(height: 24),
                 _buildSaveButton(),
               ],
             ),
@@ -306,35 +372,59 @@ class _EditPastryProductState extends State<EditPastryProduct> {
               ),
             ),
             const SizedBox(height: 8),
-            ...List.generate(availableOptions[optionGroup]!.length, (index) {
-              final option = availableOptions[optionGroup]![index];
-              return Card(
+            if (availableOptions[optionGroup]!
+                .isNotEmpty) // Ensure we only create the card if there are options
+              Card(
                 color: const Color.fromARGB(255, 149, 131, 162),
-                child: ListTile(
-                  title: Text(
-                    '${option['name']}',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  subtitle: Text(
-                      'Extra Cost: ${option['extraCost'].toStringAsFixed(2)} ILS',
-                      style: TextStyle(color: Colors.white70)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white70),
-                        onPressed: () => _editOption(optionGroup, index),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            color: Colors.white),
-                        onPressed: () => _deleteOption(optionGroup, index),
-                      ),
-                    ],
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: List.generate(
+                      availableOptions[optionGroup]!.length,
+                      (index) {
+                        final option = availableOptions[optionGroup]![index];
+                        return Column(
+                          children: [
+                            ListTile(
+                              title: Text(
+                                '${option['name']}',
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              subtitle: Text(
+                                'Extra Cost: ${option['extraCost'].toStringAsFixed(2)} ILS',
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit,
+                                        color: Colors.white70),
+                                    onPressed: () =>
+                                        _editOption(optionGroup, index),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.white),
+                                    onPressed: () =>
+                                        _deleteOption(optionGroup, index),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (index <
+                                availableOptions[optionGroup]!.length - 1)
+                              const Divider(
+                                color: Colors.white70,
+                                thickness: 1,
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-              );
-            }),
+              ),
             Container(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
@@ -353,6 +443,31 @@ class _EditPastryProductState extends State<EditPastryProduct> {
           ],
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildAddNewGroupButton() {
+    return Container(
+      alignment: Alignment.center,
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.6,
+        child: ElevatedButton.icon(
+          onPressed: _addNewGroup,
+          icon: const Icon(Icons.add, color: Colors.white70), // Added icon here
+          label: const Text(
+            'Add New Group',
+            style: TextStyle(fontSize: 18, color: Colors.white70),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: myColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding:
+                const EdgeInsets.symmetric(vertical: 5.0, horizontal: 24.0),
+          ),
+        ),
+      ),
     );
   }
 
