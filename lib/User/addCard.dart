@@ -1,4 +1,4 @@
-import 'package:craft_blend_project/config.dart';
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';

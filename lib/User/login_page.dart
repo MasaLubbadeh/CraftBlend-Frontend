@@ -3,7 +3,7 @@ import 'dart:convert'; // For JSON encoding/decoding
 //import 'controller/Auth.dart'; // Import the AuthController
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import '../config.dart';
+import '../configuration/config.dart';
 import 'profile.dart';
 import 'forgotPassword.dart';
 import '../Product/Pastry/pastryUser_page.dart';
