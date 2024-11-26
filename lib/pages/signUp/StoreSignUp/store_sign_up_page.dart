@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:signup/models/user_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
+import 'dart:convert'; // For jsonEncode and jsonDecode
+import 'package:http/http.dart' as http;
 
 class StoreSignUpPage extends StatefulWidget {
   final StoreSignUpData SignUpData;
@@ -44,7 +46,6 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
   @override
   Widget build(BuildContext context) {
     mediaSize = MediaQuery.of(context).size;
-    // const Color myColor = Color(0xff456268); // Adjust your theme color here
 
     return Container(
       decoration: BoxDecoration(
@@ -109,15 +110,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
           const SizedBox(height: 12),
           _buildGreyText("Phone Number"),
           _buildInputField(phoneController, myColor, isNumber: true),
-          // const SizedBox(height: 12),
-          //_buildGreyText("Location"),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildCountryDropdown(myColor),
-              const SizedBox(
-                  height:
-                      14), // Add spacing between the dropdown and the city field
+              const SizedBox(height: 14),
               _buildInputField(cityController, myColor, label: "City"),
             ],
           ),
@@ -169,7 +166,6 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       onChanged: (value) {
         setState(() {
           selectedCountry = value;
-          // signUpData.
         });
       },
       decoration: InputDecoration(
@@ -200,10 +196,8 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
         obscureText: isPassword ? !showPassword : false,
         decoration: InputDecoration(
-          labelText: label, // Add the label here
-          labelStyle:
-              const TextStyle(color: Colors.grey), // Make the label gray
-
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
@@ -273,7 +267,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
     );
   }
 
-  void _validateAndSubmit() {
+  void _validateAndSubmit() async {
     String password = passwordController.text;
     String confirmPassword = confirmPasswordController.text;
 
@@ -286,23 +280,85 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       );
       return;
     }
+
     // Save the entered data to the shared variable
-    // signUpData.accountType = widget.signUpData.accountType;
-
     StoreSignUpData signUpData = StoreSignUpData(
-        storeName: storeNameController.text,
-        contactEmail: emailController.text,
-        phoneNumber: phoneController.text,
-        password: passwordController.text,
-        country: selectedCountry,
-        city: cityController.text,
-        allowSpecialOrders: allowSpecialOrders,
-        accountType: widget.SignUpData.accountType,
-        selectedGenre: widget.SignUpData.selectedGenre);
+      storeName: storeNameController.text,
+      contactEmail: emailController.text,
+      phoneNumber: phoneController.text,
+      password: passwordController.text,
+      country: selectedCountry,
+      city: cityController.text,
+      allowSpecialOrders: allowSpecialOrders,
+      accountType: widget.SignUpData.accountType,
+      selectedGenre: widget.SignUpData.selectedGenre,
+    );
+    print(signUpData.toString());
+    // Register user
+    await registerUser(signUpData);
+  }
 
-    debugPrint("Store Sign-Up Data Saved Successfully!");
-    debugPrint(signUpData.toString());
+  Future<void> registerUser(StoreSignUpData signUpData) async {
+    if (signUpData.storeName != null &&
+        signUpData.contactEmail != null &&
+        signUpData.phoneNumber != null &&
+        signUpData.password != null &&
+        signUpData.country != null &&
+        signUpData.city != null) {
+      // Prepare request body using StoreSignUpData model as JSON
+      var url = Uri.parse(storeRegistration);
 
-    // Navigate to the next page or perform further actions
+      // Send data as JSON
+      var response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json', // Set content-type to JSON
+        },
+        body: jsonEncode({
+          'storeName': signUpData.storeName,
+          'contactEmail': signUpData.contactEmail,
+          'phoneNumber': signUpData.phoneNumber,
+          'password': signUpData.password,
+          'country': signUpData.country,
+          'city': signUpData.city,
+          'allowSpecialOrders':
+              signUpData.allowSpecialOrders ?? false ? "true" : "false",
+          'accountType': signUpData.accountType,
+          'selectedGenre': signUpData.selectedGenre,
+        }),
+      );
+
+      print("Request Body:");
+      print(jsonEncode({
+        'storeName': signUpData.storeName,
+        'contactEmail': signUpData.contactEmail,
+        'phoneNumber': signUpData.phoneNumber,
+        'password': signUpData.password,
+        'country': signUpData.country,
+        'city': signUpData.city,
+        'allowSpecialOrders':
+            signUpData.allowSpecialOrders ?? false ? "true" : "false",
+        'accountType': signUpData.accountType,
+        'selectedGenre': signUpData.selectedGenre,
+      }));
+
+      print("Response Body:");
+      print(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.statusCode);
+        // Registration successful, handle response
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
+        );
+      } else {
+        print(response.statusCode);
+        // Handle error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Registration failed. Please try again.')),
+        );
+      }
+    }
   }
 }

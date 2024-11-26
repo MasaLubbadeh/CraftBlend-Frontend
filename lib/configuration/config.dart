@@ -4,5 +4,6 @@ import 'package:flutter/material.dart';
 //final registration = url + ' registration';
 final String registration = "http://192.168.1.17:3000/registration";
 
+final String storeRegistration = "http://192.168.1.17:3000/store/registration";
 //define the basis color of the application
 const myColor = Color.fromARGB(255, 122, 104, 135);
