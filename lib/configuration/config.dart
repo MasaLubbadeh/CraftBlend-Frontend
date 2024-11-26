@@ -11,9 +11,10 @@ final String getPersonalInfo = '${url}getPersonalInfo';
 final String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
 final String addCreditCard = '${url}addCreditCard';
 final String getCreditCardData = '${url}getCreditCardData';
-const String addNewPastryProduct =
-    'http://192.168.1.17:3000/product/addNewPastryProduct';
-const String getAllProducts = 'http://192.168.1.17:3000/product/getAllProducts';
+const String addNewPastryProduct = '${url}product/addNewPastryProduct';
+const String getAllProducts = '${url}product/getAllProducts';
+const String updateProductInfo = '${url}product/updateProductInfo';
+const String deleteProductByID = '${url}product/deleteProduct';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

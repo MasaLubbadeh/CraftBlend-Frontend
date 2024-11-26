@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'addPastryProduct.dart';
@@ -15,29 +16,29 @@ class PastryOwnerPage extends StatefulWidget {
 class _PastryOwnerPageState extends State<PastryOwnerPage> {
   final String businessName = 'Pastry Delights';
 
-  List<Map<String, dynamic>> pastries =
-      []; // List to hold pastries fetched from the backend
-  bool isLoading = true; // For showing a loading indicator while fetching data
+  List<Map<String, dynamic>> pastries = [];
+  bool isLoading = true;
+
+  // Define a count for header items
+  static const int headerCount = 1;
 
   @override
   void initState() {
     super.initState();
-    fetchPastries(); // Fetch the pastries when the page loads
+    fetchPastries();
   }
 
   Future<void> fetchPastries() async {
     try {
-      // Replace with your backend endpoint
       final response = await http.get(
-        Uri.parse('http://192.168.1.17:3000/product/getAllProducts'),
+        Uri.parse(getAllProducts),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
-          pastries =
-              List<Map<String, dynamic>>.from(data); // Store fetched pastries
-          isLoading = false; // Stop the loader
+          pastries = List<Map<String, dynamic>>.from(data);
+          isLoading = false;
         });
       } else {
         throw Exception('Failed to load pastries');
@@ -45,35 +46,63 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     } catch (e) {
       print('Error fetching pastries: $e');
       setState(() {
-        isLoading = false; // Stop the loader even on failure
+        isLoading = false;
       });
     }
   }
 
-  Future<void> _addNewProduct(Map<String, dynamic> newProduct) async {
+  Future<void> _deleteProduct(String productId) async {
     try {
-      // Add the new product to the backend
-      final response = await http.post(
-        Uri.parse('http://192.168.1.17:3000/product/addNewPastryProduct'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(newProduct),
+      final response = await http.delete(
+        Uri.parse('${deleteProductByID}/$productId'),
       );
 
-      if (response.statusCode == 201) {
-        setState(() {
-          pastries.add(newProduct); // Update the local list
-        });
+      if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product added successfully!')),
+          const SnackBar(content: Text('Product deleted successfully!')),
         );
+        setState(() {
+          pastries.removeWhere((product) => product['_id'] == productId);
+        });
       } else {
-        throw Exception('Failed to add product');
+        throw Exception('Failed to delete product');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
+  }
+
+  void _showDeleteConfirmationDialog(String productId, String productName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: Text(
+          'Are you sure you want to delete "$productName"?',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteProduct(productId);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -99,39 +128,29 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$businessName added to favorites')),
-              );
-            },
-          ),
-        ],
       ),
-      body: Stack(
-        children: [
-          Opacity(
-            opacity: 0.2,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('images/pastry.jpg'),
-                  fit: BoxFit.cover,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Opacity(
+                  opacity: 0.2,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('images/pastry.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          isLoading
-              ? const Center(
-                  child:
-                      CircularProgressIndicator()) // Show loader if data is being fetched
-              : Padding(
+                ListView.builder(
+                  itemCount: headerCount + pastries.length,
                   padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Card(
+                  itemBuilder: (context, index) {
+                    // Handle header items first
+                    if (index < headerCount) {
+                      return Card(
                         elevation: 4,
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: ListTile(
@@ -140,100 +159,124 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                             'Add New Product',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddPastryProduct(
-                                    // onAddProduct: _addNewProduct,
-                                    ),
+                                builder: (context) => AddPastryProduct(),
                               ),
                             );
+                            // Fetch the updated list of pastries after adding a new product
+                            fetchPastries();
                           },
                         ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: pastries.length,
-                          itemBuilder: (context, index) {
-                            final pastry = pastries[index];
-                            return Card(
-                              elevation: 4,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        image: const DecorationImage(
-                                          image: AssetImage(
-                                              'images/pastry.jpg'), // Static image for now
-                                          fit: BoxFit.cover,
-                                        ),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            pastry['name'] ?? 'No Name',
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () async {
-                                        final updatedProduct =
-                                            await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                EditPastryProduct(
-                                                    product: pastry),
-                                          ),
-                                        );
+                      );
+                    }
 
-                                        if (updatedProduct != null) {
-                                          // Update the local product list with the edited product data
-                                          setState(() {
-                                            pastries[index] = updatedProduct;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
+                    // Handle product items
+                    final productIndex = index - headerCount;
+                    final pastry = pastries[productIndex];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6.0, horizontal: 10.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Slidable(
+                          key: ValueKey(pastry['_id']),
+                          endActionPane: ActionPane(
+                            motion: const DrawerMotion(),
+                            extentRatio: 0.26,
+                            children: [
+                              SlidableAction(
+                                onPressed: (context) {
+                                  _showDeleteConfirmationDialog(
+                                      pastry['_id'], pastry['name']);
+                                },
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                icon: Icons.delete,
+                                label: 'Delete',
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                          child: Card(
+                            color: const Color.fromARGB(171, 243, 229, 245),
+                            elevation: 5,
+                            margin: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      image: const DecorationImage(
+                                        image: AssetImage('images/pastry.jpg'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          pastry['name'] ?? 'No Name',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () async {
+                                      final updatedProduct =
+                                          await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              EditPastryProduct(
+                                                  product: pastry),
+                                        ),
+                                      );
+
+                                      if (updatedProduct != null) {
+                                        setState(() {
+                                          pastries[index - 1] = updatedProduct;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-        ],
-      ),
+              ],
+            ),
     );
   }
 }
