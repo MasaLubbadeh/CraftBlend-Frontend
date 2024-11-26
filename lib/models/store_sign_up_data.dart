@@ -1,36 +1,42 @@
 class StoreSignUpData {
-  String? firstName;
-  String? lastName;
-  String? email;
+  String? storeName;
+  String? contactEmail;
   String? phoneNumber;
   String? password;
   String? accountType;
-  String? selectedGenre; // Changed from List<String> to a single String
+  String? selectedGenre;
+  String? country;
+  String? city;
+  bool? allowSpecialOrders;
 
   StoreSignUpData({
-    this.firstName,
-    this.lastName,
-    this.email,
+    this.storeName,
+    this.contactEmail,
     this.phoneNumber,
     this.password,
     this.accountType,
     this.selectedGenre,
+    this.allowSpecialOrders,
+    this.city,
+    this.country,
   });
 
   @override
   String toString() {
-    return 'StoreSignUpData(firstName: $firstName, lastName: $lastName, email: $email, phoneNumber: $phoneNumber, password: $password, accountType: $accountType, selectedGenre: $selectedGenre)';
+    return 'StoreSignUpData(storename: $storeName, contactEmail: $contactEmail, allowSpecialOrders: $allowSpecialOrders, phoneNumber: $phoneNumber, password: $password, accountType: $accountType, selectedGenre: $selectedGenre,city: $city,country:$country)';
   }
 
   Map<String, dynamic> toJson() {
     return {
-      "firstName": firstName,
-      "lastName": lastName,
-      "email": email,
+      "storeName": storeName,
+      "contactEmail": contactEmail,
       "phoneNumber": phoneNumber,
       "password": password,
       "accountType": accountType,
       "selectedGenre": selectedGenre,
+      "country": country,
+      "city": city,
+      "allowSpecialOrders": allowSpecialOrders,
     };
   }
 }
