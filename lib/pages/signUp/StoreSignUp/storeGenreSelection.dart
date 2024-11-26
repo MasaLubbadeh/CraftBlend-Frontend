@@ -5,9 +5,9 @@ import '../../../models/store_sign_up_data.dart';
 import '../StoreSignUp/store_sign_up_page.dart';
 
 class StoreGenreSelectionScreen extends StatefulWidget {
-  final StoreSignUpData signUpData;
+  final StoreSignUpData storeSignUpData;
 
-  const StoreGenreSelectionScreen({super.key, required this.signUpData});
+  const StoreGenreSelectionScreen({super.key, required this.storeSignUpData});
 
   @override
   _GenreSelectionScreenState createState() => _GenreSelectionScreenState();
@@ -28,11 +28,12 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
   void onNextPressed() {
     if (selectedGenre != null) {
       // Update the SignUpData with the selected genre
-      widget.signUpData.selectedGenre = selectedGenre;
-      print(widget.signUpData.toString());
+      widget.storeSignUpData.selectedGenre = selectedGenre;
+      print(widget.storeSignUpData.toString());
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => StoreSignUpPage(signUpData: StoreSignUpData()),
+          builder: (context) =>
+              StoreSignUpPage(SignUpData: widget.storeSignUpData),
         ),
       );
     } else {

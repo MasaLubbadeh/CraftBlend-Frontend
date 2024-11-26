@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:signup/models/user_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 
 class StoreSignUpPage extends StatefulWidget {
-  final StoreSignUpData signUpData;
+  final StoreSignUpData SignUpData;
 
-  const StoreSignUpPage({super.key, required this.signUpData});
+  const StoreSignUpPage({super.key, required this.SignUpData});
 
   @override
   _StoreSignUpPageState createState() => _StoreSignUpPageState();
@@ -168,6 +169,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       onChanged: (value) {
         setState(() {
           selectedCountry = value;
+          // signUpData.
         });
       },
       decoration: InputDecoration(
@@ -284,9 +286,23 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       );
       return;
     }
+    // Save the entered data to the shared variable
+    // signUpData.accountType = widget.signUpData.accountType;
 
-    // Proceed to save store sign-up data or navigate to the next page
-    // Example:
+    StoreSignUpData signUpData = StoreSignUpData(
+        storeName: storeNameController.text,
+        contactEmail: emailController.text,
+        phoneNumber: phoneController.text,
+        password: passwordController.text,
+        country: selectedCountry,
+        city: cityController.text,
+        allowSpecialOrders: allowSpecialOrders,
+        accountType: widget.SignUpData.accountType,
+        selectedGenre: widget.SignUpData.selectedGenre);
+
     debugPrint("Store Sign-Up Data Saved Successfully!");
+    debugPrint(signUpData.toString());
+
+    // Navigate to the next page or perform further actions
   }
 }

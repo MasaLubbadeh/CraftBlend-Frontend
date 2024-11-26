@@ -135,7 +135,8 @@ class AccountTypeSelectionPage extends StatelessWidget {
               } else {
                 // print("account type:");
                 print(storeSignUpData.toString());
-                return StoreGenreSelectionScreen(signUpData: storeSignUpData);
+                return StoreGenreSelectionScreen(
+                    storeSignUpData: storeSignUpData);
               }
             },
           ),
