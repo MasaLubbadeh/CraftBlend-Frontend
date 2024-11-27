@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:signup/configuration/config.dart';
+import '../configuration/config.dart';
 import 'signUp/account_type_selection_page.dart';
 
 class WelcomePage extends StatelessWidget {

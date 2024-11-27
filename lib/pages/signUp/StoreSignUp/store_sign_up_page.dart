@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:signup/models/user_sign_up_data.dart';
+import '../../../models/store_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import 'dart:convert'; // For jsonEncode and jsonDecode
