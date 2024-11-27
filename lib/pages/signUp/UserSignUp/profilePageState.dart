@@ -11,7 +11,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   File? _image;
-  final TextEditingController _nameController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -25,18 +24,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _saveProfile() {
-    final name = _nameController.text;
-    if (_image != null && name.isNotEmpty) {
-      // Save the profile data (name and image) here
-      print("Profile Saved: Name - $name, Image Path - ${_image!.path}");
-      // You could also navigate to another page or show a success message.
+    if (_image != null) {
+      // Save the profile image here
+      print("Profile Saved: Image Path - ${_image!.path}");
     } else {
-      // Show an alert if fields are empty
+      // Show an alert if no image is selected
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Incomplete'),
-          content: const Text('Please add a photo and name.'),
+          content: const Text('Please add a photo.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -48,45 +45,83 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _skipProfile() {
+    // Handle skip action here
+    print("Profile creation skipped");
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Use MediaQuery to make the UI responsive
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add Profile"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _image != null ? FileImage(_image!) : null,
-                child: _image == null
-                    ? const Icon(
-                        Icons.camera_alt,
-                        size: 50,
-                        color: Colors.grey,
-                      )
-                    : null,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            // Center the entire content
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center the column vertically
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // Center items horizontally
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: screenWidth *
+                          0.3, // Adjust size based on screen width
+                      backgroundImage:
+                          _image != null ? FileImage(_image!) : null,
+                      child: _image == null
+                          ? const Icon(
+                              Icons.camera_alt,
+                              size: 50,
+                              color: Colors.grey,
+                            )
+                          : null,
+                    ),
+                  ),
+                  SizedBox(
+                      height:
+                          screenHeight * 0.02), // Responsive vertical spacing
+                  const Text(
+                    "This step is optional. You can skip it.",
+                    style: TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(
+                      height: screenHeight *
+                          0.04), // Additional space before buttons
+                  SizedBox(
+                    width: screenWidth * 0.6, // Adjust button width
+                    child: ElevatedButton(
+                      onPressed: _saveProfile,
+                      child: const Text("Save Profile"),
+                    ),
+                  ),
+                  SizedBox(
+                      height:
+                          screenHeight * 0.01), // Responsive vertical spacing
+                  TextButton(
+                    onPressed: _skipProfile,
+                    child: const Text(
+                      "Skip",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveProfile,
-              child: const Text("Save Profile"),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
