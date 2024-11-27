@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../configuration/config.dart';
 import '../../../models/user_sign_up_data.dart';
+import '../../User/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   final SignUpData signUpData;
@@ -238,7 +239,12 @@ class _SignUpPageState extends State<SignUpPage> {
           const SizedBox(width: 0),
           ElevatedButton(
             onPressed: () {
-              debugPrint("Navigate to Login page (not implemented yet)");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => LoginPage(),
+                ),
+              );
+              // debugPrint("Navigate to Login page (not implemented yet)");
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),
