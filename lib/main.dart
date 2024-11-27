@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'User/login_page.dart'; // Adjust the path to your LoginPage
-import 'User/profile.dart';
+import 'pages/User/login_page.dart'; // Adjust the path to your LoginPage
+import 'pages/User/profile.dart';
 import 'configuration/config.dart';
-import 'User/editProfile.dart';
-import 'User/addCard.dart';
+import 'pages/User/editProfile.dart';
+import 'pages/User/addCard.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'Product/Pastry/pastryUser_page.dart';
-import 'Product/Pastry/pastryOwner_page.dart';
+import 'pages/Product/Pastry/pastryUser_page.dart';
+import 'pages/Product/Pastry/pastryOwner_page.dart';
+import 'pages/specialOrders/specialOrder_page.dart';
+import 'pages/welcome.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,7 +51,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: PastryOwnerPage(), // Start with MainScreen
+      home: WelcomePage(), // Start with MainScreen
     );
   }
 }

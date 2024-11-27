@@ -6,7 +6,7 @@ import 'login_page.dart'; // Make sure to import your login screen
 import 'resetPassword.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../configuration/config.dart';
+import '../../configuration/config.dart';
 import 'addCard.dart';
 
 class ProfileScreen extends StatefulWidget {
