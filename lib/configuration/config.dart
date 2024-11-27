@@ -4,6 +4,9 @@ import 'dart:ui';
 const String url = 'http://192.168.1.17:3000/';
 bool isLoggedIn = false;
 final String login = '${url}login';
+final String registration = '${url}registration';
+final String storeRegistration = '${url}store/registration';
+
 final String validateTokenEndpoint = '${url}validateToken';
 final String resetPassword = '${url}resetPassword';
 final String forgotPassword = '${url}forgotPassword';

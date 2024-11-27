@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For JSON encoding/decoding
-import '../configuration/config.dart';
+import '../../configuration/config.dart';
 import 'profile.dart';
 
 class ResetPasswordPage extends StatefulWidget {

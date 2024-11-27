@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../configuration/config.dart';
+import '../../configuration/config.dart';
 
 class EditPastryProduct extends StatefulWidget {
   final Map<String, dynamic> product;
