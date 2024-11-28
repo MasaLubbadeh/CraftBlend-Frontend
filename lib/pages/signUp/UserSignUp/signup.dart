@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
+import '../../User/login_page.dart';
 
 import '../../../configuration/config.dart';
 import '../../../models/user_sign_up_data.dart';
@@ -238,7 +239,10 @@ class _SignUpPageState extends State<SignUpPage> {
           const SizedBox(width: 0),
           ElevatedButton(
             onPressed: () {
-              debugPrint("Navigate to Login page (not implemented yet)");
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              );
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),
