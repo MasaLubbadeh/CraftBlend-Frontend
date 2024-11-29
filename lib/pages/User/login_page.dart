@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../configuration/config.dart';
 import 'profile.dart';
 import 'forgotPassword.dart';
+import '../../pages/signUp/account_type_selection_page.dart';
 import '../Product/Pastry/pastryUser_page.dart';
 import '../Product/Pastry/pastryOwner_page.dart';
 
@@ -330,7 +331,11 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(width: 0),
           ElevatedButton(
             onPressed: () {
-              debugPrint("Navigate to Sign Up page (not implemented yet)");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AccountTypeSelectionPage(),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),

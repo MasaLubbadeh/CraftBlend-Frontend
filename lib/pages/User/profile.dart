@@ -129,19 +129,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: myColor, // Change to your desired color
-          leading: IconButton(
+          /*leading: IconButton(
             onPressed: () {}, // Removed function call for now
             icon: const Icon(
               LineAwesomeIcons.angle_left,
               color: Colors.white,
             ),
-          ),
-          title: Text(
-            tProfile,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white, // Set your desired color here
-                ),
-          ),
+          ),*/
+          title: Text(tProfile,
+              style: TextStyle(
+                fontSize: 35,
+                fontWeight: FontWeight.w700,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center
+              //  Theme.of(context).textTheme.headlineMedium?.copyWith( color: Colors.white,     ),
+              ),
+          centerTitle: true,
           actions: [
             IconButton(
               onPressed: () {}, // No function for the toggle
@@ -182,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(100),
                                   child: const Image(
                                       image: AssetImage(
-                                          "images/profilePURPLE.jpg"),
+                                          "assets/images/profilePURPLE.jpg"),
                                       fit: BoxFit.cover),
                                 ),
                               ),

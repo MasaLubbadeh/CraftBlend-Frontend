@@ -88,8 +88,8 @@ class _PastryPageState extends State<PastryPage> {
             child: Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image:
-                      AssetImage('images/pastry.jpg'), // Background image path
+                  image: AssetImage(
+                      'assets/images/pastry.jpg'), // Background image path
                   fit: BoxFit.cover,
                 ),
               ),
@@ -129,7 +129,7 @@ class _PastryPageState extends State<PastryPage> {
                                     decoration: BoxDecoration(
                                       image: const DecorationImage(
                                         image: AssetImage(
-                                            'images/pastry.jpg'), // Static image for now
+                                            'assets/images/pastry.jpg'), // Static image for now
                                         fit: BoxFit.cover,
                                       ),
                                       borderRadius: BorderRadius.circular(8),

@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LoginPage(), // Start with MainScreen //LoginPage
+      home: WelcomePage(), // Start with MainScreen //LoginPage
     );
   }
 }

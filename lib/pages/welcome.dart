@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/pages/User/login_page.dart';
 import 'package:flutter/material.dart';
 import '../configuration/config.dart';
 import 'signUp/account_type_selection_page.dart';
@@ -61,7 +62,7 @@ class WelcomePage extends StatelessWidget {
                 // Navigate to the next page or perform any action
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const AccountTypeSelectionPage(),
+                    builder: (context) => const LoginPage(),
                   ),
                 );
               },

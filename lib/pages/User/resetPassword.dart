@@ -105,7 +105,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           end: Alignment.bottomRight,
         ),
         image: DecorationImage(
-          image: const AssetImage("images/craftsBackground.jpg"),
+          image: const AssetImage("assets/images/craftsBackground.jpg"),
           fit: BoxFit.cover,
           colorFilter:
               ColorFilter.mode(myColor.withOpacity(0.05), BlendMode.dstATop),

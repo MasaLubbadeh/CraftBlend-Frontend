@@ -138,7 +138,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                   child: Container(
                     decoration: const BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('images/pastry.jpg'),
+                        image: AssetImage('assets/images/pastry.jpg'),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -216,7 +216,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                     height: 80,
                                     decoration: BoxDecoration(
                                       image: const DecorationImage(
-                                        image: AssetImage('images/pastry.jpg'),
+                                        image: AssetImage(
+                                            'assets/images/pastry.jpg'),
                                         fit: BoxFit.cover,
                                       ),
                                       borderRadius: BorderRadius.circular(8),

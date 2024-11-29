@@ -241,7 +241,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             child: Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('images/pastry.jpg'),
+                  image: AssetImage('assets/images/pastry.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
