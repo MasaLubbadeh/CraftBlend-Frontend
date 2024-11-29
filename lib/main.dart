@@ -11,16 +11,11 @@ import 'pages/Product/Pastry/pastryOwner_page.dart';
 import 'pages/specialOrders/specialOrder_page.dart';
 import 'pages/welcome.dart';
 
-void main() {
+Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  _initializeFirebase();
-  runApp(const MyApp());
-}
+  await Firebase.initializeApp();
 
-_initializeFirebase() async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

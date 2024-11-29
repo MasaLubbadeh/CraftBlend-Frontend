@@ -41,7 +41,8 @@ dependencies:
   firebase_core: ^3.8.0
   #firebase_storage: ^11.0.6
   flutter_slidable: ^3.1.1
-
+  #Firebase Database
+  cloud_firestore: 5.5.0 # Use the latest version
 
 
 dev_dependencies:
