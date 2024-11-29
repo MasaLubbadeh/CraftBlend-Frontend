@@ -34,7 +34,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           end: Alignment.bottomRight,
         ),
         image: DecorationImage(
-          image: const AssetImage("images/craftsBackground.jpg"),
+          image: const AssetImage("assetsimages/craftsBackground.jpg"),
           fit: BoxFit.cover,
           colorFilter:
               ColorFilter.mode(myColor.withOpacity(0.05), BlendMode.dstATop),
@@ -46,7 +46,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           children: [
             Positioned(top: 80, child: _buildTop()),
             Positioned(
-              top: mediaSize.height * 0.45,
+              top: mediaSize.height *
+                  0.5, // Adjusted spacing to increase separation
               left: mediaSize.width * 0.1,
               right: mediaSize.width * 0.1,
               child: _buildEmailContainer(),
@@ -86,9 +87,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           Container(
             width: mediaSize.width * 0.8,
-            margin: const EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(
+                top: 20), // Adjusted the margin for more space
             child: Text(
-              "Please enter your email to recieve a reset email to create a new password",
+              "Please enter your email to receive a reset email to create a new password",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
@@ -134,7 +136,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               hintText: "Enter your email",
               hintStyle: TextStyle(color: Colors.grey.shade500),
               filled: true,
-              fillColor: Colors.transparent, // Make the background transparent
+              fillColor: Colors.transparent,
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
               border: UnderlineInputBorder(
@@ -186,27 +188,28 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse(forgotPassword), // Replace with your actual backend URL
+        Uri.parse(forgotPassword),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
 
       if (response.statusCode == 200) {
-        // Success: Navigate to ResetPasswordPage or show success message
         print("Temporary password sent to email.");
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ProfileScreen()),
         );
       } else {
-        // Error handling based on response status code
-        print("Failed to send reset email: ${response.body}");
+        final responseBody = jsonDecode(response.body);
+        print("Failed to send reset email: ${responseBody['message']}");
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Error"),
-            content:
-                const Text("Failed to send reset email. Please try again."),
+            title: const Text("Failed to send Email"),
+            content: Text(
+              responseBody['message'] ?? "Please try again.",
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -217,12 +220,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
       }
     } catch (error) {
-      print("Error: $error");
+      print("Failed to send Email: $error");
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("Error"),
-          content: const Text("An error occurred. Please try again."),
+          title: const Text("Failed to send Email"),
+          content: Text("An error occurred. Details: $error"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

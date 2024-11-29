@@ -14,8 +14,10 @@ class ResetPasswordPage extends StatefulWidget {
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   late Size mediaSize;
+  TextEditingController oldPasswordController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController repeatPasswordController = TextEditingController();
+  bool isOldPasswordVisible = false;
   bool isPasswordVisible = false;
   bool isRepeatPasswordVisible = false;
   String errorMessage = ""; // For displaying errors
@@ -30,10 +32,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       errorMessage = ""; // Reset the error message
     });
 
-    if (passwordController.text.isEmpty ||
+    if (oldPasswordController.text.isEmpty ||
+        passwordController.text.isEmpty ||
         repeatPasswordController.text.isEmpty) {
       setState(() {
-        errorMessage = "Both password fields are required.";
+        errorMessage = "All password fields are required.";
       });
       return;
     } else if (passwordController.text != repeatPasswordController.text) {
@@ -44,6 +47,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
 
     // Proceed with password reset logic here
+    final String oldPassword = oldPasswordController.text;
     final String newPassword = passwordController.text;
     final prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token'); // Retrieve the stored token
@@ -56,6 +60,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           if (token != null) 'Authorization': 'Bearer $token',
         },
         body: json.encode({
+          'oldPassword': oldPassword,
           'newPassword': newPassword,
         }),
       );
@@ -76,6 +81,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
         print("Password reset successful: ${response.body}");
       } else {
+        setState(() {
+          errorMessage = "Failed to reset password. Please try again.";
+        });
         print("Failed to reset password: ${response.body}");
       }
     } catch (error) {
@@ -87,6 +95,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
     mediaSize = MediaQuery.of(context).size; // Get the media size
     return Container(
       decoration: BoxDecoration(
@@ -96,7 +105,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           end: Alignment.bottomRight,
         ),
         image: DecorationImage(
-          image: const AssetImage("images/craftsBackground.jpg"),
+          image: const AssetImage("assets/images/craftsBackground.jpg"),
           fit: BoxFit.cover,
           colorFilter:
               ColorFilter.mode(myColor.withOpacity(0.05), BlendMode.dstATop),
@@ -104,16 +113,49 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            Positioned(top: 80, child: _buildTop()),
-            Positioned(
-              top: mediaSize.height * 0.45,
-              left: mediaSize.width * 0.07,
-              right: mediaSize.width * 0.07,
-              child: _buildPasswordContainer(),
+        appBar: AppBar(
+          backgroundColor: myColor,
+          elevation: 0,
+          toolbarHeight: appBarHeight,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            color: Colors.white70,
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Reset Password',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
             ),
-          ],
+          ),
+          centerTitle: true,
+        ),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(
+            horizontal: mediaSize.width * 0.07,
+            vertical: mediaSize.height * 0.05,
+          ),
+          child: Column(
+            children: [
+              _buildTop(),
+              const SizedBox(height: 20),
+              Text(
+                "To reset your password, please enter your old password followed by your new password.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: mediaSize.width * 0.04,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: .35,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildPasswordContainer(),
+            ],
+          ),
         ),
       ),
     );
@@ -131,11 +173,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             color: Colors.white,
           ),
           Text(
-            "Password Reset",
+            "",
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: mediaSize.width * 0.09,
+              fontSize: mediaSize.width * 0.05,
               letterSpacing: 2,
               shadows: [
                 Shadow(
@@ -177,6 +219,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _buildPasswordField(
+            "Old Password",
+            oldPasswordController,
+            isOldPasswordVisible,
+            () {
+              setState(() {
+                isOldPasswordVisible = !isOldPasswordVisible;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildPasswordField(
             "New Password",
             passwordController,
             isPasswordVisible,
@@ -188,7 +241,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ),
           const SizedBox(height: 20),
           _buildPasswordField(
-            "Repeat Password",
+            "Repeat New Password",
             repeatPasswordController,
             isRepeatPasswordVisible,
             () {
@@ -241,7 +294,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   ) {
     return TextField(
       controller: controller,
-      obscureText: !isVisible, // Hide or show password
+      obscureText: !isVisible,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey.shade700),
@@ -268,20 +321,4 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       ),
     );
   }
-
-  /*void _resetPassword() {
-    setState(() {
-      if (passwordController.text.isEmpty ||
-          repeatPasswordController.text.isEmpty) {
-        errorMessage = "Both password fields are required.";
-      } else if (passwordController.text != repeatPasswordController.text) {
-        errorMessage = "Passwords do not match.";
-      } else {
-        errorMessage = "";
-        // Proceed with password reset logic here
-        print(
-            "Reset password with: ${passwordController.text} and ${repeatPasswordController.text}");
-      }
-    });
-  }*/
 }

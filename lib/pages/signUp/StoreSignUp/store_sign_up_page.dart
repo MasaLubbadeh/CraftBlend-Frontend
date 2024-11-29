@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
+import '../../../pages/User/login_page.dart';
+
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
 
@@ -229,7 +231,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       },
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
-        elevation: 20,
+        elevation: 12,
         shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
@@ -249,7 +251,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
           const SizedBox(width: 5),
           ElevatedButton(
             onPressed: () {
-              debugPrint("Navigate to Login page (not implemented yet)");
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),
