@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert'; // For JSON encoding/decoding
 //import 'controller/Auth.dart'; // Import the AuthController
@@ -26,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   String errorMessage = ""; // For displaying errors
 
   // final AuthController authController =   AuthController(); // Instantiate the AuthController
+  void loginMethod() {}
 
   @override
   void initState() {
@@ -123,7 +125,12 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void loginUser() async {
+  void loginUser(BuildContext context) async {
+    //auth firebase//////////////////
+    //auth service
+    final authService = AuthService();
+
+    /////////////////////////////////
     String email =
         emailController.text.trim(); // Trim to remove leading/trailing spaces
     String password = passwordController.text.trim();
@@ -134,7 +141,15 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-
+    try {
+      await authService.signInWithEmainPassword(email, password);
+    } catch (err) {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text(err.toString()),
+              ));
+    }
     loginUserWithCredentials(
         email, password); // Call the new method with the entered credentials
   }
@@ -373,7 +388,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLoginButton() {
     return ElevatedButton(
       onPressed: () async {
-        loginUser();
+        loginUser(context);
       },
       /*
         String email = emailController.text;

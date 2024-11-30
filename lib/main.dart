@@ -1,3 +1,6 @@
+import 'package:craft_blend_project/services/authentication/auth_gate.dart';
+
+import '../pages/chatting/allChats.dart';
 import 'package:flutter/material.dart';
 import 'pages/User/login_page.dart'; // Adjust the path to your LoginPage
 import 'pages/User/profile.dart';
@@ -46,7 +49,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: WelcomePage(), // Start with MainScreen
+      home: AuthGate(), // Start with MainScreen
     );
   }
 }
