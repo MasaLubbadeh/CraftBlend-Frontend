@@ -9,6 +9,7 @@ import '../../pages/signUp/account_type_selection_page.dart';
 import '../Product/Pastry/pastryUser_page.dart';
 import '../Product/Pastry/pastryOwner_page.dart';
 import '../Admin/adminDashboard.dart';
+import '../../main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -92,12 +93,16 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       var jsonResponse = jsonDecode(response.body);
+      print('LOGIN jsonResponse:');
+      print(jsonResponse);
+
       if (jsonResponse['status']) {
         var myToken = jsonResponse['token'];
         var userType = jsonResponse['userType'];
 
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
+        prefs.setString('userType', userType);
 
         if (rememberUser) {
           prefs.setString('email', email);
@@ -107,36 +112,11 @@ class _LoginPageState extends State<LoginPage> {
           prefs.remove('password');
         }
 
-        // Save user type to SharedPreferences
-        prefs.setString('userType', userType);
-
-        // If the user is a store owner, save additional information
-        if (userType == 'store') {
-          var storeName = jsonResponse[
-              'storeName']; // Assuming this is returned from the backend
-          var storeId = jsonResponse[
-              'storeId']; // Assuming this is returned from the backend
-          prefs.setString('storeName', storeName);
-          prefs.setString('storeId', storeId);
-        }
-
-        // Navigate to the appropriate screen based on user type
-        if (userType == 'admin') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
-          );
-        } else if (userType == 'store') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-          );
-        }
+        // Navigate to MainScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       } else {
         setState(() {
           errorMessage =

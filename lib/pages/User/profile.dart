@@ -19,19 +19,27 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? userData; // Store user data
   bool isLoading = true; // Loading state
+  bool isUser = false; // Determine if the user is not  owner nor admin
 
   @override
   void initState() {
     super.initState();
-    _fetchUserDetails(); // Fetch user data and credit card info when the screen initializes
+    _fetchUserDetails(); // Fetch user data when the screen initializes
   }
 
   Future<void> _fetchUserDetails() async {
     final prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token'); // Retrieve the stored token
+    final String? userType =
+        prefs.getString('userType'); // Retrieve the user type
 
     if (token != null) {
       try {
+        // Set isOwner based on userType
+        setState(() {
+          isUser = (userType == 'user');
+        });
+
         // Fetch User Information
         final userResponse = await http.get(
           Uri.parse(getPersonalInfo), // Replace with your API endpoint
@@ -40,48 +48,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         );
 
-        // Fetch Credit Card Information
-        final cardResponse = await http.get(
-          Uri.parse(getCreditCardData), // Replace with your API endpoint
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        );
-
-        if (userResponse.statusCode == 200 && cardResponse.statusCode == 200) {
+        if (userResponse.statusCode == 200) {
           setState(() {
             userData =
                 json.decode(userResponse.body); // Decode the user response
 
-            final creditCardData = json.decode(cardResponse.body);
-            var creditCard = creditCardData['creditCard'] ?? {};
-
-            // Mask the credit card number to show only the last 4 digits
-            String maskedCardNumber = creditCard.isNotEmpty
-                ? '**** **** **** ' +
-                    (creditCard['cardNumber']
-                            ?.substring(creditCard['cardNumber'].length - 4) ??
-                        'N/A')
-                : 'No Info Yet';
-
-            // Assign payment information to userData
-            userData?['creditCard'] = maskedCardNumber;
-
-            // Constructing expiryDate from expiryMonth and expiryYear
-            userData?['expiryDate'] = (creditCard['expiryMonth'] != null &&
-                    creditCard['expiryYear'] != null)
-                ? '${creditCard['expiryMonth']}/${creditCard['expiryYear']}'
-                : 'No Info Yet';
-
-            // Assigning CVV (not displayed for security reasons)
-            userData?['cvv'] =
-                creditCard.containsKey('cardCode') ? '***' : 'No Info Yet';
-
-            isLoading = false; // Update loading state
+            // Only fetch and add credit card info if the user is not an owner
+            if (isUser) {
+              _fetchCreditCardDetails(token);
+            } else {
+              isLoading = false; // Stop loading
+            }
           });
         } else {
-          print(
-              'Error fetching data: ${userResponse.statusCode} / ${cardResponse.statusCode}');
+          print('Error fetching user data: ${userResponse.statusCode}');
           setState(() {
             isLoading = false; // Stop loading
           });
@@ -94,6 +74,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } else {
       print('Token not found. Cannot fetch data.');
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+    }
+  }
+
+  Future<void> _fetchCreditCardDetails(String token) async {
+    try {
+      // Fetch Credit Card Information
+      final cardResponse = await http.get(
+        Uri.parse(getCreditCardData), // Replace with your API endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (cardResponse.statusCode == 200) {
+        setState(() {
+          final creditCardData = json.decode(cardResponse.body);
+          var creditCard = creditCardData['creditCard'] ?? {};
+
+          // Mask the credit card number to show only the last 4 digits
+          String maskedCardNumber = creditCard.isNotEmpty
+              ? '**** **** **** ' +
+                  (creditCard['cardNumber']
+                          ?.substring(creditCard['cardNumber'].length - 4) ??
+                      'N/A')
+              : 'No Info Yet';
+
+          // Assign payment information to userData
+          userData?['creditCard'] = maskedCardNumber;
+
+          // Constructing expiryDate from expiryMonth and expiryYear
+          userData?['expiryDate'] = (creditCard['expiryMonth'] != null &&
+                  creditCard['expiryYear'] != null)
+              ? '${creditCard['expiryMonth']}/${creditCard['expiryYear']}'
+              : 'No Info Yet';
+
+          // Assigning CVV (not displayed for security reasons)
+          userData?['cvv'] =
+              creditCard.containsKey('cardCode') ? '***' : 'No Info Yet';
+
+          isLoading = false; // Update loading state
+        });
+      } else {
+        print('Error fetching credit card data: ${cardResponse.statusCode}');
+        setState(() {
+          isLoading = false; // Stop loading
+        });
+      }
+    } catch (e) {
+      print('Exception while fetching credit card data: $e');
       setState(() {
         isLoading = false; // Stop loading
       });
@@ -129,22 +161,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: myColor, // Change to your desired color
-          /*leading: IconButton(
-            onPressed: () {}, // Removed function call for now
-            icon: const Icon(
-              LineAwesomeIcons.angle_left,
-              color: Colors.white,
-            ),
-          ),*/
           title: Text(tProfile,
               style: TextStyle(
                 fontSize: 35,
                 fontWeight: FontWeight.w700,
                 color: Colors.white70,
               ),
-              textAlign: TextAlign.center
-              //  Theme.of(context).textTheme.headlineMedium?.copyWith( color: Colors.white,     ),
-              ),
+              textAlign: TextAlign.center),
           centerTitle: true,
           actions: [
             IconButton(
@@ -266,47 +289,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           const SizedBox(height: 8),
 
-                          // Payment Information Card
-                          _buildInfoCard("Payment Information", [
-                            _buildUserInfoCard(
-                                "Credit Card",
-                                userData?['creditCard'] ?? 'No Info Yet',
-                                Icons.credit_card),
-                            _buildUserInfoCard(
-                                "Expiry Date",
-                                userData?['expiryDate'] ?? 'No Info Yet',
-                                Icons.date_range),
-                            _buildUserInfoCard("CVV",
-                                userData?['cvv'] ?? 'No Info Yet', Icons.lock),
-                          ]),
-
-                          _spacing(),
-                          SizedBox(
-                            width: mediaSize.width * 0.6,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const AddCardView(),
+                          // Payment Information Card - Only show if not an owner
+                          if (isUser)
+                            Column(
+                              children: [
+                                _buildInfoCard("Payment Information", [
+                                  _buildUserInfoCard(
+                                      "Credit Card",
+                                      userData?['creditCard'] ?? 'No Info Yet',
+                                      Icons.credit_card),
+                                  _buildUserInfoCard(
+                                      "Expiry Date",
+                                      userData?['expiryDate'] ?? 'No Info Yet',
+                                      Icons.date_range),
+                                  _buildUserInfoCard(
+                                      "CVV",
+                                      userData?['cvv'] ?? 'No Info Yet',
+                                      Icons.lock),
+                                ]),
+                                _spacing(),
+                                SizedBox(
+                                  width: mediaSize.width * 0.6,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const AddCardView(),
+                                        ),
+                                      );
+                                      if (result == true) {
+                                        _fetchUserDetails(); // Refresh data if the card was updated
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: tPrimaryColor,
+                                      shape: const StadiumBorder(),
+                                    ),
+                                    child: Text(
+                                      userData?['creditCard'] != 'No Info Yet'
+                                          ? 'Edit Payment Information'
+                                          : 'Add Payment Information',
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                );
-                                if (result == true) {
-                                  _fetchUserDetails(); // Refresh data if the card was updated
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: tPrimaryColor,
-                                shape: const StadiumBorder(),
-                              ),
-                              child: Text(
-                                userData?['creditCard'] != 'No Info Yet'
-                                    ? 'Edit Payment Information'
-                                    : 'Add Payment Information',
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                                ),
+                              ],
                             ),
-                          ),
+
                           const SizedBox(height: 20),
                           ListTile(
                             onTap: () {

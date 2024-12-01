@@ -1,9 +1,11 @@
+import 'package:craft_blend_project/main.dart';
 import 'package:flutter/material.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import '../../../pages/User/login_page.dart';
 import '../../../pages/Product/Pastry/pastryOwner_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
@@ -312,32 +314,45 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         signUpData.password != null &&
         signUpData.country != null &&
         signUpData.city != null) {
-      // Prepare request body using StoreSignUpData model as JSON
-      var url = Uri.parse(storeRegistration);
+      try {
+        // Prepare request body using StoreSignUpData model as JSON
+        var url = Uri.parse(storeRegistration);
 
-      // Send data as JSON
-      var response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json', // Set content-type to JSON
-        },
-        body: jsonEncode(signUpData.toJson()),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful!')),
+        // Send data as JSON
+        var response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json', // Set content-type to JSON
+          },
+          body: jsonEncode(signUpData.toJson()),
         );
 
-        // Navigate to the OwnerPage after successful registration
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => PastryOwnerPage()),
-        );
-      } else {
-        final errorMessage = jsonDecode(response.body)['message'] ??
-            'Registration failed. Please try again.';
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final jsonResponse = jsonDecode(response.body);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful!')),
+          );
+
+          // Save token and user type to SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('token', jsonResponse['token']);
+          prefs.setString('userType', jsonResponse['userType']);
+
+          // Navigate to MainScreen after successful registration
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          final errorMessage = jsonDecode(response.body)['message'] ??
+              'Registration failed. Please try again.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $errorMessage')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $errorMessage')),
+          SnackBar(content: Text('An error occurred: $e')),
         );
       }
     }

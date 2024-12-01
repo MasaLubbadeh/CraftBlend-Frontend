@@ -1,6 +1,7 @@
 import '../../../configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class AddPastryProduct extends StatefulWidget {
@@ -54,11 +55,24 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   // Add Product Method
   Future<void> _addProduct() async {
     try {
+      // Retrieve token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
+
       final Map<String, dynamic> productData = {
         'name': titleController.text,
         'description': descriptionController.text,
         'price': double.tryParse(priceController.text) ?? 0,
-        'category': 'Pastry',
+        //'category': 'Pastry',
         'stock': selectedAvailability == 'In Stock'
             ? int.tryParse(stockController.text) ?? 0
             : 0,
@@ -79,7 +93,11 @@ class _AddPastryProductState extends State<AddPastryProduct> {
 
       final response = await http.post(
         Uri.parse(addNewPastryProduct),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization':
+              'Bearer $token' // Include the token for authentication
+        },
         body: jsonEncode(productData),
       );
 
@@ -100,7 +118,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     }
   }
 
-  // Add New Option Method
+// Add New Option Method
   void _addNewOption(String optionGroup) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();

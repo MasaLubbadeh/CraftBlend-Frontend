@@ -40,17 +40,26 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   Future<void> fetchPastries() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      String? storeId = prefs.getString('storeId');
-      print('storeId :');
-      print(storeId);
+      String? token = prefs.getString('token');
+      print('STORE token :');
+      print(token);
 
       final response = await http.get(
         Uri.parse(
-            '${getStoreProducts}/$storeId'), // Assuming API can filter by storeId
+            getStoreProducts), // Make sure the backend is setup to handle this endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        // Decode the entire response
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // Extract the `data` list from the JSON response
+        final List<dynamic> data = jsonResponse['data'];
+
+        // Update state with the extracted list
         setState(() {
           pastries = List<Map<String, dynamic>>.from(data);
           isLoading = false;
@@ -68,8 +77,25 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
   Future<void> _deleteProduct(String productId) async {
     try {
+      // Retrieve token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
+
       final response = await http.delete(
         Uri.parse('${deleteProductByID}/$productId'),
+        headers: {
+          'Authorization':
+              'Bearer $token', // Include the token for authentication
+        },
       );
 
       if (response.statusCode == 200) {
@@ -80,7 +106,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           pastries.removeWhere((product) => product['_id'] == productId);
         });
       } else {
-        throw Exception('Failed to delete product');
+        throw Exception('Failed to delete product: ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

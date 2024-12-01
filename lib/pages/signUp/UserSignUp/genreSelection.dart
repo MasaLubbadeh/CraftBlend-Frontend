@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'profilePageState.dart'; // Assuming ProfilePage exists
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/user_sign_up_data.dart';
+import '../../../main.dart';
 
 class GenreSelectionApp extends StatelessWidget {
   final SignUpData signUpData;
@@ -106,9 +108,15 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == 201 ||
             jsonResponse['status'] == true) {
           print("Registration successful!");
-          // Navigate to ProfilePage after successful registration
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => ProfilePage()),
+
+          // Save token and user type to SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('token', jsonResponse['token']);
+          prefs.setString('userType', jsonResponse['userType']);
+
+          // Navigate to MainScreen after successful registration
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => MainScreen()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -122,7 +130,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                "Registeration failed, check your information: ${response.statusCode}"),
+                "Registration failed, check your information: ${response.statusCode}"),
             backgroundColor: Colors.red,
           ),
         );
