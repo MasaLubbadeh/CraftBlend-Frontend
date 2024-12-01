@@ -10,6 +10,7 @@ import 'pages/Product/Pastry/pastryUser_page.dart';
 import 'pages/Product/Pastry/pastryOwner_page.dart';
 import 'pages/specialOrders/specialOrder_page.dart';
 import 'pages/welcome.dart';
+import 'pages/Admin/adminDashboard.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

@@ -3,6 +3,7 @@ import '../../../models/store_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import '../../../pages/User/login_page.dart';
+import '../../../pages/Product/Pastry/pastryOwner_page.dart';
 
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
@@ -297,7 +298,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       city: cityController.text,
       allowSpecialOrders: allowSpecialOrders,
       accountType: widget.SignUpData.accountType,
-      selectedGenre: widget.SignUpData.selectedGenre,
+      selectedGenreId: widget.SignUpData.selectedGenreId, // Changed here
     );
     print(signUpData.toString());
     // Register user
@@ -320,49 +321,23 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         headers: {
           'Content-Type': 'application/json', // Set content-type to JSON
         },
-        body: jsonEncode({
-          'storeName': signUpData.storeName,
-          'contactEmail': signUpData.contactEmail,
-          'phoneNumber': signUpData.phoneNumber,
-          'password': signUpData.password,
-          'country': signUpData.country,
-          'city': signUpData.city,
-          'allowSpecialOrders':
-              signUpData.allowSpecialOrders ?? false ? "true" : "false",
-          'accountType': signUpData.accountType,
-          'selectedGenre': signUpData.selectedGenre,
-        }),
+        body: jsonEncode(signUpData.toJson()),
       );
 
-      print("Request Body:");
-      print(jsonEncode({
-        'storeName': signUpData.storeName,
-        'contactEmail': signUpData.contactEmail,
-        'phoneNumber': signUpData.phoneNumber,
-        'password': signUpData.password,
-        'country': signUpData.country,
-        'city': signUpData.city,
-        'allowSpecialOrders':
-            signUpData.allowSpecialOrders ?? false ? "true" : "false",
-        'accountType': signUpData.accountType,
-        'selectedGenre': signUpData.selectedGenre,
-      }));
-
-      print("Response Body:");
-      print(response.body);
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.statusCode);
-        // Registration successful, handle response
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration successful!')),
         );
+
+        // Navigate to the OwnerPage after successful registration
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => PastryOwnerPage()),
+        );
       } else {
-        print(response.statusCode);
-        // Handle error
+        final errorMessage = jsonDecode(response.body)['message'] ??
+            'Registration failed. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Registration failed. Please try again.')),
+          SnackBar(content: Text('Error: $errorMessage')),
         );
       }
     }

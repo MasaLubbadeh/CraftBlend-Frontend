@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,24 +15,38 @@ class PastryOwnerPage extends StatefulWidget {
 }
 
 class _PastryOwnerPageState extends State<PastryOwnerPage> {
-  final String businessName = 'Pastry Delights';
-
+  String businessName = 'Pastry Delights';
   List<Map<String, dynamic>> pastries = [];
   bool isLoading = true;
-
-  // Define a count for header items
-  static const int headerCount = 1;
 
   @override
   void initState() {
     super.initState();
+    _initializeStore();
     fetchPastries();
+  }
+
+  Future<void> _initializeStore() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? storeName = prefs.getString('storeName');
+
+    setState(() {
+      if (storeName != null) {
+        businessName = storeName;
+      }
+    });
   }
 
   Future<void> fetchPastries() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      String? storeId = prefs.getString('storeId');
+      print('storeId :');
+      print(storeId);
+
       final response = await http.get(
-        Uri.parse(getAllProducts),
+        Uri.parse(
+            '${getStoreProducts}/$storeId'), // Assuming API can filter by storeId
       );
 
       if (response.statusCode == 200) {
@@ -114,11 +129,6 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.white70,
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
           businessName,
           style: const TextStyle(
@@ -145,11 +155,11 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                   ),
                 ),
                 ListView.builder(
-                  itemCount: headerCount + pastries.length,
+                  itemCount: 1 + pastries.length, // Header count + pastries
                   padding: const EdgeInsets.all(8.0),
                   itemBuilder: (context, index) {
-                    // Handle header items first
-                    if (index < headerCount) {
+                    // Handle header for adding new products
+                    if (index == 0) {
                       return Card(
                         elevation: 4,
                         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -166,15 +176,14 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                 builder: (context) => AddPastryProduct(),
                               ),
                             );
-                            // Fetch the updated list of pastries after adding a new product
-                            fetchPastries();
+                            fetchPastries(); // Refresh after adding a product
                           },
                         ),
                       );
                     }
 
-                    // Handle product items
-                    final productIndex = index - headerCount;
+                    // Product details
+                    final productIndex = index - 1;
                     final pastry = pastries[productIndex];
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -262,7 +271,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
                                       if (updatedProduct != null) {
                                         setState(() {
-                                          pastries[index - 1] = updatedProduct;
+                                          pastries[productIndex] =
+                                              updatedProduct;
                                         });
                                       }
                                     },

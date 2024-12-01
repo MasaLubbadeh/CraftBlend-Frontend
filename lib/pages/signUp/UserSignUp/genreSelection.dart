@@ -29,16 +29,48 @@ class GenreSelectionScreen extends StatefulWidget {
 }
 
 class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
-  final List<Map<String, String>> genres = [
-    {'title': 'Pastries', 'image': 'assets/images/pastaries.jpg'},
-    {'title': 'Pottery', 'image': 'assets/images/pottery.jpg'},
-    {'title': 'Crochet', 'image': 'assets/images/crochet.png'},
-    {'title': 'Build A Bear', 'image': 'assets/images/buildbear.png'},
-    {'title': 'Phone Covers', 'image': 'assets/images/covers.png'},
-    {'title': 'Flowers', 'image': 'assets/images/flowers.png'},
-  ];
-
+  List<Map<String, dynamic>> genres =
+      []; // Update type to dynamic to handle various types
   List<String> selectedGenres = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGenres();
+  }
+
+  // Function to fetch genres from the backend
+  Future<void> _fetchGenres() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            getAllCategories), // Use the correct endpoint to get all categories
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> genreList = jsonDecode(response.body)['categories'];
+        setState(() {
+          genres = genreList
+              .map((genre) => {
+                    'title': genre['name'] as String,
+                    'image':
+                        'assets/images/${(genre['name'] as String).toLowerCase()}.jpg',
+                  })
+              .toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to fetch categories: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error occurred: $e')),
+      );
+    }
+  }
 
   // Function to register user
   void registerUser() async {
@@ -65,7 +97,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(regbody),
       );
-      //jsonResponse['message'] == "Registered successfully")
+
       // Handle server response
       if (response.statusCode == 200 || response.statusCode == 201) {
         var jsonResponse = jsonDecode(response.body);
@@ -79,7 +111,6 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             MaterialPageRoute(builder: (context) => ProfilePage()),
           );
         } else {
-          //widget.signUpData.accountType = "U";
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Registration failed: ${jsonResponse['message']}"),
@@ -90,7 +121,8 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Server error: ${response.statusCode}"),
+            content: Text(
+                "Registeration failed, check your information: ${response.statusCode}"),
             backgroundColor: Colors.red,
           ),
         );
@@ -107,55 +139,66 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('What are you interested in?'),
-        centerTitle: true,
+        title: Text(
+          'What are you interested in?',
+          style: TextStyle(
+              fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
+        ),
+        foregroundColor: Colors.white70,
         backgroundColor: myColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 5,
+        toolbarHeight: appBarHeight,
+        centerTitle: true,
       ),
       body: Column(
         children: [
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'This will customize your new home feed',
+              'This will customize your feed',
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: genres.length,
-              itemBuilder: (context, index) {
-                return GenreCard(
-                  title: genres[index]['title']!,
-                  imagePath: genres[index]['image']!,
-                  isSelected: selectedGenres.contains(genres[index]['title']),
-                  onTap: () {
-                    setState(() {
-                      if (selectedGenres.contains(genres[index]['title'])) {
-                        selectedGenres.remove(genres[index]['title']);
-                        // Save selected genres to signUpData before registration
-                        widget.signUpData.selectedGenres = selectedGenres;
-                      } else {
-                        selectedGenres.add(genres[index]['title']!);
-                        // Save selected genres to signUpData before registration
-                        widget.signUpData.selectedGenres = selectedGenres;
-                      }
-                    });
-                  },
-                );
-              },
-            ),
+            child: genres.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.1,
+                    ),
+                    itemCount: genres.length,
+                    itemBuilder: (context, index) {
+                      return GenreCard(
+                        title: genres[index]['title'],
+                        imagePath: genres[index]['image'],
+                        isSelected:
+                            selectedGenres.contains(genres[index]['title']),
+                        onTap: () {
+                          setState(() {
+                            if (selectedGenres
+                                .contains(genres[index]['title'])) {
+                              selectedGenres.remove(genres[index]['title']);
+                              widget.signUpData.selectedGenres = selectedGenres;
+                            } else {
+                              selectedGenres.add(genres[index]['title']);
+                              widget.signUpData.selectedGenres = selectedGenres;
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -224,8 +267,10 @@ class GenreCard extends StatelessWidget {
                 alignment: Alignment.bottomLeft,
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.red
+                        : Colors.black54, // Change color based on selection
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),

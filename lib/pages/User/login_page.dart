@@ -8,6 +8,7 @@ import 'forgotPassword.dart';
 import '../../pages/signUp/account_type_selection_page.dart';
 import '../Product/Pastry/pastryUser_page.dart';
 import '../Product/Pastry/pastryOwner_page.dart';
+import '../Admin/adminDashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,10 +54,26 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
+        if (prefs.getString('userType') == 'store') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    const PastryOwnerPage()), // Update this to your OwnerPage
+          );
+        } else if (prefs.getString('userType') == 'admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    const AdminDashboardPage()), // Update this to your OwnerPage
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+        }
       } else {
         prefs.remove('token'); // Clear stored token
       }
@@ -77,6 +94,7 @@ class _LoginPageState extends State<LoginPage> {
       var jsonResponse = jsonDecode(response.body);
       if (jsonResponse['status']) {
         var myToken = jsonResponse['token'];
+        var userType = jsonResponse['userType'];
 
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
@@ -89,10 +107,36 @@ class _LoginPageState extends State<LoginPage> {
           prefs.remove('password');
         }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
+        // Save user type to SharedPreferences
+        prefs.setString('userType', userType);
+
+        // If the user is a store owner, save additional information
+        if (userType == 'store') {
+          var storeName = jsonResponse[
+              'storeName']; // Assuming this is returned from the backend
+          var storeId = jsonResponse[
+              'storeId']; // Assuming this is returned from the backend
+          prefs.setString('storeName', storeName);
+          prefs.setString('storeId', storeId);
+        }
+
+        // Navigate to the appropriate screen based on user type
+        if (userType == 'admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
+          );
+        } else if (userType == 'store') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+        }
       } else {
         setState(() {
           errorMessage =

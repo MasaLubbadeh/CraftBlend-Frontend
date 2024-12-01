@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../configuration/config.dart';
-import '../../../models/user_sign_up_data.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For jsonEncode and jsonDecode
+import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/store_sign_up_data.dart';
 import '../StoreSignUp/store_sign_up_page.dart';
 
@@ -14,22 +15,52 @@ class StoreGenreSelectionScreen extends StatefulWidget {
 }
 
 class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
-  final List<Map<String, String>> genres = [
-    {'title': 'Pastries', 'image': 'assets/images/pastaries.jpg'},
-    {'title': 'Pottery', 'image': 'assets/images/pottery.jpg'},
-    {'title': 'Crochet', 'image': 'assets/images/crochet.png'},
-    {'title': 'Build A Bear', 'image': 'assets/images/buildbear.png'},
-    {'title': 'Phone Covers', 'image': 'assets/images/covers.png'},
-    {'title': 'Flowers', 'image': 'assets/images/flowers.png'},
-  ];
+  List<Map<String, dynamic>> genres = [];
+  String? selectedGenreId; // Store the ID of the selected genre
 
-  String? selectedGenre;
+  @override
+  void initState() {
+    super.initState();
+    _fetchGenres();
+  }
+
+  // Function to fetch genres from the backend
+  Future<void> _fetchGenres() async {
+    try {
+      final response = await http.get(
+        Uri.parse(getAllCategories),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> genreList = jsonDecode(response.body)['categories'];
+        setState(() {
+          genres = genreList
+              .map((genre) => {
+                    'id': genre['_id'], // Assuming the category ID is `_id`
+                    'title': genre['name'],
+                    'image': 'assets/images/${genre['name'].toLowerCase()}.jpg',
+                  })
+              .toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to fetch categories: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error occurred: $e')),
+      );
+    }
+  }
 
   void onNextPressed() {
-    if (selectedGenre != null) {
-      // Update the SignUpData with the selected genre
-      widget.storeSignUpData.selectedGenre = selectedGenre;
-      print(widget.storeSignUpData.toString());
+    if (selectedGenreId != null) {
+      // Update the StoreSignUpData with the selected genre ID
+      widget.storeSignUpData.selectedGenreId = selectedGenreId;
+
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
@@ -51,50 +82,49 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Select Your Store Genre',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Select Your Store Genre'),
         centerTitle: true,
         backgroundColor: myColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 5,
       ),
       body: Column(
         children: [
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'You must select a genre for you store',
+              'You must select a genre for your store',
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: genres.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedGenre = genres[index]['title'];
-                    });
-                  },
-                  child: GenreCard(
-                    title: genres[index]['title']!,
-                    imagePath: genres[index]['image']!,
-                    isSelected: selectedGenre == genres[index]['title'],
+            child: genres.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.1,
+                    ),
+                    itemCount: genres.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedGenreId = genres[index]['id'];
+                          });
+                        },
+                        child: GenreCard(
+                          title: genres[index]['title'],
+                          imagePath: genres[index]['image'],
+                          isSelected: selectedGenreId == genres[index]['id'],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -152,8 +182,11 @@ class GenreCard extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.black
+                      : const Color.fromARGB(
+                          255, 161, 134, 134), // Highlight color for selected
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -172,27 +205,6 @@ class GenreCard extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class NextSignUpScreen extends StatelessWidget {
-  final StoreSignUpData signUpData;
-
-  const NextSignUpScreen({super.key, required this.signUpData});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Next Signup Step'),
-      ),
-      body: Center(
-        child: Text(
-          'SignUpData: ${signUpData.toString()}',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
     );
   }
 }

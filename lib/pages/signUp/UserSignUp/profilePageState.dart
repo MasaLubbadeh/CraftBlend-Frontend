@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../../configuration/config.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -56,10 +57,20 @@ class _ProfilePageState extends State<ProfilePage> {
     // Use MediaQuery to make the UI responsive
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Profile"),
+        title: Text(
+          'Profile Photo',
+          style: TextStyle(
+              fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
+        ),
+        foregroundColor: Colors.white70,
+        backgroundColor: myColor,
+        elevation: 5,
+        toolbarHeight: appBarHeight,
+        centerTitle: true,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

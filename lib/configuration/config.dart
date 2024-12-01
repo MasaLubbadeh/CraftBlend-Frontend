@@ -18,6 +18,10 @@ const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
+const String addNewCategory = '${url}category/add';
+const String deleteCategory = '${url}category/delete';
+const String getAllCategories = '${url}category/all';
+const String getStoreProducts = '${url}store/getAllProducts';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
