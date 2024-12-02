@@ -26,6 +26,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -38,10 +39,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Stack(
         children: [

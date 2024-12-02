@@ -155,6 +155,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             onPressed: () {
               if (nameController.text.isNotEmpty) {
                 setState(() {
+                  // Only add to predefinedOptions to avoid duplication
                   predefinedOptions[optionGroup]?.add({
                     'name': nameController.text.trim(),
                     'extraCost':
@@ -247,10 +248,21 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
-        foregroundColor: Colors.white,
         elevation: 0,
         toolbarHeight: appBarHeight,
-        title: const Text('Add Pastry Product'),
+        title: const Text(
+          'Add Pastry Product',
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Stack(
         children: [

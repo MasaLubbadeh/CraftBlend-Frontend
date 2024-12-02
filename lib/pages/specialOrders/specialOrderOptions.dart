@@ -35,7 +35,7 @@ class _SpecialOrdersOverviewPageState extends State<SpecialOrdersOverviewPage> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
       ),

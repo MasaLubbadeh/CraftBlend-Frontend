@@ -22,19 +22,36 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   @override
   void initState() {
     super.initState();
-    _initializeStore();
+    _fetchStoreDetails();
     fetchPastries();
   }
 
-  Future<void> _initializeStore() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? storeName = prefs.getString('storeName');
+  Future<void> _fetchStoreDetails() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
 
-    setState(() {
-      if (storeName != null) {
-        businessName = storeName;
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse(
+              getStoreDetails), // Your backend endpoint for fetching store details
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final jsonResponse = json.decode(response.body);
+          setState(() {
+            businessName = jsonResponse['storeName'] ?? businessName;
+          });
+        } else {
+          throw Exception('Failed to load store details');
+        }
       }
-    });
+    } catch (e) {
+      print('Error fetching store details: $e');
+    }
   }
 
   Future<void> fetchPastries() async {
@@ -53,31 +70,30 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       );
 
       if (response.statusCode == 200) {
-        // Decode the entire response
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-        // Extract the `data` list from the JSON response
         final List<dynamic> data = jsonResponse['data'];
 
-        // Update state with the extracted list
-        setState(() {
-          pastries = List<Map<String, dynamic>>.from(data);
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            pastries = List<Map<String, dynamic>>.from(data);
+            isLoading = false;
+          });
+        }
       } else {
         throw Exception('Failed to load pastries');
       }
     } catch (e) {
       print('Error fetching pastries: $e');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _deleteProduct(String productId) async {
     try {
-      // Retrieve token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
@@ -93,8 +109,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       final response = await http.delete(
         Uri.parse('${deleteProductByID}/$productId'),
         headers: {
-          'Authorization':
-              'Bearer $token', // Include the token for authentication
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -152,6 +167,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -181,10 +197,9 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                   ),
                 ),
                 ListView.builder(
-                  itemCount: 1 + pastries.length, // Header count + pastries
+                  itemCount: 1 + pastries.length,
                   padding: const EdgeInsets.all(8.0),
                   itemBuilder: (context, index) {
-                    // Handle header for adding new products
                     if (index == 0) {
                       return Card(
                         elevation: 4,
@@ -208,7 +223,6 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                       );
                     }
 
-                    // Product details
                     final productIndex = index - 1;
                     final pastry = pastries[productIndex];
                     return Padding(

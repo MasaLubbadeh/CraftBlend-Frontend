@@ -2,6 +2,8 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 
+import '../pages/categoriesPage.dart';
+
 class UserBottomNavigationBar extends StatefulWidget {
   @override
   _UserBottomNavigationBarState createState() =>
@@ -14,7 +16,9 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   final List<Widget> _userPages = [
     // WelcomePage(), // Home
     // OrdersPage(), // Orders
+    CategoriesPage(),
     ProfileScreen(), // Profile
+
     // FeedPage(), // Feed
   ];
 
@@ -40,6 +44,10 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
             label: 'Orders',
           ),
           */
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',

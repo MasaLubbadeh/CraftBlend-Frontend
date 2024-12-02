@@ -1,6 +1,6 @@
-import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import '../pages/Admin/adminDashboard.dart';
+import '../pages/Admin/adminManageStores.dart';
 //import '../pages/Admin/manageUsers.dart';
 //import '../pages/Admin/manageStores.dart';
 
@@ -17,7 +17,7 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
   final List<Widget> _adminPages = [
     AdminDashboardPage(), // Admin Dashboard
     //ManageUsersPage(), // Manage Users
-    //ManageStoresPage(), // Manage Stores
+    AdminManageStoresPage(), // Manage Stores
   ];
 
   void _onItemTapped(int index) {
@@ -36,10 +36,10 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
+          /* BottomNavigationBarItem(
             icon: Icon(Icons.group),
             label: 'Manage Users',
-          ),
+          ),*/
           BottomNavigationBarItem(
             icon: Icon(Icons.store),
             label: 'Manage Stores',

@@ -13,6 +13,7 @@ class AdminDashboardPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,

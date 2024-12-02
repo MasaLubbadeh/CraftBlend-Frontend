@@ -130,7 +130,8 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                "Registration failed, check your information: ${response.statusCode}"),
+              "Registration failed, ${jsonDecode(response.body)['message']}",
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -277,7 +278,7 @@ class GenreCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: isSelected
-                        ? Colors.red
+                        ? Colors.grey
                         : Colors.black54, // Change color based on selection
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

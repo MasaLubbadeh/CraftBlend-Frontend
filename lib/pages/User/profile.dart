@@ -160,10 +160,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       length: 2, // Two tabs for 'Your Info' and 'Your Activity'
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: myColor, // Change to your desired color
           title: Text(tProfile,
               style: TextStyle(
-                fontSize: 35,
+                fontSize: 30,
                 fontWeight: FontWeight.w700,
                 color: Colors.white70,
               ),

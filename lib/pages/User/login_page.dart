@@ -55,6 +55,13 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const MainScreen()), // Update this to your OwnerPage
+        );
+        /*
         if (prefs.getString('userType') == 'store') {
           Navigator.pushReplacement(
             context,
@@ -74,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(builder: (context) => const ProfileScreen()),
           );
-        }
+        }*/
       } else {
         prefs.remove('token'); // Clear stored token
       }
