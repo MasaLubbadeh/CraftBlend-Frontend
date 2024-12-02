@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
@@ -74,6 +75,11 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == 201 ||
             jsonResponse['status'] == true) {
           print("Registration successful!");
+          final _auth = AuthService();
+          _auth.signUpWithEmainPassword(
+            widget.signUpData.email!,
+            widget.signUpData.password!,
+          );
           // Navigate to ProfilePage after successful registration
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => ProfilePage()),

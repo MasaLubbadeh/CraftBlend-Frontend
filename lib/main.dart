@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: AuthGate(), // Start with MainScreen
+      home: WelcomePage(), // Start with MainScreen
     );
   }
 }

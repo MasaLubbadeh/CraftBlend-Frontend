@@ -5,6 +5,7 @@ import 'dart:convert'; // For JSON encoding/decoding
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../configuration/config.dart';
+import '../chatting/allChats.dart';
 import 'profile.dart';
 import 'forgotPassword.dart';
 import '../Product/Pastry/pastryUser_page.dart';
@@ -37,22 +38,24 @@ class _LoginPageState extends State<LoginPage> {
 
   void initSharedPref() async {
     prefs = await SharedPreferences.getInstance();
-    setState(() {
-      rememberUser = prefs.getBool('rememberUser') ?? false;
-      emailController.text = prefs.getString('email') ?? '';
-      passwordController.text = prefs.getString('password') ?? '';
-      var token = prefs.getString('token') ?? '';
+    if (showPassword) {
+      setState(() {
+        rememberUser = prefs.getBool('rememberUser') ?? false;
+        emailController.text = prefs.getString('email') ?? '';
+        passwordController.text = prefs.getString('password') ?? '';
+        var token = prefs.getString('token') ?? '';
 
-      print('Remember Me: $rememberUser'); // Log rememberUser status
-      print('Loaded Email: ${emailController.text}'); // Log loaded email
-      print(
-          'Loaded Password: ${passwordController.text}'); // Log loaded password
+        print('Remember Me: $rememberUser'); // Log rememberUser status
+        print('Loaded Email: ${emailController.text}'); // Log loaded email
+        print(
+            'Loaded Password: ${passwordController.text}'); // Log loaded password
 
-      if (rememberUser && token.isNotEmpty) {
-        print('rememberUser && token.isNotEmpty');
-        validateToken(token); // Check if the token is valid
-      }
-    });
+        if (rememberUser && token.isNotEmpty) {
+          print('rememberUser && token.isNotEmpty');
+          validateToken(token); // Check if the token is valid
+        }
+      });
+    }
   }
 
   void validateToken(String token) async {
@@ -110,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          MaterialPageRoute(builder: (context) => AllChats()),
         );
       } else {
         setState(() {
@@ -125,12 +128,25 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void loginUser(BuildContext context) async {
+  void firebse_login(String email, String pass, BuildContext context) async {
     //auth firebase//////////////////
     //auth service
     final authService = AuthService();
+    try {
+      await authService.signInWithEmainPassword(email, pass);
+    } catch (err) {
+      print("Firebase Login Error: $err"); // Log the exact error for debugging
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Login Failed"),
+          content: Text(err.toString()),
+        ),
+      );
+    }
+  }
 
-    /////////////////////////////////
+  void loginUser() {
     String email =
         emailController.text.trim(); // Trim to remove leading/trailing spaces
     String password = passwordController.text.trim();
@@ -141,15 +157,8 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-    try {
-      await authService.signInWithEmainPassword(email, password);
-    } catch (err) {
-      showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text(err.toString()),
-              ));
-    }
+
+    firebse_login(email, password, context);
     loginUserWithCredentials(
         email, password); // Call the new method with the entered credentials
   }
@@ -388,7 +397,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLoginButton() {
     return ElevatedButton(
       onPressed: () async {
-        loginUser(context);
+        loginUser();
       },
       /*
         String email = emailController.text;
