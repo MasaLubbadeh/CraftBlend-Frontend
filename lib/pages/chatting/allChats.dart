@@ -63,6 +63,7 @@ class AllChats extends StatelessWidget {
               MaterialPageRoute(
                 builder: (context) => ChatPage(
                   recieverEmail: userData["email"],
+                  receiverID: userData["uid"],
                 ),
               ));
         });
