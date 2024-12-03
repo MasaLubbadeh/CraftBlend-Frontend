@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'profilePageState.dart'; // Assuming ProfilePage exists
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/user_sign_up_data.dart';
 import '../../../main.dart';
-import '../../../services/authentication/auth_service.dart';
 
 class GenreSelectionApp extends StatelessWidget {
   final SignUpData signUpData;
@@ -34,7 +34,48 @@ class GenreSelectionScreen extends StatefulWidget {
 class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
   List<Map<String, dynamic>> genres =
       []; // Update type to dynamic to handle various types
+  List<Map<String, dynamic>> genres =
+      []; // Update type to dynamic to handle various types
   List<String> selectedGenres = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGenres();
+  }
+
+  // Function to fetch genres from the backend
+  Future<void> _fetchGenres() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            getAllCategories), // Use the correct endpoint to get all categories
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> genreList = jsonDecode(response.body)['categories'];
+        setState(() {
+          genres = genreList
+              .map((genre) => {
+                    'title': genre['name'] as String,
+                    'image':
+                        'assets/images/${(genre['name'] as String).toLowerCase()}.jpg',
+                  })
+              .toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to fetch categories: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error occurred: $e')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -101,6 +142,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         body: jsonEncode(regbody),
       );
 
+
       // Handle server response
       if (response.statusCode == 200 || response.statusCode == 201) {
         var jsonResponse = jsonDecode(response.body);
@@ -109,11 +151,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == 201 ||
             jsonResponse['status'] == true) {
           print("Registration successful!");
-          final _auth = AuthService();
-          _auth.signUpWithEmainPassword(
-            widget.signUpData.email!,
-            widget.signUpData.password!,
-          );
+
           // Save token and user type to SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString('token', jsonResponse['token']);
@@ -137,6 +175,9 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             content: Text(
               "Registration failed, ${jsonDecode(response.body)['message']}",
             ),
+            content: Text(
+              "Registration failed, ${jsonDecode(response.body)['message']}",
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -156,8 +197,17 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
+        title: Text(
+          'What are you interested in?',
+          style: TextStyle(
+              fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
+        ),
+        foregroundColor: Colors.white70,
         title: Text(
           'What are you interested in?',
           style: TextStyle(
@@ -168,6 +218,9 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
         elevation: 5,
         toolbarHeight: appBarHeight,
         centerTitle: true,
+        elevation: 5,
+        toolbarHeight: appBarHeight,
+        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -175,11 +228,45 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             padding: EdgeInsets.all(16.0),
             child: Text(
               'This will customize your feed',
+              'This will customize your feed',
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
+            child: genres.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.1,
+                    ),
+                    itemCount: genres.length,
+                    itemBuilder: (context, index) {
+                      return GenreCard(
+                        title: genres[index]['title'],
+                        imagePath: genres[index]['image'],
+                        isSelected:
+                            selectedGenres.contains(genres[index]['title']),
+                        onTap: () {
+                          setState(() {
+                            if (selectedGenres
+                                .contains(genres[index]['title'])) {
+                              selectedGenres.remove(genres[index]['title']);
+                              widget.signUpData.selectedGenres = selectedGenres;
+                            } else {
+                              selectedGenres.add(genres[index]['title']);
+                              widget.signUpData.selectedGenres = selectedGenres;
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
             child: genres.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : GridView.builder(
@@ -281,6 +368,10 @@ class GenreCard extends StatelessWidget {
                 alignment: Alignment.bottomLeft,
                 child: Text(
                   title,
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.grey
+                        : Colors.black54, // Change color based on selection
                   style: TextStyle(
                     color: isSelected
                         ? Colors.grey

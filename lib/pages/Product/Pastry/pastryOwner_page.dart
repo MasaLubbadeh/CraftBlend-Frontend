@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,47 +15,102 @@ class PastryOwnerPage extends StatefulWidget {
 }
 
 class _PastryOwnerPageState extends State<PastryOwnerPage> {
-  final String businessName = 'Pastry Delights';
-
+  String businessName = 'Pastry Delights';
   List<Map<String, dynamic>> pastries = [];
   bool isLoading = true;
-
-  // Define a count for header items
-  static const int headerCount = 1;
 
   @override
   void initState() {
     super.initState();
+    _fetchStoreDetails();
     fetchPastries();
+  }
+
+  Future<void> _fetchStoreDetails() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse(
+              getStoreDetails), // Your backend endpoint for fetching store details
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final jsonResponse = json.decode(response.body);
+          setState(() {
+            businessName = jsonResponse['storeName'] ?? businessName;
+          });
+        } else {
+          throw Exception('Failed to load store details');
+        }
+      }
+    } catch (e) {
+      print('Error fetching store details: $e');
+    }
   }
 
   Future<void> fetchPastries() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+      print('STORE token :');
+      print(token);
+
       final response = await http.get(
-        Uri.parse(getAllProducts),
+        Uri.parse(
+            getStoreProducts), // Make sure the backend is setup to handle this endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          pastries = List<Map<String, dynamic>>.from(data);
-          isLoading = false;
-        });
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final List<dynamic> data = jsonResponse['data'];
+
+        if (mounted) {
+          setState(() {
+            pastries = List<Map<String, dynamic>>.from(data);
+            isLoading = false;
+          });
+        }
       } else {
         throw Exception('Failed to load pastries');
       }
     } catch (e) {
       print('Error fetching pastries: $e');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _deleteProduct(String productId) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
+
       final response = await http.delete(
         Uri.parse('${deleteProductByID}/$productId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -65,7 +121,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           pastries.removeWhere((product) => product['_id'] == productId);
         });
       } else {
-        throw Exception('Failed to delete product');
+        throw Exception('Failed to delete product: ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -111,14 +167,10 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.white70,
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
           businessName,
           style: const TextStyle(
@@ -145,11 +197,10 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                   ),
                 ),
                 ListView.builder(
-                  itemCount: headerCount + pastries.length,
+                  itemCount: 1 + pastries.length,
                   padding: const EdgeInsets.all(8.0),
                   itemBuilder: (context, index) {
-                    // Handle header items first
-                    if (index < headerCount) {
+                    if (index == 0) {
                       return Card(
                         elevation: 4,
                         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -166,15 +217,13 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                 builder: (context) => AddPastryProduct(),
                               ),
                             );
-                            // Fetch the updated list of pastries after adding a new product
-                            fetchPastries();
+                            fetchPastries(); // Refresh after adding a product
                           },
                         ),
                       );
                     }
 
-                    // Handle product items
-                    final productIndex = index - headerCount;
+                    final productIndex = index - 1;
                     final pastry = pastries[productIndex];
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -262,7 +311,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
                                       if (updatedProduct != null) {
                                         setState(() {
-                                          pastries[index - 1] = updatedProduct;
+                                          pastries[productIndex] =
+                                              updatedProduct;
                                         });
                                       }
                                     },

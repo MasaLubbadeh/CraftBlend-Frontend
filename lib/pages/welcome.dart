@@ -41,7 +41,7 @@ class WelcomePage extends StatelessWidget {
           const SizedBox(height: 0),
 
           // Privacy Policy Text
-          const Padding(
+          /*  const Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.0),
             child: Text(
               "Read our Privacy Policy. Tap Agree and Continue to accept the Terms of Services.",
@@ -52,6 +52,8 @@ class WelcomePage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+          
+          */
           const Spacer(),
 
           // "Agree & Continue" Button
@@ -78,11 +80,12 @@ class WelcomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Agree & Continue",
+                    "Continue",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      letterSpacing: 3,
                     ),
                   ),
                   SizedBox(width: 8),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../configuration/config.dart';
 
 class EditPastryProduct extends StatefulWidget {
@@ -19,6 +20,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
   late TextEditingController stockController;
 
   late Map<String, List<Map<String, dynamic>>> availableOptions;
+  late Map<String, bool> availableOptionStatus;
 
   @override
   void initState() {
@@ -39,10 +41,36 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         availableOptions[key] = List<Map<String, dynamic>>.from(value);
       });
     }
+
+    // Initialize available option status with existing product data, defaulting to false
+    availableOptionStatus = {};
+    if (widget.product['availableOptionStatus'] != null) {
+      widget.product['availableOptionStatus'].forEach((key, value) {
+        availableOptionStatus[key] = value as bool;
+      });
+    } else {
+      // If no availableOptionStatus is provided, initialize with false for each available option
+      for (var key in availableOptions.keys) {
+        availableOptionStatus[key] = false;
+      }
+    }
   }
 
   Future<void> _updateProduct() async {
     try {
+      // Retrieve token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
+
       final updatedProduct = {
         '_id': widget.product['_id'], // Use the MongoDB product ID
         'name': nameController.text,
@@ -50,11 +78,16 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         'description': descriptionController.text,
         'stock': int.tryParse(stockController.text) ?? 0,
         'availableOptions': availableOptions,
+        'availableOptionStatus': availableOptionStatus, // Add the status here
       };
 
       final response = await http.put(
         Uri.parse(updateProductInfo),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization':
+              'Bearer $token', // Include the token for authentication
+        },
         body: jsonEncode(updatedProduct),
       );
 
@@ -64,11 +97,13 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         );
         Navigator.pop(context, updatedProduct); // Pass updated data back
       } else {
-        throw Exception('Failed to update product');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update product: ${response.body}')),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('An error occurred: $e')),
       );
     }
   }
@@ -258,8 +293,8 @@ class _EditPastryProductState extends State<EditPastryProduct> {
                 onPressed: () {
                   if (groupController.text.isNotEmpty) {
                     setState(() {
-                      // Add the new group to availableOptions with an empty list of options
                       availableOptions[groupController.text] = [];
+                      availableOptionStatus[groupController.text] = isOptional;
                     });
                     Navigator.pop(context);
                   }
@@ -277,85 +312,6 @@ class _EditPastryProductState extends State<EditPastryProduct> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: myColor,
-        elevation: 0,
-        toolbarHeight: appBarHeight,
-        title: const Text(
-          'Edit Product',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Stack(
-        children: [
-          // Background Image with Opacity
-          Opacity(
-            opacity: 0.2,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/pastry.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInputField(nameController, 'Name'),
-                const SizedBox(height: 16),
-                _buildInputField(priceController, 'Price', isNumber: true),
-                const SizedBox(height: 16),
-                _buildInputField(descriptionController, 'Description'),
-                const SizedBox(height: 16),
-                _buildInputField(stockController, 'Stock', isNumber: true),
-                const SizedBox(height: 24),
-                _buildOptionsSection(),
-                const SizedBox(height: 24),
-                _buildAddNewGroupButton(),
-                const SizedBox(height: 24),
-                _buildSaveButton(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInputField(TextEditingController controller, String label,
-      {bool isNumber = false}) {
-    return TextField(
-      controller: controller,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.black54),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: myColor, width: 2.0),
-        ),
-      ),
-    );
-  }
-
   Widget _buildOptionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,17 +319,44 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              optionGroup,
-              style: const TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: myColor,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  optionGroup,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                  ),
+                ),
+                // Switch to control whether the option group is optional
+                Row(
+                  children: [
+                    const Text(
+                      'Optional',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Switch(
+                      activeColor: myColor,
+                      value: availableOptionStatus[optionGroup] ??
+                          false, // Set initial value
+                      onChanged: (value) {
+                        setState(() {
+                          availableOptionStatus[optionGroup] =
+                              value; // Update state when changed
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 8),
-            if (availableOptions[optionGroup]!
-                .isNotEmpty) // Ensure we only create the card if there are options
+            if (availableOptions[optionGroup]!.isNotEmpty)
               Card(
                 color: const Color.fromARGB(255, 149, 131, 162),
                 child: Padding(
@@ -486,6 +469,85 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         child: const Text(
           'Save Changes',
           style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'Edit Product',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Stack(
+        children: [
+          // Background Image with Opacity
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/pastry.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInputField(nameController, 'Name'),
+                const SizedBox(height: 16),
+                _buildInputField(priceController, 'Price', isNumber: true),
+                const SizedBox(height: 16),
+                _buildInputField(descriptionController, 'Description'),
+                const SizedBox(height: 16),
+                _buildInputField(stockController, 'Stock', isNumber: true),
+                const SizedBox(height: 24),
+                _buildOptionsSection(),
+                const SizedBox(height: 24),
+                _buildAddNewGroupButton(),
+                const SizedBox(height: 24),
+                _buildSaveButton(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField(TextEditingController controller, String label,
+      {bool isNumber = false}) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.black54),
+        border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: myColor, width: 2.0),
         ),
       ),
     );

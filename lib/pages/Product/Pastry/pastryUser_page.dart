@@ -5,14 +5,16 @@ import 'package:http/http.dart' as http;
 import '../productDetails_page.dart';
 
 class PastryPage extends StatefulWidget {
-  const PastryPage({super.key});
+  final String storeId;
+  final String storeName;
+
+  const PastryPage({required this.storeId, required this.storeName});
 
   @override
   _PastryPageState createState() => _PastryPageState();
 }
 
 class _PastryPageState extends State<PastryPage> {
-  final String businessName = 'Pastry Delights';
   List<dynamic> pastries = []; // Dynamic list to hold fetched pastries
   bool isLoading = true; // Loading indicator
   String errorMessage = ''; // Error message for display
@@ -25,13 +27,21 @@ class _PastryPageState extends State<PastryPage> {
 
   Future<void> _fetchPastries() async {
     try {
-      // Replace with your actual backend URL
-      final response = await http.get(Uri.parse(getAllProducts));
+      final response = await http
+          .get(Uri.parse('${getStoreProductsForUser}/${widget.storeId}'));
       if (response.statusCode == 200) {
-        setState(() {
-          pastries = jsonDecode(response.body);
-          isLoading = false;
-        });
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
+          setState(() {
+            pastries = jsonResponse['data'];
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            errorMessage = 'No products found.';
+            isLoading = false;
+          });
+        }
       } else {
         setState(() {
           errorMessage = 'Failed to load pastries: ${response.body}';
@@ -61,7 +71,7 @@ class _PastryPageState extends State<PastryPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          businessName,
+          widget.storeName,
           style: const TextStyle(
               fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white70),
         ),
@@ -73,8 +83,8 @@ class _PastryPageState extends State<PastryPage> {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content:
-                        Text('$businessName added to your favorites stores')),
+                    content: Text(
+                        '${widget.storeName} added to your favorites stores')),
               );
             },
           ),
@@ -144,8 +154,8 @@ class _PastryPageState extends State<PastryPage> {
                                       children: [
                                         // Pastry title
                                         Text(
-                                          pastry[
-                                              'name'], // Use 'name' from the backend
+                                          pastry['name'] ??
+                                              'No Name', // Use 'name' from the backend
                                           style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
