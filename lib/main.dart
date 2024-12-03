@@ -12,8 +12,9 @@ import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
 
-void main() {
+Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
