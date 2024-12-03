@@ -1,33 +1,50 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/authentication/auth_service.dart';
 import '../../services/chat/chat_service.dart';
+import '../../components/message_bubble.dart';
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   final String recieverEmail;
   final String receiverID;
+
   ChatPage({super.key, required this.recieverEmail, required this.receiverID});
 
-//text controller
-  final TextEditingController _messageController = TextEditingController();
+  @override
+  _ChatPageState createState() => _ChatPageState();
+}
 
-//chat and auth services
+class _ChatPageState extends State<ChatPage> {
+  // Text controller
+  final TextEditingController _messageController = TextEditingController();
+  bool _isTyping = false;
+
+  // Chat and auth services
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
-//send message
+
+  @override
+  void initState() {
+    super.initState();
+    _messageController.addListener(() {
+      setState(() {
+        // Check if the text field is not empty
+        _isTyping = _messageController.text.isNotEmpty;
+      });
+    });
+  }
+
+  // Send message
   void _sendMessage() async {
-    //if there is something inside the textfield
     final String message = _messageController.text.trim();
     if (message.isNotEmpty) {
       try {
-        // Send the message
-        print("Sending message to receiverID: $receiverID"); // Debug log
-
-        await _chatService.sendMessage(receiverID, message);
-
-        // Clear the text field after sending
-        _messageController.clear();
+        print(
+            "Sending message to receiverID: ${widget.receiverID}"); // Debug log
+        await _chatService.sendMessage(widget.receiverID, message);
+        _messageController.clear(); // Clear after sending
       } catch (e) {
         print("Failed to send message: $e");
       }
@@ -39,18 +56,15 @@ class ChatPage extends StatelessWidget {
     String senderID = _authService.getCurrentUser()!.uid;
 
     return StreamBuilder(
-      stream: _chatService.getMessages(receiverID, senderID),
+      stream: _chatService.getMessages(widget.receiverID, senderID),
       builder: (context, snapshot) {
-        // Handle errors
         if (snapshot.hasError) {
           return const Center(child: Text("Error loading messages."));
         }
-
-        // Handle loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        //return list view
+
         return ListView(
           children:
               snapshot.data!.docs.map((doc) => _buildMessageItem(doc)).toList(),
@@ -59,47 +73,71 @@ class ChatPage extends StatelessWidget {
     );
   }
 
-//build message item
+  // Build message item
   Widget _buildMessageItem(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    //is current user
     bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()!.uid;
-    //align messages to the right is the sender is the current user,otherwise left
-    var alignment =
-        isCurrentUser ? Alignment.centerRight : Alignment.centerLeft;
-    return Container(
-        alignment: alignment,
-        child: Column(
-          crossAxisAlignment:
-              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Text(data["message"]),
-          ],
-        ));
-  }
 
-  //build message input
-  /* Widget _buildUserInput(){
-    return Row(
-      children: [
-        //textfield should take most of the space
-        Expanded(child: MyTextField(
-          controller : _messageController,
-          hintText :"Type a Message",
-          obscureText:false,
-
-        )),
-        //send button
-      ],
+    return MessageBubble(
+      message: data['message'],
+      isSent: isCurrentUser,
+      senderID: data['senderID'],
+      currentUserID: _authService.getCurrentUser()!.uid,
     );
-  }*/
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(recieverEmail),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundImage:
+                  NetworkImage('https://your-profile-image-url.com'),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              widget.recieverEmail,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.video_call,
+              color: myColor,
+            ),
+            onPressed: () {
+              // Video call action
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.phone,
+              color: myColor,
+            ),
+            onPressed: () {
+              // Phone call action
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -113,22 +151,47 @@ class ChatPage extends StatelessWidget {
                     controller: _messageController,
                     decoration: InputDecoration(
                       hintText: "Type your message...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      hintStyle: TextStyle(
+                        fontWeight: FontWeight.w300,
+                        color: Colors.grey[400],
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(35),
+                        borderSide: BorderSide(
+                          color: Colors.grey[400]!,
+                          width: 1.0,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(35),
+                        borderSide: BorderSide(
+                          color: Colors.grey[400]!,
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(35),
+                        borderSide: BorderSide(
+                          color: myColor,
+                          width: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  color: Theme.of(context).primaryColor,
-                  onPressed: _sendMessage,
-                ),
+                const SizedBox(width: 1),
+                _isTyping
+                    ? IconButton(
+                        icon: Icon(Icons.arrow_circle_up),
+                        color: myColor,
+                        iconSize: 40,
+                        onPressed: _sendMessage,
+                      )
+                    : SizedBox.shrink(), // Hide the button when no text
               ],
             ),
           ),
