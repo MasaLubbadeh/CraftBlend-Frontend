@@ -52,7 +52,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
         elevation: 0,
         toolbarHeight: appBarHeight,
         title: const Text(
-          'Add Pastry Product',
+          'Categories',
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.bold,
