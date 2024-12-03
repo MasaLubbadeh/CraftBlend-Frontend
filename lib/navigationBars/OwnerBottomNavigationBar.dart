@@ -3,6 +3,7 @@ import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:flutter/material.dart';
 import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
+import '../pages/chatting/allChats.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
   @override
@@ -18,6 +19,7 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
     PastryOwnerPage(), // Manage Store
     SpecialOrdersPage(),
     ProfileScreen(), // Special Orders
+    AllChats(),
     //add more
   ];
 
@@ -44,6 +46,10 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chat',
           ),
         ],
         //add here too

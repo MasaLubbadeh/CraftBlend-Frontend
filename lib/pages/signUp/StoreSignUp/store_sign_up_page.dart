@@ -235,7 +235,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
         elevation: 12,
-        elevation: 12,
+        //elevation: 12,
         shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
@@ -296,19 +296,29 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       return;
     }
 
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password must be at least 6 characters long"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Save the entered data to the shared variable
     StoreSignUpData signUpData = StoreSignUpData(
-      storeName: storeNameController.text,
-      contactEmail: emailController.text,
+      storeName: storeNameController.text.trim(),
+      contactEmail: emailController.text.trim(),
       phoneNumber: phoneController.text,
-      password: passwordController.text,
+      password: passwordController.text.trim(),
       country: selectedCountry,
       city: cityController.text,
       allowSpecialOrders: allowSpecialOrders,
       accountType: widget.SignUpData.accountType,
-      selectedGenreId: widget.SignUpData.selectedGenreId, // Changed here
+      selectedGenreId: widget.SignUpData.selectedGenreId,
     );
-    print(signUpData.toString());
+
     // Register user
     await registerUser(signUpData);
   }

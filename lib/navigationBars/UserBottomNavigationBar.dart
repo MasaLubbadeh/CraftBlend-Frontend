@@ -1,7 +1,7 @@
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
-
+import '../pages/chatting/allChats.dart';
 import '../pages/categoriesPage.dart';
 
 class UserBottomNavigationBar extends StatefulWidget {
@@ -18,6 +18,7 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
     // OrdersPage(), // Orders
     CategoriesPage(),
     ProfileScreen(), // Profile
+    AllChats(),
 
     // FeedPage(), // Feed
   ];
@@ -55,6 +56,10 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.rss_feed),
             label: 'Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chat',
           ),
         ],
         currentIndex: _currentIndex,

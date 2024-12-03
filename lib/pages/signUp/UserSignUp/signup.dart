@@ -18,7 +18,6 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  // late Color myColor;
   late Size mediaSize;
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -29,9 +28,77 @@ class _SignUpPageState extends State<SignUpPage> {
   bool showPassword = false;
   bool _isNotValid = false;
 
+  // Form Key to validate fields
+  final _formKey = GlobalKey<FormState>();
+
+  Future<bool> _isEmailAvailable(String email) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${checkEmail}?email=$email'), // Update with your endpoint
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return jsonResponse['status'];
+      } else if (response.statusCode == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                "Email already in use: ${jsonDecode(response.body)['message']}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text("Error checking email availability: ${response.body}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error occurred: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+  }
+
+  // Function to handle the sign-up button press
+  void _handleSignUp() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      bool emailAvailable =
+          await _isEmailAvailable(emailController.text.trim());
+      if (emailAvailable) {
+        // Proceed to Genre Selection if email is available
+        SignUpData signUpData = SignUpData(
+          firstName: firstNameController.text,
+          lastName: lastNameController.text,
+          email: emailController.text.trim(),
+          phoneNumber: phoneController.text,
+          password: passwordController.text.trim(),
+          accountType: widget.signUpData.accountType,
+        );
+
+        // Navigate to Genre Selection Page
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => GenreSelectionApp(signUpData: signUpData),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // myColor = const Color(0xff456268);
     mediaSize = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
@@ -58,10 +125,11 @@ class _SignUpPageState extends State<SignUpPage> {
       height: mediaSize.height * .93,
       child: Card(
         shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        )),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: _buildForm(),
@@ -72,38 +140,114 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Create Account",
-            style: TextStyle(
-                color: myColor, fontSize: 28, fontWeight: FontWeight.w500),
+      child: Form(
+        key: _formKey, // Form key to manage form validation
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Create Account",
+              style: TextStyle(
+                  color: myColor, fontSize: 28, fontWeight: FontWeight.w500),
+            ),
+            _buildGreyText("Please sign up with your information"),
+            const SizedBox(height: 20),
+            _buildGreyText("First Name"),
+            _buildInputField(firstNameController, validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your first name';
+              }
+              return null;
+            }),
+            const SizedBox(height: 12),
+            _buildGreyText("Last Name"),
+            _buildInputField(lastNameController, validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your last name';
+              }
+              return null;
+            }),
+            const SizedBox(height: 12),
+            _buildGreyText("Email"),
+            _buildInputField(emailController, isEmail: true,
+                validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                return 'Please enter a valid email address';
+              }
+              return null;
+            }),
+            const SizedBox(height: 12),
+            _buildGreyText("Phone Number"),
+            _buildNumberInputField(phoneController, validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your phone number';
+              }
+              return null;
+            }),
+            const SizedBox(height: 12),
+            _buildGreyText("Password"),
+            _buildInputField(passwordController, isPassword: true,
+                validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a password';
+              } else if (value.length < 6) {
+                return 'Password must be at least 6 characters long';
+              }
+              return null;
+            }),
+            const SizedBox(height: 12),
+            _buildGreyText("Confirm Password"),
+            _buildInputField(confirmPasswordController, isPassword: true,
+                validator: (value) {
+              if (value == null || value != passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            }),
+            const SizedBox(height: 18),
+            _buildSignUpButton(),
+            const SizedBox(height: 5),
+            _buildGoToLogin(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumberInputField(TextEditingController controller,
+      {String? Function(String?)? validator}) {
+    return SizedBox(
+      height: 40,
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: myColor),
           ),
-          _buildGreyText("Please sign up with your information"),
-          const SizedBox(height: 20),
-          _buildGreyText("First Name"),
-          _buildInputField(firstNameController),
-          const SizedBox(height: 12),
-          _buildGreyText("Last Name"),
-          _buildInputField(lastNameController),
-          const SizedBox(height: 12),
-          _buildGreyText("Email"),
-          _buildInputField(emailController),
-          const SizedBox(height: 12),
-          _buildGreyText("Phone Number"),
-          _buildNumberInputField(phoneController),
-          const SizedBox(height: 12),
-          _buildGreyText("Password"),
-          _buildInputField(passwordController, isPassword: true),
-          const SizedBox(height: 12),
-          _buildGreyText("Confirm Password"),
-          _buildInputField(confirmPasswordController, isPassword: true),
-          const SizedBox(height: 18),
-          _buildSignUpButton(),
-          const SizedBox(height: 5),
-          _buildGoToLogin(),
-        ],
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: myColor),
+          ),
+        ),
+        validator: validator,
+        keyboardType: TextInputType.phone,
+      ),
+    );
+  }
+
+  Widget _buildSignUpButton() {
+    return ElevatedButton(
+      onPressed: _handleSignUp,
+      style: ElevatedButton.styleFrom(
+        shape: const StadiumBorder(),
+        elevation: 20,
+        shadowColor: myColor,
+        minimumSize: const Size.fromHeight(50),
+      ),
+      child: const Text(
+        "Next",
+        style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
       ),
     );
   }
@@ -115,52 +259,20 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildNumberInputField(TextEditingController controller,
-      {bool isPassword = false}) {
-    return SizedBox(
-      height: 40,
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    showPassword ? Icons.visibility_off : Icons.visibility,
-                    color: myColor,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      showPassword = !showPassword;
-                    });
-                  },
-                )
-              : null,
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: myColor),
-          ),
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: myColor),
-          ),
-        ),
-        obscureText: isPassword ? !showPassword : false,
-        keyboardType: isPassword ? TextInputType.text : TextInputType.phone,
-      ),
-    );
-  }
-
   Widget _buildInputField(TextEditingController controller,
-      {bool isPassword = false}) {
+      {bool isPassword = false,
+      bool isEmail = false,
+      String? Function(String?)? validator}) {
     return SizedBox(
       height: 40,
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    showPassword ? Icons.visibility_off : Icons.visibility,
-                    color: myColor,
-                  ),
+                      showPassword ? Icons.visibility_off : Icons.visibility,
+                      color: myColor),
                   onPressed: () {
                     setState(() {
                       showPassword = !showPassword;
@@ -176,56 +288,8 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
         obscureText: isPassword ? !showPassword : false,
-      ),
-    );
-  }
-
-  Widget _buildSignUpButton() {
-    return ElevatedButton(
-      onPressed: () {
-        //registerUser();
-
-        String password = passwordController.text;
-        String confirmPassword = confirmPasswordController.text;
-
-        if (password == confirmPassword) {
-          // Save user data
-          SignUpData signUpData = SignUpData(
-              firstName: firstNameController.text,
-              lastName: lastNameController.text,
-              email: emailController.text,
-              phoneNumber: phoneController.text,
-              password: passwordController.text, // Include the password
-              accountType: widget.signUpData.accountType);
-
-          // Navigate to GenreSelectionPage and pass the data
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => GenreSelectionApp(
-                signUpData: signUpData,
-              ),
-            ),
-          );
-          print(signUpData.toString());
-          // signUpData.accountType = "U";
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Passwords do not match!"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        shape: const StadiumBorder(),
-        elevation: 20,
-        shadowColor: myColor,
-        minimumSize: const Size.fromHeight(50),
-      ),
-      child: const Text(
-        "Next",
-        style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
+        validator: validator,
+        keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
       ),
     );
   }
