@@ -235,6 +235,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
         elevation: 12,
+        elevation: 12,
         shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
@@ -254,6 +255,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
           const SizedBox(width: 5),
           ElevatedButton(
             onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ),
+              );
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const LoginPage(),

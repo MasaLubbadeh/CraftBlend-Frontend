@@ -6,6 +6,7 @@ import '../../configuration/config.dart';
 import 'profile.dart';
 import 'forgotPassword.dart';
 import '../../pages/signUp/account_type_selection_page.dart';
+import '../../pages/signUp/account_type_selection_page.dart';
 import '../Product/Pastry/pastryUser_page.dart';
 import '../Product/Pastry/pastryOwner_page.dart';
 import '../Admin/adminDashboard.dart';
@@ -51,6 +52,7 @@ class _LoginPageState extends State<LoginPage> {
   void validateToken(String token) async {
     try {
       var response = await http.post(
+        Uri.parse(validateTokenEndpoint),
         Uri.parse(validateTokenEndpoint),
         headers: {"Authorization": "Bearer $token"},
       );
@@ -173,10 +175,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     mediaSize = MediaQuery.of(context).size;
+    mediaSize = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
         color: myColor,
         image: DecorationImage(
+          image: const AssetImage("assets/images/craftsBackground.jpg"),
           image: const AssetImage("assets/images/craftsBackground.jpg"),
           fit: BoxFit.cover,
           colorFilter:
@@ -185,6 +189,24 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: mediaSize.height,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  SizedBox(height: mediaSize.height * 0.1),
+                  _buildTop(),
+                  const SizedBox(height: 30),
+                  Expanded(child: _buildBottom()),
+                ],
+              ),
+            ),
+          ),
+        ),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: ConstrainedBox(
@@ -243,6 +265,16 @@ class _LoginPageState extends State<LoginPage> {
       child: Padding(
         padding: EdgeInsets.all(mediaSize.width * 0.07),
         child: _buildForm(),
+    return Card(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(mediaSize.width * 0.07),
+        child: _buildForm(),
       ),
     );
   }
@@ -256,6 +288,7 @@ class _LoginPageState extends State<LoginPage> {
           style: TextStyle(
             color: myColor,
             fontSize: mediaSize.width * 0.08,
+            fontSize: mediaSize.width * 0.08,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -267,7 +300,9 @@ class _LoginPageState extends State<LoginPage> {
         _buildGreyText("Password"),
         _buildInputField(passwordController, isPassword: true),
         const SizedBox(height: 18),
+        const SizedBox(height: 18),
         _buildRememberForgot(),
+        const SizedBox(height: 13),
         const SizedBox(height: 13),
         _buildLoginButton(),
         if (errorMessage.isNotEmpty)
@@ -351,6 +386,7 @@ class _LoginPageState extends State<LoginPage> {
             );
           },
           child: _buildGreyText("forgot my password"),
+          child: _buildGreyText("forgot my password"),
         ),
       ],
     );
@@ -358,6 +394,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildLoginButton() {
     return ElevatedButton(
+      onPressed: loginUser,
       onPressed: loginUser,
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
@@ -381,6 +418,11 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(width: 0),
           ElevatedButton(
             onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AccountTypeSelectionPage(),
+                ),
+              );
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const AccountTypeSelectionPage(),

@@ -55,7 +55,8 @@ class _DetailPageState extends State<DetailPage> {
             child: Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('images/pastriesBackgroundBorder.jpg'),
+                  image:
+                      AssetImage('assets/images/pastriesBackgroundBorder.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -138,7 +139,7 @@ class _DetailPageState extends State<DetailPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
-          'images/donut.jpg',
+          'assets/images/donut.jpg',
           width: screenWidth * 0.8,
           height: screenWidth * 0.8,
           fit: BoxFit.cover,
