@@ -80,12 +80,26 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Your Store Genre'),
-        centerTitle: true,
         backgroundColor: myColor,
-        elevation: 5,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'Select your store genre',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [

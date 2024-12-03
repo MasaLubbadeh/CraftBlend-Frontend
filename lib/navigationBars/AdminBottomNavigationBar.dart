@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../pages/Admin/adminDashboard.dart';
 import '../pages/Admin/adminManageStores.dart';
+import '../pages/chatting/allChats.dart';
 //import '../pages/Admin/manageUsers.dart';
 //import '../pages/Admin/manageStores.dart';
 
@@ -18,6 +19,7 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
     AdminDashboardPage(), // Admin Dashboard
     //ManageUsersPage(), // Manage Users
     AdminManageStoresPage(), // Manage Stores
+    AllChats(),
   ];
 
   void _onItemTapped(int index) {
@@ -43,6 +45,10 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.store),
             label: 'Manage Stores',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chat',
           ),
         ],
         currentIndex: _currentIndex,

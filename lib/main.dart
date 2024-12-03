@@ -11,6 +11,8 @@ import 'pages/specialOrders/specialOrder_page.dart';
 import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
