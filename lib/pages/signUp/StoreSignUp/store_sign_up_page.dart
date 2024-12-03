@@ -1,8 +1,11 @@
+import 'package:craft_blend_project/main.dart';
 import 'package:flutter/material.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import '../../../pages/User/login_page.dart';
+import '../../../pages/Product/Pastry/pastryOwner_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
@@ -232,6 +235,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
         elevation: 12,
+        elevation: 12,
         shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
@@ -251,6 +255,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
           const SizedBox(width: 5),
           ElevatedButton(
             onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ),
+              );
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const LoginPage(),
@@ -297,7 +306,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       city: cityController.text,
       allowSpecialOrders: allowSpecialOrders,
       accountType: widget.SignUpData.accountType,
-      selectedGenre: widget.SignUpData.selectedGenre,
+      selectedGenreId: widget.SignUpData.selectedGenreId, // Changed here
     );
     print(signUpData.toString());
     // Register user
@@ -311,58 +320,45 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         signUpData.password != null &&
         signUpData.country != null &&
         signUpData.city != null) {
-      // Prepare request body using StoreSignUpData model as JSON
-      var url = Uri.parse(storeRegistration);
+      try {
+        // Prepare request body using StoreSignUpData model as JSON
+        var url = Uri.parse(storeRegistration);
 
-      // Send data as JSON
-      var response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json', // Set content-type to JSON
-        },
-        body: jsonEncode({
-          'storeName': signUpData.storeName,
-          'contactEmail': signUpData.contactEmail,
-          'phoneNumber': signUpData.phoneNumber,
-          'password': signUpData.password,
-          'country': signUpData.country,
-          'city': signUpData.city,
-          'allowSpecialOrders':
-              signUpData.allowSpecialOrders ?? false ? "true" : "false",
-          'accountType': signUpData.accountType,
-          'selectedGenre': signUpData.selectedGenre,
-        }),
-      );
-
-      print("Request Body:");
-      print(jsonEncode({
-        'storeName': signUpData.storeName,
-        'contactEmail': signUpData.contactEmail,
-        'phoneNumber': signUpData.phoneNumber,
-        'password': signUpData.password,
-        'country': signUpData.country,
-        'city': signUpData.city,
-        'allowSpecialOrders':
-            signUpData.allowSpecialOrders ?? false ? "true" : "false",
-        'accountType': signUpData.accountType,
-        'selectedGenre': signUpData.selectedGenre,
-      }));
-
-      print("Response Body:");
-      print(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print(response.statusCode);
-        // Registration successful, handle response
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful!')),
+        // Send data as JSON
+        var response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json', // Set content-type to JSON
+          },
+          body: jsonEncode(signUpData.toJson()),
         );
-      } else {
-        print(response.statusCode);
-        // Handle error
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final jsonResponse = jsonDecode(response.body);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful!')),
+          );
+
+          // Save token and user type to SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('token', jsonResponse['token']);
+          prefs.setString('userType', jsonResponse['userType']);
+
+          // Navigate to MainScreen after successful registration
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          final errorMessage = jsonDecode(response.body)['message'] ??
+              'Registration failed. Please try again.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $errorMessage')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Registration failed. Please try again.')),
+          SnackBar(content: Text('An error occurred: $e')),
         );
       }
     }

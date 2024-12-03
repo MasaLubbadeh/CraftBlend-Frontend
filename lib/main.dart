@@ -1,3 +1,6 @@
+import 'package:craft_blend_project/services/authentication/auth_gate.dart';
+
+import '../pages/chatting/allChats.dart';
 import 'package:flutter/material.dart';
 import 'pages/User/login_page.dart'; // Adjust the path to your LoginPage
 import 'pages/User/profile.dart';
@@ -11,16 +14,11 @@ import 'pages/Product/Pastry/pastryOwner_page.dart';
 import 'pages/specialOrders/specialOrder_page.dart';
 import 'pages/welcome.dart';
 
-void main() {
+Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  _initializeFirebase();
-  runApp(const MyApp());
-}
+  await Firebase.initializeApp();
 
-_initializeFirebase() async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -1,23 +1,35 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.17:3000/';
+const String url = 'http://172.23.203.218:3000/';
 bool isLoggedIn = false;
-final String login = '${url}login';
-final String registration = '${url}registration';
-final String storeRegistration = '${url}store/registration';
+const String login = '${url}login';
+const String registration = '${url}registration';
+const String validateTokenEndpoint = '${url}validateToken';
+const String resetPassword = '${url}resetPassword';
+const String forgotPassword = '${url}forgotPassword';
+const String getPersonalInfo = '${url}getPersonalInfo';
+const String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
+const String addCreditCard = '${url}addCreditCard';
+const String getCreditCardData = '${url}getCreditCardData';
 
-final String validateTokenEndpoint = '${url}validateToken';
-final String resetPassword = '${url}resetPassword';
-final String forgotPassword = '${url}forgotPassword';
-final String getPersonalInfo = '${url}getPersonalInfo';
-final String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
-final String addCreditCard = '${url}addCreditCard';
-final String getCreditCardData = '${url}getCreditCardData';
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
+
+const String addNewCategory = '${url}category/add';
+const String deleteCategory = '${url}category/delete';
+const String getAllCategories = '${url}category/all';
+const String getAllStoresAndCategories =
+    '${url}category/categories-and-stores'; //getStoresByCategory
+const String getStoresByCategory = '${url}category';
+
+const String storeRegistration = '${url}store/registration';
+const String getStoreProducts =
+    '${url}store/getAllProducts'; //categories-and-stores ////getProductsByStoreId
+const String getStoreProductsForUser = '${url}store/getProductsByStoreId';
+const String getStoreDetails = '${url}store/details';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
