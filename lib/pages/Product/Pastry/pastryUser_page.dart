@@ -137,9 +137,13 @@ class _PastryPageState extends State<PastryPage> {
                                     width: 80,
                                     height: 80,
                                     decoration: BoxDecoration(
-                                      image: const DecorationImage(
-                                        image: AssetImage(
-                                            'assets/images/pastry.jpg'), // Static image for now
+                                      image: DecorationImage(
+                                        image: pastry['image'] != null &&
+                                                pastry['image'].isNotEmpty
+                                            ? NetworkImage(pastry['image'])
+                                                as ImageProvider
+                                            : const AssetImage(
+                                                'assets/images/pastry.jpg'),
                                         fit: BoxFit.cover,
                                       ),
                                       borderRadius: BorderRadius.circular(8),

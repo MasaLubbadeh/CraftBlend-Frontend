@@ -34,12 +34,18 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> genreList = jsonDecode(response.body)['categories'];
+        print("genreList");
+
+        for (var genre in genreList) {
+          print(genre);
+        }
         setState(() {
           genres = genreList
               .map((genre) => {
                     'id': genre['_id'], // Assuming the category ID is `_id`
                     'title': genre['name'],
-                    'image': 'assets/images/${genre['name'].toLowerCase()}.jpg',
+                    'image':
+                        genre['image'] ?? '', // Use the photo URL from backend
                   })
               .toList();
         });
@@ -179,14 +185,16 @@ class GenreCard extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            image: DecorationImage(
-              image: AssetImage(imagePath),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
-                BlendMode.darken,
-              ),
-            ),
+            image: imagePath.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(imagePath),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
+                      BlendMode.darken,
+                    ),
+                  )
+                : null, // No image decoration if imagePath is empty
             border:
                 isSelected ? Border.all(color: Colors.white, width: 3) : null,
           ),
@@ -197,10 +205,7 @@ class GenreCard extends StatelessWidget {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: isSelected
-                      ? Colors.black
-                      : const Color.fromARGB(
-                          255, 161, 134, 134), // Highlight color for selected
+                  color: isSelected ? Colors.grey : Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),

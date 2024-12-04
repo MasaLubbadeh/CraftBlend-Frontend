@@ -43,6 +43,7 @@ class _DetailPageState extends State<DetailPage> {
         backgroundColor: myColor,
         elevation: 5,
         toolbarHeight: appBarHeight,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -138,12 +139,20 @@ class _DetailPageState extends State<DetailPage> {
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/images/donut.jpg',
-          width: screenWidth * 0.8,
-          height: screenWidth * 0.8,
-          fit: BoxFit.cover,
-        ),
+        child: widget.product['image'] != null &&
+                widget.product['image'].isNotEmpty
+            ? Image.network(
+                widget.product['image'],
+                width: screenWidth * 0.8,
+                height: screenWidth * 0.8,
+                fit: BoxFit.cover,
+              )
+            : Image.asset(
+                'assets/images/donut.jpg',
+                width: screenWidth * 0.8,
+                height: screenWidth * 0.8,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }

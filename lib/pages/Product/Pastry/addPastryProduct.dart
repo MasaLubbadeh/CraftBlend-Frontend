@@ -1,7 +1,13 @@
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
+
 import '../../../configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 
 class AddPastryProduct extends StatefulWidget {
@@ -23,6 +29,10 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   String? selectedDay = "0";
   String? selectedHour = "0";
   String? selectedMinute = "0";
+
+  File? _selectedImage;
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
 
   // Predefined Options
   final Map<String, List<Map<String, dynamic>>> predefinedOptions = {
@@ -52,9 +62,69 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     'Flavor': [],
   };
 
+  Future<void> _pickImage() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImageToFirebase(File image, String productName) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+      }
+
+      String uniqueFileName =
+          'products_images/${productName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch.toString()}';
+
+      UploadTask uploadTask =
+          FirebaseStorage.instance.ref().child(uniqueFileName).putFile(image);
+
+      TaskSnapshot snapshot = await uploadTask;
+      if (snapshot.state == TaskState.success) {
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        return downloadUrl;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    }
+    return null;
+  }
+
   // Add Product Method
   Future<void> _addProduct() async {
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload an image for the product')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+    });
+
     try {
+      // Upload image to Firebase
+      String? imageUrl =
+          await _uploadImageToFirebase(_selectedImage!, titleController.text);
+      if (imageUrl == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload product image')),
+        );
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
       // Retrieve token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -65,6 +135,9 @@ class _AddPastryProductState extends State<AddPastryProduct> {
               content:
                   Text('Authentication token not found. Please log in again.')),
         );
+        setState(() {
+          _isUploading = false;
+        });
         return;
       }
 
@@ -72,7 +145,6 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         'name': titleController.text,
         'description': descriptionController.text,
         'price': double.tryParse(priceController.text) ?? 0,
-        //'category': 'Pastry',
         'stock': selectedAvailability == 'In Stock'
             ? int.tryParse(stockController.text) ?? 0
             : 0,
@@ -86,17 +158,14 @@ class _AddPastryProductState extends State<AddPastryProduct> {
           return MapEntry(optionGroup, options);
         }),
         'availableOptionStatus': availableOptionStatus,
+        'image': imageUrl,
       };
-
-      print("productData SENT:");
-      print(jsonEncode(productData));
 
       final response = await http.post(
         Uri.parse(addNewPastryProduct),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer $token' // Include the token for authentication
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(productData),
       );
@@ -115,6 +184,10 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
     }
   }
 
@@ -264,48 +337,75 @@ class _AddPastryProductState extends State<AddPastryProduct> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Stack(
-        children: [
-          Opacity(
-            opacity: 0.2,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/pastry.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+      body: _isUploading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
               children: [
-                _buildInputField(titleController, 'Title'),
-                const SizedBox(height: 16),
-                _buildInputField(priceController, 'Price'),
-                const SizedBox(height: 16),
-                _buildInputField(descriptionController, 'Description'),
-                const SizedBox(height: 16),
-                _buildAvailabilityDropdown(),
-                const SizedBox(height: 16),
-                if (selectedAvailability == 'In Stock')
-                  _buildInputField(stockController, 'Stock Quantity'),
-                if (selectedAvailability == 'Time Required')
-                  _buildTimeRequiredDropdown(),
-                const SizedBox(height: 16),
-                ...predefinedOptions.keys.map((optionGroup) {
-                  return _buildOptionCard(optionGroup);
-                }),
-                const SizedBox(height: 24),
-                _buildAddNewCategoryButton(),
-                const SizedBox(height: 24),
-                _buildSubmitButton(),
+                Opacity(
+                  opacity: 0.2,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/pastry.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          await _pickImage();
+                        },
+                        child: Container(
+                          height: 150,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white70,
+                            border: Border.all(color: myColor),
+                          ),
+                          child: _selectedImage != null
+                              ? Image.file(
+                                  _selectedImage!,
+                                  fit: BoxFit.cover,
+                                )
+                              : const Center(
+                                  child: Text(
+                                    'Tap to select product image',
+                                    style: TextStyle(color: myColor),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInputField(titleController, 'Title'),
+                      const SizedBox(height: 16),
+                      _buildInputField(priceController, 'Price'),
+                      const SizedBox(height: 16),
+                      _buildInputField(descriptionController, 'Description'),
+                      const SizedBox(height: 16),
+                      _buildAvailabilityDropdown(),
+                      const SizedBox(height: 16),
+                      if (selectedAvailability == 'In Stock')
+                        _buildInputField(stockController, 'Stock Quantity'),
+                      if (selectedAvailability == 'Time Required')
+                        _buildTimeRequiredDropdown(),
+                      const SizedBox(height: 16),
+                      ...predefinedOptions.keys.map((optionGroup) {
+                        return _buildOptionCard(optionGroup);
+                      }),
+                      const SizedBox(height: 24),
+                      _buildAddNewCategoryButton(),
+                      const SizedBox(height: 24),
+                      _buildSubmitButton(),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 

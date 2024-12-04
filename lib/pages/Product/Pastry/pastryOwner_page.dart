@@ -18,6 +18,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   String businessName = 'Pastry Delights';
   List<Map<String, dynamic>> pastries = [];
   bool isLoading = true;
+  bool _isAddingProduct = false; // Loading indicator for adding product
 
   @override
   void initState() {
@@ -33,8 +34,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse(
-              getStoreDetails), // Your backend endpoint for fetching store details
+          Uri.parse(getStoreDetails),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -58,12 +58,9 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
-      print('STORE token :');
-      print(token);
 
       final response = await http.get(
-        Uri.parse(
-            getStoreProducts), // Make sure the backend is setup to handle this endpoint
+        Uri.parse(getStoreProducts),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -206,19 +203,50 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: ListTile(
                           leading: const Icon(Icons.add, color: myColor),
-                          title: const Text(
-                            'Add New Product',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddPastryProduct(),
-                              ),
-                            );
-                            fetchPastries(); // Refresh after adding a product
-                          },
+                          title: _isAddingProduct
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                myColor),
+                                      ),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Adding Product...',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                )
+                              : const Text(
+                                  'Add New Product',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                          onTap: _isAddingProduct
+                              ? null
+                              : () async {
+                                  setState(() {
+                                    _isAddingProduct = true;
+                                  });
+
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddPastryProduct(),
+                                    ),
+                                  );
+                                  await fetchPastries(); // Refresh after adding a product
+
+                                  setState(() {
+                                    _isAddingProduct = false;
+                                  });
+                                },
                         ),
                       );
                     }
@@ -264,9 +292,13 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                     width: 80,
                                     height: 80,
                                     decoration: BoxDecoration(
-                                      image: const DecorationImage(
-                                        image: AssetImage(
-                                            'assets/images/pastry.jpg'),
+                                      image: DecorationImage(
+                                        image: pastry['image'] != null &&
+                                                pastry['image'].isNotEmpty
+                                            ? NetworkImage(pastry['image'])
+                                                as ImageProvider
+                                            : const AssetImage(
+                                                'assets/images/pastry.jpg'),
                                         fit: BoxFit.cover,
                                       ),
                                       borderRadius: BorderRadius.circular(8),

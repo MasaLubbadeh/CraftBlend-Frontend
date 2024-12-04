@@ -44,6 +44,8 @@ dependencies:
   #Firebase Database
   cloud_firestore: ^5.5.0 # Use the latest version
   firebase_auth: ^5.3.3
+  firebase_storage: ^12.3.6
+
 
 
 dev_dependencies:
