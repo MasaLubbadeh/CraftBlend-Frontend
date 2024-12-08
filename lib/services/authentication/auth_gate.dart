@@ -17,9 +17,12 @@ class AuthGate extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             //if user is logged in
+            print("logged in-auth gate");
             return AllChats();
           } else {
             //if the user is NOT logged in
+            print("failed-auth gate");
+
             return const LoginPage();
           }
         },

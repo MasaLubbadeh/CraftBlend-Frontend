@@ -53,22 +53,22 @@ class AllChats extends StatelessWidget {
   Widget _buildUserListItem(
       Map<String, dynamic> userData, BuildContext context) {
     //display all users except current user
-    //  if (userData["email"] != _authService.getCurrrentUser()!.email) {
-    return UserTile(
-        text: userData["email"],
-        onTap: () {
-          //tapped on user -> go to chat page
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatPage(
-                  recieverEmail: userData["email"],
-                  receiverID: userData["uid"],
-                ),
-              ));
-        });
-    /* } else {
+    if (userData["email"] != _authService.getCurrentUser()!.email) {
+      return UserTile(
+          text: userData["email"],
+          onTap: () {
+            //tapped on user -> go to chat page
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    recieverEmail: userData["email"],
+                    receiverID: userData["uid"],
+                  ),
+                ));
+          });
+    } else {
       return Container();
-    }*/
+    }
   }
 }

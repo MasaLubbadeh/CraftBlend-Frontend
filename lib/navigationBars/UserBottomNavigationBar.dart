@@ -54,10 +54,6 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
             label: 'Profile',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.rss_feed),
-            label: 'Feed',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
           ),

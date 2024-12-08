@@ -56,7 +56,7 @@ class _ChatPageState extends State<ChatPage> {
     String senderID = _authService.getCurrentUser()!.uid;
 
     return StreamBuilder(
-      stream: _chatService.getMessages(widget.receiverID, senderID),
+      stream: _chatService.getMessages(senderID, widget.receiverID),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(child: Text("Error loading messages."));
