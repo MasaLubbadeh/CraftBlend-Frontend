@@ -317,6 +317,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       allowSpecialOrders: allowSpecialOrders,
       accountType: widget.SignUpData.accountType,
       selectedGenreId: widget.SignUpData.selectedGenreId,
+      logo: widget.SignUpData.logo, // Include logo URL from Firebase
     );
 
     // Register user

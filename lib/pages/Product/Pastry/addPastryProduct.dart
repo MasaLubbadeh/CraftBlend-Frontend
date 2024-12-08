@@ -317,6 +317,8 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
@@ -361,24 +363,25 @@ class _AddPastryProductState extends State<AddPastryProduct> {
                           await _pickImage();
                         },
                         child: Container(
-                          height: 150,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white70,
-                            border: Border.all(color: myColor),
-                          ),
-                          child: _selectedImage != null
-                              ? Image.file(
-                                  _selectedImage!,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Center(
-                                  child: Text(
-                                    'Tap to select product image',
-                                    style: TextStyle(color: myColor),
-                                  ),
-                                ),
-                        ),
+                            height: 150,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              color: Colors.white70,
+                              border: Border.all(
+                                color: myColor,
+                              ),
+                            ),
+                            child: _selectedImage != null
+                                ? Image.file(
+                                    _selectedImage!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Icon(
+                                    Icons.camera_alt,
+                                    size: 50,
+                                    color: myColor,
+                                  )),
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(titleController, 'Title'),

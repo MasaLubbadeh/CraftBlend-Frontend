@@ -52,10 +52,11 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
             label: 'Chat',
           ),
         ],
-        //add here too
         currentIndex: _currentIndex,
-        selectedItemColor: myColor,
-        backgroundColor: Colors.white70,
+        selectedItemColor: myColor, // Color for selected icon
+        unselectedItemColor: Colors.black45, // Color for unselected icons
+        backgroundColor: Colors.white70, // Background of the navigation bar
+        type: BottomNavigationBarType.fixed, // Ensure all icons are displayed
         onTap: _onItemTapped,
       ),
     );

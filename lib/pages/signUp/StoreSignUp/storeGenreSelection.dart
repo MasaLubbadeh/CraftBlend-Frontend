@@ -4,6 +4,7 @@ import 'dart:convert'; // For jsonEncode and jsonDecode
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/store_sign_up_data.dart';
 import '../StoreSignUp/store_sign_up_page.dart';
+import '../StoreSignUp/store_signUp_addLogo.dart';
 
 class StoreGenreSelectionScreen extends StatefulWidget {
   final StoreSignUpData storeSignUpData;
@@ -67,10 +68,12 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
       // Update the StoreSignUpData with the selected genre ID
       widget.storeSignUpData.selectedGenreId = selectedGenreId;
 
+      // Navigate to the logo upload page
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) =>
-              StoreSignUpPage(SignUpData: widget.storeSignUpData),
+          builder: (context) => StoreSignUpLogoPage(
+            storeSignUpData: widget.storeSignUpData,
+          ),
         ),
       );
     } else {
