@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 import '../pages/chatting/allChats.dart';
 import '../pages/categoriesPage.dart';
+import '../pages/cart_order/cart_page.dart';
 
 class UserBottomNavigationBar extends StatefulWidget {
   @override
@@ -13,15 +14,19 @@ class UserBottomNavigationBar extends StatefulWidget {
 class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   int _currentIndex = 0;
 
-  final List<Widget> _userPages = [
-    // WelcomePage(), // Home
-    // OrdersPage(), // Orders
-    CategoriesPage(),
-    ProfileScreen(), // Profile
-    AllChats(),
+  // Updated _userPages to include the callback for CartPage
+  late final List<Widget> _userPages;
 
-    // FeedPage(), // Feed
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _userPages = [
+      CategoriesPage(), // Home
+      ProfileScreen(), // Profile
+      CartPage(onTabChange: _onItemTapped), // Cart with callback
+      AllChats(), // Chat
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -32,19 +37,9 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _userPages[_currentIndex],
+      body: _userPages[_currentIndex], // Display the current page
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          /*
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Orders',
-          ),
-          */
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
@@ -54,12 +49,17 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
             label: 'Profile',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
           ),
         ],
         currentIndex: _currentIndex,
         selectedItemColor: myColor,
+        unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white70,
         onTap: _onItemTapped,
       ),

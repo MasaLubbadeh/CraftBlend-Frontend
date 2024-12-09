@@ -13,6 +13,7 @@ import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'googleMapsPage.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: WelcomePage(), // Start with WelcomePage
+      home: WelcomePage(), //MapPage(), // // Start with WelcomePage
     );
   }
 }

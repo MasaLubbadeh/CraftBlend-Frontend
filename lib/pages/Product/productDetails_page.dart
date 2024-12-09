@@ -1,5 +1,9 @@
 import '../../configuration/config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -339,7 +343,7 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _buildAddToCartButton() {
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
         // Validate required options
         for (final key in _selectedOptions.keys) {
           bool isOptional =
@@ -351,13 +355,54 @@ class _DetailPageState extends State<DetailPage> {
             return;
           }
         }
-        print('Adding to cart:');
-        print('Product: ${widget.product['name']}');
-        print('Quantity: $_quantity');
-        print('Selected Options: $_selectedOptions');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${widget.product['name']} added to cart!')),
-        );
+
+        // Prepare data to send to the backend
+        final Map<String, dynamic> cartItem = {
+          'productId': widget.product['id'], // Assuming 'id' is the product ID
+          'quantity': _quantity,
+          'selectedOptions': _selectedOptions.map((key, value) => MapEntry(
+              key, value != null ? value['name'] : null)), // Map options
+        };
+
+        try {
+          // Fetch the token from SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          final String? token = prefs.getString('token');
+          if (token == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('You are not logged in.')),
+            );
+            return;
+          }
+
+          // Make the POST request to add to the cart
+          final response = await http.post(
+            Uri.parse(addNewCartItem),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(cartItem),
+          );
+
+          // Handle the response
+          if (response.statusCode == 200) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('${widget.product['name']} added to cart!')),
+            );
+          } else {
+            final error =
+                json.decode(response.body)['message'] ?? 'Unknown error';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to add to cart: $error')),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('An error occurred: $e')),
+          );
+        }
       },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
