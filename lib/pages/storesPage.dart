@@ -8,7 +8,8 @@ class StoresPage extends StatefulWidget {
   final String categoryId;
   final String categoryName;
 
-  const StoresPage({required this.categoryId, required this.categoryName});
+  const StoresPage(
+      {super.key, required this.categoryId, required this.categoryName});
 
   @override
   _StoresPageState createState() => _StoresPageState();

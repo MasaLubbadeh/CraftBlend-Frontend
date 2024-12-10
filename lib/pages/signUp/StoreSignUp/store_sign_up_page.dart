@@ -1,10 +1,8 @@
 import 'package:craft_blend_project/main.dart';
 import 'package:flutter/material.dart';
 import '../../../models/store_sign_up_data.dart';
-import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import '../../../pages/User/login_page.dart';
-import '../../../pages/Product/Pastry/pastryOwner_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:convert'; // For jsonEncode and jsonDecode

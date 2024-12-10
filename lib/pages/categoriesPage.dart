@@ -5,6 +5,8 @@ import '../configuration/config.dart';
 import 'Product/Pastry/pastryUser_page.dart';
 
 class CategoriesPage extends StatefulWidget {
+  const CategoriesPage({super.key});
+
   @override
   _CategoriesPageState createState() => _CategoriesPageState();
 }
@@ -264,8 +266,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                         fit: BoxFit.cover,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
-                                          if (loadingProgress == null)
+                                          if (loadingProgress == null) {
                                             return child;
+                                          }
                                           return Container(
                                             height: MediaQuery.of(context)
                                                     .size
@@ -307,9 +310,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    Text(
+                                    const Text(
                                       'review:',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Colors.grey,
                                         fontSize: 14,
                                       ),

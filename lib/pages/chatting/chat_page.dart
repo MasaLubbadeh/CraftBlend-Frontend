@@ -10,7 +10,8 @@ class ChatPage extends StatefulWidget {
   final String recieverEmail;
   final String receiverID;
 
-  ChatPage({super.key, required this.recieverEmail, required this.receiverID});
+  const ChatPage(
+      {super.key, required this.recieverEmail, required this.receiverID});
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -94,7 +95,7 @@ class _ChatPageState extends State<ChatPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios,
             color: Colors.black,
           ),
@@ -102,7 +103,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         title: Row(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               radius: 20,
               backgroundImage:
                   NetworkImage('https://your-profile-image-url.com'),
@@ -110,7 +111,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(width: 10),
             Text(
               widget.recieverEmail,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -120,7 +121,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.video_call,
               color: myColor,
             ),
@@ -129,7 +130,7 @@ class _ChatPageState extends State<ChatPage> {
             },
           ),
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.phone,
               color: myColor,
             ),
@@ -175,7 +176,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(35),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: myColor,
                           width: 1,
                         ),
@@ -186,12 +187,12 @@ class _ChatPageState extends State<ChatPage> {
                 const SizedBox(width: 1),
                 _isTyping
                     ? IconButton(
-                        icon: Icon(Icons.arrow_circle_up),
+                        icon: const Icon(Icons.arrow_circle_up),
                         color: myColor,
                         iconSize: 40,
                         onPressed: _sendMessage,
                       )
-                    : SizedBox.shrink(), // Hide the button when no text
+                    : const SizedBox.shrink(), // Hide the button when no text
               ],
             ),
           ),

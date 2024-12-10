@@ -6,6 +6,8 @@ import '../pages/categoriesPage.dart';
 import '../pages/cart_order/cart_page.dart';
 
 class UserBottomNavigationBar extends StatefulWidget {
+  const UserBottomNavigationBar({super.key});
+
   @override
   _UserBottomNavigationBarState createState() =>
       _UserBottomNavigationBarState();
@@ -22,7 +24,7 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
     super.initState();
     _userPages = [
       CategoriesPage(), // Home
-      ProfileScreen(), // Profile
+      const ProfileScreen(), // Profile
       CartPage(onTabChange: _onItemTapped), // Cart with callback
       AllChats(), // Chat
     ];

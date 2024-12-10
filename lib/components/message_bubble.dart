@@ -8,7 +8,8 @@ class MessageBubble extends StatelessWidget {
   final String senderID;
   final String currentUserID;
 
-  MessageBubble({
+  const MessageBubble({
+    super.key,
     required this.message,
     required this.isSent,
     required this.senderID,

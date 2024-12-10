@@ -108,8 +108,8 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == 201 ||
             jsonResponse['status'] == true) {
           print("Registration successful!");
-          final _auth = AuthService();
-          _auth.signUpWithEmainPassword(
+          final auth = AuthService();
+          auth.signUpWithEmainPassword(
             widget.signUpData.email!,
             widget.signUpData.password!,
           );
@@ -120,7 +120,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
 
           // Navigate to MainScreen after successful registration
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => MainScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -142,7 +142,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Please fill in all fields!"),
           backgroundColor: Colors.red,
         ),

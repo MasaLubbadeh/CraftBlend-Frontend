@@ -131,7 +131,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
 
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content:
                   Text('Authentication token not found. Please log in again.')),
         );
@@ -148,11 +148,12 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         'stock': selectedAvailability == 'In Stock'
             ? int.tryParse(stockController.text) ?? 0
             : 0,
-        'timeRequired': selectedAvailability == 'Time Required'
+        'timeRequired': selectedAvailability == 'Upon Order'
             ? (int.parse(selectedDay!) * 1440 +
                 int.parse(selectedHour!) * 60 +
                 int.parse(selectedMinute!))
             : null,
+        'isUponOrder': selectedAvailability == 'Upon Order',
         'inStock': selectedAvailability == 'In Stock',
         'availableOptions': selectedOptions.map((optionGroup, options) {
           return MapEntry(optionGroup, options);
@@ -394,7 +395,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
                       const SizedBox(height: 16),
                       if (selectedAvailability == 'In Stock')
                         _buildInputField(stockController, 'Stock Quantity'),
-                      if (selectedAvailability == 'Time Required')
+                      if (selectedAvailability == 'Upon Order')
                         _buildTimeRequiredDropdown(),
                       const SizedBox(height: 16),
                       ...predefinedOptions.keys.map((optionGroup) {
@@ -433,7 +434,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       items: const [
         DropdownMenuItem(value: 'In Stock', child: Text('In Stock')),
         DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
-        DropdownMenuItem(value: 'Time Required', child: Text('Time Required')),
+        DropdownMenuItem(value: 'Upon Order', child: Text('Upon Order')),
       ],
       onChanged: (value) {
         setState(() {

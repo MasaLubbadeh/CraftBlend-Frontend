@@ -1,3 +1,5 @@
+import 'package:craft_blend_project/components/badge.dart';
+
 import '../../configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
@@ -88,9 +90,11 @@ class _DetailPageState extends State<DetailPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
+
                   _buildProductSpecialNote(),
                   const SizedBox(height: 16),
                   _buildProductDescription(),
+                  //const Spacer(),
                   const SizedBox(height: 20),
                   Card(
                     color: myColor,
@@ -173,14 +177,36 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildProductSpecialNote() {
-    return Text(
-      widget.product['specialNote'] ?? 'New Product',
-      style: const TextStyle(
-        fontSize: 18,
-        color: myColor,
-        fontStyle: FontStyle.italic,
-      ),
-    );
+    if (widget.product['isUponOrder'] == true) {
+      // Upon Order badge with special note
+      return Row(
+        children: [
+          const badge(
+            text: 'Upon Order',
+            color: Colors.orangeAccent,
+          ),
+          const SizedBox(width: 8), // Add spacing between badges
+          badge(
+            text: widget.product['specialNote'] ?? 'Special Product',
+            color: const Color.fromARGB(
+                172, 219, 174, 227), // Adjust color as needed
+          ),
+        ],
+      );
+    } else if (widget.product['inStock'] == false) {
+      // Out of Stock badge
+      return const badge(
+        text: 'Out of Stock',
+        color: Colors.redAccent,
+      );
+    } else {
+      // Special note badge or text
+      return badge(
+        text: widget.product['specialNote'] ?? 'New Product',
+        color:
+            const Color.fromARGB(191, 123, 211, 168), // Adjust color as needed
+      );
+    }
   }
 
   Widget _buildProductPrice(double screenWidth) {
@@ -195,11 +221,13 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildProductDescription() {
-    return Text(
-      widget.product['description'] ?? 'No description available.',
-      style: const TextStyle(
-        fontSize: 16,
-        color: Colors.black54,
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        widget.product['description'] ?? 'No description available.',
+        style: const TextStyle(
+            fontSize: 16, color: Colors.black54, letterSpacing: 1.5),
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -332,7 +360,7 @@ class _DetailPageState extends State<DetailPage> {
                       style: const TextStyle(color: Colors.black87),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             )
           ],
@@ -358,10 +386,11 @@ class _DetailPageState extends State<DetailPage> {
 
         // Prepare data to send to the backend
         final Map<String, dynamic> cartItem = {
-          'productId': widget.product['id'], // Assuming 'id' is the product ID
+          'productId': widget.product['_id'],
+          'storeId': widget.product['store'],
           'quantity': _quantity,
-          'selectedOptions': _selectedOptions.map((key, value) => MapEntry(
-              key, value != null ? value['name'] : null)), // Map options
+          'selectedOptions': _selectedOptions.map((key, value) =>
+              MapEntry(key, value != null ? value['name'] : null)),
         };
 
         try {
@@ -389,9 +418,14 @@ class _DetailPageState extends State<DetailPage> {
           if (response.statusCode == 200) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('${widget.product['name']} added to cart!')),
+                content: Text('${widget.product['name']} added to cart!'),
+              ),
             );
+            // Pop to the previous page
+            Navigator.pop(context);
           } else {
+            print(cartItem);
+
             final error =
                 json.decode(response.body)['message'] ?? 'Unknown error';
             ScaffoldMessenger.of(context).showSnackBar(

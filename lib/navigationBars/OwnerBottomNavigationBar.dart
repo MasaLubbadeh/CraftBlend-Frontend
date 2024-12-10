@@ -6,6 +6,8 @@ import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
+  const OwnerBottomNavigationBar({super.key});
+
   @override
   _OwnerBottomNavigationBarState createState() =>
       _OwnerBottomNavigationBarState();
@@ -16,9 +18,9 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
 
   // List of pages corresponding to the bottom navigation items
   final List<Widget> _ownerPages = [
-    PastryOwnerPage(), // Manage Store
-    SpecialOrdersPage(),
-    ProfileScreen(), // Special Orders
+    const PastryOwnerPage(), // Manage Store
+    const SpecialOrdersPage(),
+    const ProfileScreen(), // Special Orders
     AllChats(),
     //add more
   ];

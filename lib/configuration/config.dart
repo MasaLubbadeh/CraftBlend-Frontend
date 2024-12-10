@@ -32,7 +32,7 @@ const String getStoreProducts =
 const String getStoreProductsForUser = '${url}store/getProductsByStoreId';
 const String getStoreDetails = '${url}store/details';
 
-const String addNewCartItem = '${url}cart/removeCartItem';
+const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
 const String removeCartItem = '${url}cart/removeCartItem';

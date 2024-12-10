@@ -48,8 +48,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 'id': category['_id'],
                 'name': category['name'],
                 'description': category['description'],
-                'image': category['image'] ??
-                    null, // Add your image handling logic if needed
+                'image': category[
+                    'image'], // Add your image handling logic if needed
               }));
         });
       } else {
@@ -169,7 +169,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     try {
       final categoryId = categories[index]['id'];
       final response = await http.delete(
-        Uri.parse('${deleteCategory}/$categoryId'),
+        Uri.parse('$deleteCategory/$categoryId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -444,7 +444,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

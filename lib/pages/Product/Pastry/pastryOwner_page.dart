@@ -21,7 +21,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   bool isLoading = true;
   bool _isAddingProduct = false;
   bool _isSearching = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -116,7 +116,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content:
                   Text('Authentication token not found. Please log in again.')),
         );
@@ -124,7 +124,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       }
 
       final response = await http.delete(
-        Uri.parse('${deleteProductByID}/$productId'),
+        Uri.parse('$deleteProductByID/$productId'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -281,7 +281,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => AddPastryProduct(),
+                                    builder: (context) =>
+                                        const AddPastryProduct(),
                                   ),
                                 );
                                 await fetchPastries(); // Refresh data

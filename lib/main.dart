@@ -1,6 +1,6 @@
-import 'package:craft_blend_project/configuration/config.dart';
-import 'package:craft_blend_project/pages/User/profile.dart';
-import 'package:craft_blend_project/pages/signUp/UserSignUp/profilePageState.dart';
+import "configuration/config.dart";
+import 'pages/User/profile.dart';
+import 'pages/signUp/UserSignUp/profilePageState.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/User/login_page.dart';
@@ -45,7 +45,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: WelcomePage(), //MapPage(), // // Start with WelcomePage
+      home:
+          const WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
     );
   }
 }
@@ -53,7 +54,7 @@ class MyApp extends StatelessWidget {
 class MainPage extends StatelessWidget {
   final bool isOwner; // Determined after login
 
-  MainPage({required this.isOwner});
+  const MainPage({super.key, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {

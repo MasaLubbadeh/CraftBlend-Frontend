@@ -1,4 +1,5 @@
 ////this file is to use a stream builder,it checks if the user is logged in or not
+library;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

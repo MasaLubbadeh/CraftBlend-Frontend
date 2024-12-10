@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../configuration/config.dart';
 
 class AdminManageStoresPage extends StatefulWidget {
-  const AdminManageStoresPage({Key? key}) : super(key: key);
+  const AdminManageStoresPage({super.key});
 
   @override
   _AdminManageStoresPageState createState() => _AdminManageStoresPageState();

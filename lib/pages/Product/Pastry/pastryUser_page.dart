@@ -3,12 +3,13 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../configuration/config.dart';
 import '../productDetails_page.dart';
+import '../../../components/badge.dart';
 
 class PastryPage extends StatefulWidget {
   final String storeId;
   final String storeName;
 
-  const PastryPage({required this.storeId, required this.storeName});
+  const PastryPage({super.key, required this.storeId, required this.storeName});
 
   @override
   _PastryPageState createState() => _PastryPageState();
@@ -32,7 +33,7 @@ class _PastryPageState extends State<PastryPage> {
   Future<void> _fetchPastries() async {
     try {
       final response = await http
-          .get(Uri.parse('${getStoreProductsForUser}/${widget.storeId}'));
+          .get(Uri.parse('$getStoreProductsForUser/${widget.storeId}'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
@@ -195,14 +196,42 @@ class _PastryPageState extends State<PastryPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      pastry['name'] ?? 'No Name',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // Product Title
+                                        Expanded(
+                                          child: Text(
+                                            pastry['name'] ?? 'No Name',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow
+                                                .ellipsis, // Prevent overflow
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                            width:
+                                                8), // Add spacing between title and badge
+                                        // Badge for Out of Stock or Special Note
+                                        if ((pastry['inStock'] == false) &&
+                                            (pastry['isUponOrder'] ==
+                                                false)) // Out of Stock
+                                          const badge(
+                                            text: 'Out of Stock',
+                                            color: Colors.redAccent,
+                                          )
+                                        else if (pastry['specialNote'] !=
+                                            null) // Special Note
+                                          badge(
+                                            text: pastry['specialNote'] ?? '',
+                                            color: Colors
+                                                .blueAccent, // Adjust color as needed
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -213,23 +242,43 @@ class _PastryPageState extends State<PastryPage> {
                                       ),
                                     ),
                                     const Spacer(),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.arrow_forward,
-                                          color: myColor,
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            if (pastry['isUponOrder'] ==
+                                                true) // Upon Order badge
+                                              const badge(
+                                                text: 'Upon Order',
+                                                color: Colors.orangeAccent,
+                                              ),
+                                            if ((pastry['inStock'] == false) &&
+                                                (pastry['isUponOrder'] ==
+                                                    false)) // Out of Stock badge
+                                              const badge(
+                                                text: 'Out of Stock',
+                                                color: Colors.redAccent,
+                                              ),
+                                          ],
                                         ),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  DetailPage(product: pastry),
-                                            ),
-                                          );
-                                        },
-                                      ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.arrow_forward,
+                                            color: myColor,
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    DetailPage(product: pastry),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -255,12 +304,12 @@ class _PastryPageState extends State<PastryPage> {
         },
         backgroundColor: myColor, //const Color.fromARGB(171, 243, 229, 245),
         foregroundColor: isFavorite
-            ? Color.fromARGB(171, 243, 229, 245)
-            : const Color.fromARGB(227, 255, 255, 255), //Colors.white70,
-        child: const Icon(Icons.favorite),
+            ? const Color.fromARGB(171, 243, 229, 245)
+            : const Color.fromARGB(227, 255, 255, 255),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
-        ),
+        ), //Colors.white70,
+        child: const Icon(Icons.favorite),
       ),
     );
   }
