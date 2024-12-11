@@ -3,7 +3,7 @@ import 'package:craft_blend_project/pages/categoriesPage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import '../Product/productDetails_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CartPage extends StatefulWidget {
@@ -47,6 +47,7 @@ class _CartPageState extends State<CartPage> {
       });
 
       if (response.statusCode == 200) {
+        print(response.body);
         final data = json.decode(response.body);
         if (data['cart'] != null && data['cart']['items'] != null) {
           setState(() {
@@ -71,12 +72,6 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  void updateQuantity(int index, int newQuantity) {
-    setState(() {
-      cartData[index]['quantity'] = newQuantity;
-    });
-  }
-
   double calculateCartTotal() {
     if (cartData.isEmpty) return 0.0;
     return cartData.fold(
@@ -84,6 +79,33 @@ class _CartPageState extends State<CartPage> {
       (sum, item) =>
           sum + (item['productId']['price'] ?? 0) * (item['quantity'] ?? 0),
     );
+  }
+
+  double calculateStoreSubtotal(List<Map<String, dynamic>> storeItems) {
+    return storeItems.fold(
+      0.0,
+      (sum, item) =>
+          sum + (item['productId']['price'] ?? 0) * (item['quantity'] ?? 0),
+    );
+  }
+
+  Map<String, List<Map<String, dynamic>>> groupByStore() {
+    return cartData.fold({}, (grouped, item) {
+      final storeId = item['storeId']['_id'];
+      final storeName = item['storeId']['storeName'];
+      final storeIcon = item['storeId']['icon'];
+
+      if (!grouped.containsKey(storeId)) {
+        grouped[storeId] = [];
+      }
+
+      grouped[storeId]!.add({
+        ...item,
+        'storeName': storeName,
+        'storeIcon': storeIcon,
+      });
+      return grouped;
+    });
   }
 
   @override
@@ -165,28 +187,26 @@ class _CartPageState extends State<CartPage> {
                     ],
                   ),
                 )
-              : _buildCartListView(),
+              : _buildGroupedCartListView(),
       bottomNavigationBar: cartData.isEmpty ? null : _buildBottomCheckoutBar(),
     );
   }
 
-  Widget _buildCartListView() {
+  Widget _buildGroupedCartListView() {
+    final groupedData = groupByStore();
     return ListView.builder(
       padding: const EdgeInsets.all(10.0),
-      itemCount: cartData.length,
+      itemCount: groupedData.keys.length,
       itemBuilder: (context, index) {
-        final item = cartData[index];
-        final product = item['productId'];
-        final storeName = item['storeId']?['storeName'] ?? 'Unknown Store';
-        final productName = product?['name'] ?? 'No Name';
-        final productImage = product?['image'];
-        final productPrice = product?['price'] ?? 0;
-        final quantity = item['quantity'] ?? 0;
-        final selectedOptions = item['selectedOptions'] ?? {};
+        final storeId = groupedData.keys.elementAt(index);
+        final storeItems = groupedData[storeId]!;
+        final storeName = storeItems.first['storeName'];
+        final storeIcon = storeItems.first['storeIcon'];
+        final storeSubtotal = calculateStoreSubtotal(storeItems);
 
         return Card(
           elevation: 5,
-          margin: const EdgeInsets.all(10),
+          margin: const EdgeInsets.symmetric(vertical: 10),
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
@@ -194,132 +214,38 @@ class _CartPageState extends State<CartPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.store, color: Colors.black87),
-                    const SizedBox(width: 5),
+                    storeIcon != null
+                        ? Image.network(
+                            storeIcon,
+                            width: 30,
+                            height: 30,
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(Icons.store,
+                            size: 30, color: Colors.black87),
+                    const SizedBox(width: 10),
                     Text(
                       storeName,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: productImage != null
-                              ? NetworkImage(productImage)
-                              : const AssetImage('assets/images/pastry.jpg')
-                                  as ImageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            productName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Wrap(
-                            spacing: 5,
-                            children:
-                                selectedOptions.entries.map<Widget>((entry) {
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 2),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: myColor.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${entry.key}  :  ${entry.value}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${(productPrice * quantity).toStringAsFixed(2)}₪',
-                      style: const TextStyle(
+                const Divider(),
+                ...storeItems.map((item) => _buildCartItem(item)).toList(),
+                const Divider(),
+                //const SizedBox(height: 2),
+                Container(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'Subtotal: ${storeSubtotal.toStringAsFixed(2)}₪',
+                    style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: quantity > 1
-                          ? () => updateQuantity(index, quantity - 1)
-                          : null,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: quantity > 1 ? Colors.grey[300] : Colors.grey,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Icon(
-                          quantity > 1 ? Icons.remove : Icons.delete,
-                          size: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 30,
-                      height: 30,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: Colors.transparent,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$quantity',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => updateQuantity(index, quantity + 1),
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: myColor.withOpacity(.7),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          size: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
+                        color: Colors.black54),
+                  ),
                 ),
               ],
             ),
@@ -327,6 +253,178 @@ class _CartPageState extends State<CartPage> {
         );
       },
     );
+  }
+
+  Widget _buildCartItem(Map<String, dynamic> item) {
+    final product = item['productId'];
+    final productName = product?['name'] ?? 'No Name';
+    final productImage = product?['image'];
+    final productPrice = product?['price'] ?? 0;
+    final quantity = item['quantity'] ?? 0;
+    final selectedOptions = item['selectedOptions'] ?? {};
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailPage(product: product),
+          ),
+        ).then((_) {
+          // Re-fetch the cart data when returning from the detail page
+          fetchCartData();
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: productImage != null
+                      ? NetworkImage(productImage)
+                      : const AssetImage('assets/images/pastry.jpg')
+                          as ImageProvider,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    productName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Wrap(
+                    spacing: 5,
+                    children: selectedOptions.entries.map<Widget>((entry) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: myColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${entry.key}  :  ${entry.value}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Quantity:',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: quantity > 1
+                                ? () => setState(() {
+                                      item['quantity'] -= 1;
+                                      updateCart(item);
+                                    })
+                                : null,
+                            child: Container(
+                              width: 25,
+                              height: 25,
+                              decoration: BoxDecoration(
+                                color: quantity > 1
+                                    ? Colors.grey[300]
+                                    : Colors.grey,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Icon(
+                                quantity > 1 ? Icons.remove : Icons.delete,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 35,
+                            height: 25,
+                            margin: const EdgeInsets.symmetric(horizontal: 5),
+                            child: Center(
+                              child: Text(
+                                '$quantity',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              item['quantity'] += 1;
+                              updateCart(item);
+                            }),
+                            child: Container(
+                              width: 25,
+                              height: 25,
+                              decoration: BoxDecoration(
+                                color: myColor.withOpacity(.7),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${(productPrice * quantity).toStringAsFixed(2)}₪',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void updateCart(Map<String, dynamic> updatedItem) {
+    setState(() {
+      // Replace the updated item in the cartData list
+      final index = cartData.indexWhere((item) =>
+          item['productId']['_id'] == updatedItem['productId']['_id']);
+      if (index != -1) {
+        cartData[index] = updatedItem;
+      }
+    });
   }
 
   Widget _buildBottomCheckoutBar() {
