@@ -24,7 +24,6 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
     _fetchGenres();
   }
 
-  // Function to fetch genres from the backend
   Future<void> _fetchGenres() async {
     try {
       final response = await http.get(
@@ -39,26 +38,35 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
         for (var genre in genreList) {
           print(genre);
         }
-        setState(() {
-          genres = genreList
-              .map((genre) => {
-                    'id': genre['_id'], // Assuming the category ID is `_id`
-                    'title': genre['name'],
-                    'image':
-                        genre['image'] ?? '', // Use the photo URL from backend
-                  })
-              .toList();
-        });
+
+        if (mounted) {
+          // Check if the widget is still mounted
+          setState(() {
+            genres = genreList
+                .map((genre) => {
+                      'id': genre['_id'],
+                      'title': genre['name'],
+                      'image': genre['image'] ?? '',
+                    })
+                .toList();
+          });
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Failed to fetch categories: ${response.body}')),
-        );
+        if (mounted) {
+          // Check if the widget is still mounted
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to fetch categories: ${response.body}')),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error occurred: $e')),
-      );
+      if (mounted) {
+        // Check if the widget is still mounted
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error occurred: $e')),
+        );
+      }
     }
   }
 

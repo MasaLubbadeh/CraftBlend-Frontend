@@ -37,6 +37,9 @@ const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
 const String removeCartItem = '${url}cart/removeCartItem';
 
+const String getAllCities = '${url}city/getAll';
+const String incrementCityStoreCount = '${url}city/';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 

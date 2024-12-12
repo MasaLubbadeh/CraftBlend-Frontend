@@ -75,8 +75,11 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   Future<String?> _uploadImageToFirebase(File image, String productName) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
+      print("user before anonymous sign-in: ${user}");
       if (user == null) {
         await FirebaseAuth.instance.signInAnonymously();
+        user = FirebaseAuth.instance.currentUser; // Fetch the signed-in user
+        print("Anonymous user signed in: ${user?.uid}");
       }
 
       String uniqueFileName =

@@ -211,13 +211,28 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _buildProductPrice(double screenWidth) {
     return Text(
-      '${widget.product['price']?.toStringAsFixed(2) ?? '0.00'} ₪',
+      '${calculateFinalPrice().toStringAsFixed(2)} ₪',
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: Colors.black54,
       ),
     );
+  }
+
+  double calculateFinalPrice() {
+    double basePrice = (widget.product['price'] ?? 0.0)
+        .toDouble(); // Ensure basePrice is a double
+    double extraCost = 0.0;
+
+    _selectedOptions.forEach((key, value) {
+      if (value != null && value['extraCost'] != null) {
+        extraCost += (value['extraCost'] as num)
+            .toDouble(); // Safely cast extraCost to double
+      }
+    });
+
+    return (basePrice + extraCost) * _quantity;
   }
 
   Widget _buildProductDescription() {
@@ -391,6 +406,8 @@ class _DetailPageState extends State<DetailPage> {
           'quantity': _quantity,
           'selectedOptions': _selectedOptions.map((key, value) =>
               MapEntry(key, value != null ? value['name'] : null)),
+          'finalPrice':
+              calculateFinalPrice(), // Add the final price to the payload
         };
 
         try {

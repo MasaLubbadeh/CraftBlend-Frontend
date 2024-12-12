@@ -12,12 +12,18 @@ import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
-import 'googleMapsPage.dart';
+import 'pages/googleMapsPage.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  //await FirebaseAppCheck.instance.activate(androidProvider: null);
+  // Disable App Check for development
+  /*await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+  );*/
   runApp(const MyApp());
 }
 
@@ -46,7 +52,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home:
-          const WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
+          const WelcomePage(), //MapPage(), //WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
     );
   }
 }

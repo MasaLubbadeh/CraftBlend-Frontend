@@ -94,7 +94,7 @@ class _StoreSignUpLogoPageState extends State<StoreSignUpLogoPage> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => StoreSignUpPage(
-              SignUpData: widget.storeSignUpData,
+              signUpData: widget.storeSignUpData,
             ),
           ),
         );
@@ -126,7 +126,7 @@ class _StoreSignUpLogoPageState extends State<StoreSignUpLogoPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => StoreSignUpPage(
-          SignUpData: widget.storeSignUpData,
+          signUpData: widget.storeSignUpData,
         ),
       ),
     );
