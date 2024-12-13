@@ -45,6 +45,8 @@ dependencies:
   cloud_firestore: ^5.5.0 # Use the latest version
   firebase_auth: ^5.3.3
   intl: ^0.18.0
+  permission_handler: ^11.2.0
+  flutter_sound: ^9.4.2
 
 dev_dependencies:
   flutter_test:
