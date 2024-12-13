@@ -159,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
   void loginUser() async {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
+    //prefs.remove('token');
 
     if (email.isEmpty || password.isEmpty) {
       setState(() {

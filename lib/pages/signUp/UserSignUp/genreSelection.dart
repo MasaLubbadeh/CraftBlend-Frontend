@@ -2,6 +2,7 @@ import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
+import '../../User/profile.dart';
 import 'profilePageState.dart'; // Assuming ProfilePage exists
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/user_sign_up_data.dart';
@@ -76,13 +77,15 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == true) {
           print("Registration successful!");
           final _auth = AuthService();
-          _auth.signUpWithEmainPassword(
+          _auth.signUpWithEmailPassword(
             widget.signUpData.email!,
             widget.signUpData.password!,
+            widget.signUpData.firstName!,
+            widget.signUpData.lastName!,
           );
           // Navigate to ProfilePage after successful registration
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => ProfilePage()),
+            MaterialPageRoute(builder: (context) => ProfileScreen()),
           );
         } else {
           //widget.signUpData.accountType = "U";

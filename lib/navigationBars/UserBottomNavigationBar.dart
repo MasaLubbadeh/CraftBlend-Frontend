@@ -12,7 +12,6 @@ class UserBottomNavigationBar extends StatefulWidget {
 
 class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   int _currentIndex = 0;
-
   final List<Widget> _userPages = [
     // WelcomePage(), // Home
     // OrdersPage(), // Orders

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.17:3000/';
+const String url = 'http://192.168.1.6:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -31,6 +31,8 @@ const String getStoreProducts =
     '${url}store/getAllProducts'; //categories-and-stores ////getProductsByStoreId
 const String getStoreProductsForUser = '${url}store/getProductsByStoreId';
 const String getStoreDetails = '${url}store/details';
+
+const String getFirstLast = '${url}getFullName';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
