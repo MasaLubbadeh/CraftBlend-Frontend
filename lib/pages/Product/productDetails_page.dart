@@ -211,7 +211,7 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _buildProductPrice(double screenWidth) {
     return Text(
-      '${calculateFinalPrice().toStringAsFixed(2)} ₪',
+      '${calculatePriceWithExtra().toStringAsFixed(2)} ₪',
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -220,7 +220,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  double calculateFinalPrice() {
+  double calculatePriceWithExtra() {
     double basePrice = (widget.product['price'] ?? 0.0)
         .toDouble(); // Ensure basePrice is a double
     double extraCost = 0.0;
@@ -232,7 +232,7 @@ class _DetailPageState extends State<DetailPage> {
       }
     });
 
-    return (basePrice + extraCost) * _quantity;
+    return (basePrice + extraCost);
   }
 
   Widget _buildProductDescription() {
@@ -406,8 +406,8 @@ class _DetailPageState extends State<DetailPage> {
           'quantity': _quantity,
           'selectedOptions': _selectedOptions.map((key, value) =>
               MapEntry(key, value != null ? value['name'] : null)),
-          'finalPrice':
-              calculateFinalPrice(), // Add the final price to the payload
+          'pricePerUnitWithOptionsCost':
+              calculatePriceWithExtra(), // Add the final price to the payload
         };
 
         try {

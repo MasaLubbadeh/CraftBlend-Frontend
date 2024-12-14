@@ -15,6 +15,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'pages/googleMapsPage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,8 @@ Future main() async {
   /*await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.playIntegrity,
   );*/
+  await dotenv.load(fileName: "assets/.env");
+
   runApp(const MyApp());
 }
 
@@ -33,27 +36,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Craft Blend',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        dialogTheme: const DialogTheme(
-          backgroundColor: Colors.white,
-          titleTextStyle: TextStyle(
-            color: myColor,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          contentTextStyle: TextStyle(
-            color: Colors.black38,
-            fontSize: 16,
+        debugShowCheckedModeBanner: false,
+        title: 'Craft Blend',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          dialogTheme: const DialogTheme(
+            backgroundColor: Colors.white,
+            titleTextStyle: TextStyle(
+              color: myColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            contentTextStyle: TextStyle(
+              color: Colors.black38,
+              fontSize: 16,
+            ),
           ),
         ),
-      ),
-      home:
-          const WelcomePage(), //MapPage(), //WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
-    );
+        home:
+            const WelcomePage() //MapPage(), // WelcomePage(), //MapPage(), //WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
+        );
   }
 }
 

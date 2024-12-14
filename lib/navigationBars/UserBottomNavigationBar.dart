@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 import '../pages/chatting/allChats.dart';
 import '../pages/categoriesPage.dart';
-import '../pages/cart_order/cart_page.dart';
+import '../pages/cart_checkout_pages/cart_page.dart';
 
 class UserBottomNavigationBar extends StatefulWidget {
   const UserBottomNavigationBar({super.key});

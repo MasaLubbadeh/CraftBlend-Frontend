@@ -36,6 +36,8 @@ const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
 const String removeCartItem = '${url}cart/removeCartItem';
+const String fetchInstantCartItems = '${url}cart/fetchInstantItems';
+const String fetchScheduledCartItems = '${url}cart/fetchScheduledItems';
 
 const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
