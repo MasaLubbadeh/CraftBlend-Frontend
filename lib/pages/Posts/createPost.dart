@@ -65,8 +65,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Set the background color to white
       appBar: AppBar(
-        title: const Text("New Post"),
+        title: Center(child: const Text("New Post")),
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
@@ -124,56 +125,60 @@ class _CreatePostPageState extends State<CreatePostPage> {
                       SizedBox(
                         height: constraints.maxWidth *
                             0.7, // Ensures square appearance based on width
-                        child: PageView.builder(
-                          itemCount: _selectedImages.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentPage = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            return Stack(
-                              alignment: Alignment.topRight,
-                              children: [
-                                GestureDetector(
-                                  onTap: () => _viewImageFullScreen(
-                                      _selectedImages[index]),
-                                  child: Center(
-                                    child: AspectRatio(
-                                      aspectRatio: 1.0, // Square aspect ratio
-                                      child: Container(
-                                        margin: EdgeInsets.symmetric(
-                                            horizontal:
-                                                constraints.maxWidth * 0.02),
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          image: DecorationImage(
-                                            image: FileImage(
-                                                _selectedImages[index]),
-                                            fit: BoxFit.cover,
+                        child: Container(
+                          color: Colors
+                              .grey.shade300, // Darker gray background color
+                          child: PageView.builder(
+                            itemCount: _selectedImages.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentPage = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              return Stack(
+                                alignment: Alignment.topRight,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _viewImageFullScreen(
+                                        _selectedImages[index]),
+                                    child: Center(
+                                      child: AspectRatio(
+                                        aspectRatio: 1.0, // Square aspect ratio
+                                        child: Container(
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal:
+                                                  constraints.maxWidth * 0.02),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            image: DecorationImage(
+                                              image: FileImage(
+                                                  _selectedImages[index]),
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        _removeImage(_selectedImages[index]),
-                                    child: Icon(
-                                      Icons.cancel,
-                                      color: Colors.grey,
-                                      size: 24,
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: GestureDetector(
+                                      onTap: () =>
+                                          _removeImage(_selectedImages[index]),
+                                      child: Icon(
+                                        Icons.cancel,
+                                        color: Colors.grey,
+                                        size: 24,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
                       SizedBox(height: 10),
