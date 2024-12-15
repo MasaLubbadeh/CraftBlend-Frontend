@@ -222,8 +222,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         children: [
           if (_isSearching) // Show the search box only when searching
             Container(
-              color: const Color.fromARGB(
-                  171, 243, 229, 245), // Same background color as the AppBar
+              color: const Color.fromARGB(171, 243, 229, 245),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 controller: _searchController,

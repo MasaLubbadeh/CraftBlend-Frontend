@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../Product/productDetails_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'DeliveryTime_Page.dart';
+import 'checkout_page.dart';
 
 class CartPage extends StatefulWidget {
   final Function(int) onTabChange;
@@ -701,6 +702,10 @@ class _CartPageState extends State<CartPage>
     double total =
         type == 'instant' ? calculateInstantTotal() : calculateScheduledTotal();
 
+    // Fetch the relevant cart items
+    List<Map<String, dynamic>> selectedItems =
+        type == 'instant' ? getInstantItems() : getScheduledItems();
+
     return Container(
       color: myColor.withOpacity(.8),
       padding: const EdgeInsets.all(10.0),
@@ -717,10 +722,15 @@ class _CartPageState extends State<CartPage>
           ),
           ElevatedButton(
             onPressed: () {
+              // Navigate to CheckoutPage with the selected cart items
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DeliveryTimeCheckoutPage(),
+                  builder: (context) => CheckoutPage(
+                    type: type,
+                    total: total,
+                    cartItems: selectedItems, // Pass cart items here
+                  ),
                 ),
               );
             },
