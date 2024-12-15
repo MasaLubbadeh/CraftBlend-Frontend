@@ -51,6 +51,8 @@ class _ChatPageState extends State<ChatPage> {
 
   // Text controller
   final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   bool _isTyping = false;
 
   // Chat and auth services
@@ -112,9 +114,23 @@ class _ChatPageState extends State<ChatPage> {
             "Sending message to receiverID: ${widget.receiverID}"); // Debug log
         await _chatService.sendMessage(widget.receiverID, message);
         _messageController.clear(); // Clear after sending
+        setState(() {
+          _isTyping = false;
+        });
+        _scrollToBottom(); // Scroll to the bottom after sending a message
       } catch (e) {
         print("Failed to send message: $e");
       }
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -184,8 +200,12 @@ class _ChatPageState extends State<ChatPage> {
           // Add the message widget
           messageWidgets.add(_buildMessageItem(doc));
         }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom(); // Auto-scroll when messages update
+        });
 
         return ListView(
+          controller: _scrollController, // Attach the scroll controller
           children: messageWidgets,
         );
       },
@@ -313,6 +333,12 @@ class _ChatPageState extends State<ChatPage> {
                             horizontal: 16.0,
                           ),
                         ),
+                        onChanged: (value) {
+                          setState(() {
+                            _isTyping =
+                                value.isNotEmpty; // Update the typing state
+                          });
+                        },
                       ),
                     ),
                   ),
@@ -323,14 +349,26 @@ class _ChatPageState extends State<ChatPage> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(Icons.mic, color: Colors.grey[700]),
-                    onPressed: () {
-                      // Handle voice message recording
-                    },
+                    icon: Icon(Icons.arrow_outward,
+                        color: _isTyping ? myColor : Colors.grey),
+                    onPressed: _isTyping
+                        ? () async {
+                            final message = _messageController.text.trim();
+                            if (message.isNotEmpty) {
+                              await _chatService.sendMessage(
+                                  widget.receiverID, message);
+                              _messageController
+                                  .clear(); // Clear the input field
+                              setState(() {
+                                _isTyping = false; // Reset typing state
+                              });
+                            }
+                          }
+                        : null, // Disable if not typing
                   ),
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),

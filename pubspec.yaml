@@ -30,8 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.3
+  http: ^1.2.2
   image_picker: ^0.8.7+3
+  image_cropper: ^5.0.1
   line_awesome_flutter: ^1.0.2
   shared_preferences: ^2.0.0
   path_provider: ^2.0.14
@@ -47,6 +48,7 @@ dependencies:
   intl: ^0.18.0
   permission_handler: ^11.2.0
   flutter_sound: ^9.4.2
+  firebase_storage: ^12.3.7
 
 dev_dependencies:
   flutter_test:
