@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,22 +39,52 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return _contentController.text.isNotEmpty || _selectedImages.isNotEmpty;
   }
 
-  void _submitPost() {
-    print("Post Submitted: ${_contentController.text}");
-    for (var image in _selectedImages) {
-      print("Image Path: ${image.path}");
+  Future<void> _submitPost() async {
+    if (_contentController.text.isEmpty && _selectedImages.isEmpty) {
+      return; // Don't submit if there's no content or images
     }
-    Navigator.pop(context);
+
+    String url = "https://yourserver.com/api/posts"; // Your server URL
+
+    // Create a multipart request
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+
+    // Add text content (post content)
+    request.fields['content'] = _contentController.text;
+
+    // Add images to the request
+    for (var image in _selectedImages) {
+      var imageBytes = await image.readAsBytes();
+      var imageMultipart = http.MultipartFile.fromBytes(
+        'images[]', // 'images[]' is the key in the server
+        imageBytes,
+        filename: image.uri.pathSegments.last,
+      );
+      request.files.add(imageMultipart);
+    }
+
+    // Send the request
+    try {
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        // Post uploaded successfully
+        print("Post uploaded successfully");
+        Navigator.pop(context);
+      } else {
+        // Handle error
+        print("Failed to upload post. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
   }
 
-  // Function to remove image from the selected images list
   void _removeImage(File image) {
     setState(() {
       _selectedImages.remove(image);
     });
   }
 
-  // Function to display the image in full screen
   void _viewImageFullScreen(File image) {
     Navigator.push(
       context,
@@ -65,7 +97,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Set the background color to white
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Center(child: const Text("New Post")),
         backgroundColor: Colors.white,
@@ -95,8 +127,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
               children: [
                 ListTile(
                   leading: const CircleAvatar(
-                    backgroundImage: NetworkImage(
-                        'https://via.placeholder.com/150'), // Replace with user image
+                    backgroundImage:
+                        NetworkImage('https://via.placeholder.com/150'),
                   ),
                   title: const Text(
                     "masa_lubbadeh",
@@ -123,11 +155,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   Column(
                     children: [
                       SizedBox(
-                        height: constraints.maxWidth *
-                            0.7, // Ensures square appearance based on width
+                        height: constraints.maxWidth * 0.7,
                         child: Container(
-                          color: Colors
-                              .grey.shade300, // Darker gray background color
+                          color: Colors.grey.shade300,
                           child: PageView.builder(
                             itemCount: _selectedImages.length,
                             onPageChanged: (index) {
@@ -144,7 +174,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                         _selectedImages[index]),
                                     child: Center(
                                       child: AspectRatio(
-                                        aspectRatio: 1.0, // Square aspect ratio
+                                        aspectRatio: 1.0,
                                         child: Container(
                                           margin: EdgeInsets.symmetric(
                                               horizontal:
@@ -230,7 +260,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 }
 
-// Full-Screen Image View Page
 class FullScreenImageView extends StatelessWidget {
   final File image;
 
@@ -250,13 +279,10 @@ class FullScreenImageView extends StatelessWidget {
       ),
       body: Center(
         child: InteractiveViewer(
-          panEnabled: true, // Allows panning
+          panEnabled: true,
           minScale: 0.5,
-          maxScale: 3.0, // Allows zooming
-          child: Image.file(
-            image,
-            fit: BoxFit.contain,
-          ),
+          maxScale: 3.0,
+          child: Image.file(image, fit: BoxFit.contain),
         ),
       ),
     );
