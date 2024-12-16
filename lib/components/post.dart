@@ -10,7 +10,7 @@ class PostCard extends StatefulWidget {
   final VoidCallback onLike;
   final Function(int) onUpvote;
   final VoidCallback onComment;
-  final List<String>? photoUrls; // List of photo URLs
+  final List<String>? photoUrls;
 
   const PostCard({
     Key? key,
@@ -23,7 +23,7 @@ class PostCard extends StatefulWidget {
     required this.onLike,
     required this.onUpvote,
     required this.onComment,
-    this.photoUrls, // Optional parameter for multiple photos
+    this.photoUrls,
   }) : super(key: key);
 
   @override
@@ -35,6 +35,7 @@ class _PostCardState extends State<PostCard> {
   int upvotes = 0;
   bool isLiked = false;
   bool isUpvoted = false;
+  int currentImageIndex = 0; // Tracks the current image index
   final List<Map<String, String>> comments = [];
 
   @override
@@ -100,32 +101,85 @@ class _PostCardState extends State<PostCard> {
           ),
           // Image Carousel Section
           if (widget.photoUrls != null && widget.photoUrls!.isNotEmpty)
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                itemCount: widget.photoUrls!.length,
-                itemBuilder: (context, index) {
-                  final photoUrl = widget.photoUrls![index];
-                  return ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: photoUrl.startsWith('http')
-                        ? Image.network(
-                            photoUrl, // Network image
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.asset(
-                            // Local asset image
-                            photoUrl,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
+            Stack(
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: PageView.builder(
+                    itemCount: widget.photoUrls!.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentImageIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final photoUrl = widget.photoUrls![index];
+                      return ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                        child: photoUrl.startsWith('http')
+                            ? Image.network(
+                                photoUrl,
+                                height: 300,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                photoUrl,
+                                height: 300,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                      );
+                    },
+                  ),
+                ),
+                // Image count indicator at the top-right
+                if (widget.photoUrls!.length > 1)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${currentImageIndex + 1}/${widget.photoUrls!.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Dots indicator at the bottom
+                if (widget.photoUrls!.length > 1)
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children:
+                          List.generate(widget.photoUrls!.length, (index) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: currentImageIndex == index
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.4),
+                            shape: BoxShape.circle,
                           ),
-                  );
-                },
-              ),
+                        );
+                      }),
+                    ),
+                  ),
+              ],
             ),
           // Action Buttons Section
           Padding(
