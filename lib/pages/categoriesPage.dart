@@ -116,10 +116,11 @@ class _FeedPageState extends State<FeedPage> {
                       onComment: () {
                         print("Comment button pressed!");
                       },
-                      photoUrl:
-                          post['images'] != null && post['images'].isNotEmpty
-                              ? post['images'][0] // Display the first image
-                              : null, // No image if none is provided
+                      photoUrls: post['images'] != null &&
+                              post['images'].isNotEmpty
+                          ? List<String>.from(
+                              post['images']) // Convert to List<String>
+                          : [], // Provide an empty list if no images are available
                     );
                   },
                 ),

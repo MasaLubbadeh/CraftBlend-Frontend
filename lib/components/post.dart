@@ -10,7 +10,7 @@ class PostCard extends StatefulWidget {
   final VoidCallback onLike;
   final Function(int) onUpvote;
   final VoidCallback onComment;
-  final String? photoUrl; // Optional photo URL
+  final List<String>? photoUrls; // List of photo URLs
 
   const PostCard({
     Key? key,
@@ -23,7 +23,7 @@ class PostCard extends StatefulWidget {
     required this.onLike,
     required this.onUpvote,
     required this.onComment,
-    this.photoUrl, // Optional parameter
+    this.photoUrls, // Optional parameter for multiple photos
   }) : super(key: key);
 
   @override
@@ -35,7 +35,6 @@ class _PostCardState extends State<PostCard> {
   int upvotes = 0;
   bool isLiked = false;
   bool isUpvoted = false;
-
   final List<Map<String, String>> comments = [];
 
   @override
@@ -99,29 +98,35 @@ class _PostCardState extends State<PostCard> {
               style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
-          // Optional Image Section
-// Optional Image Section
-          if (widget.photoUrl != null && widget.photoUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: widget.photoUrl!
-                      .startsWith('http') // Check if it's a network URL
-                  ? Image.network(
-                      widget.photoUrl!, // Network image
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.asset(
-                      // Local asset image
-                      widget.photoUrl!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+          // Image Carousel Section
+          if (widget.photoUrls != null && widget.photoUrls!.isNotEmpty)
+            SizedBox(
+              height: 200,
+              child: PageView.builder(
+                itemCount: widget.photoUrls!.length,
+                itemBuilder: (context, index) {
+                  final photoUrl = widget.photoUrls![index];
+                  return ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: photoUrl.startsWith('http')
+                        ? Image.network(
+                            photoUrl, // Network image
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.asset(
+                            // Local asset image
+                            photoUrl,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                  );
+                },
+              ),
             ),
-
           // Action Buttons Section
           Padding(
             padding:
