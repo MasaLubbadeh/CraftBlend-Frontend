@@ -23,7 +23,8 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
-
+  String? deliveryType = 'instant'; // Default to 'instant'
+  bool allowDeliveryDateSelection = false; // Default to false
   // Availability States
   String? selectedAvailability = 'In Stock';
   String? selectedDay = "0";
@@ -157,6 +158,9 @@ class _AddPastryProductState extends State<AddPastryProduct> {
                 int.parse(selectedMinute!))
             : null,
         'isUponOrder': selectedAvailability == 'Upon Order',
+        'deliveryType': deliveryType, // Include delivery type
+        'allowDeliveryDateSelection':
+            allowDeliveryDateSelection, // Include date selection
         'inStock': selectedAvailability == 'In Stock',
         'availableOptions': selectedOptions.map((optionGroup, options) {
           return MapEntry(optionGroup, options);
@@ -388,19 +392,43 @@ class _AddPastryProductState extends State<AddPastryProduct> {
                                   )),
                       ),
                       const SizedBox(height: 16),
-                      _buildInputField(titleController, 'Title'),
+                      _buildInputField(titleController, 'Product Name'),
                       const SizedBox(height: 16),
                       _buildInputField(priceController, 'Price'),
                       const SizedBox(height: 16),
                       _buildInputField(descriptionController, 'Description'),
                       const SizedBox(height: 16),
                       _buildAvailabilityDropdown(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 5),
+                      _buildAvailablityNote(),
+                      const SizedBox(height: 5),
                       if (selectedAvailability == 'In Stock')
-                        _buildInputField(stockController, 'Stock Quantity'),
+                        Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildInputField(
+                                stockController, 'Current Stock Quantity'),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
                       if (selectedAvailability == 'Upon Order')
-                        _buildTimeRequiredDropdown(),
+                        Column(
+                          children: [
+                            const SizedBox(height: 14),
+                            _buildTimeRequiredDropdown(),
+                            const SizedBox(height: 5),
+                            _buildTimeRequiredNote(),
+                            const SizedBox(height: 14),
+                          ],
+                        ),
                       const SizedBox(height: 16),
+                      _buildDeliveryTypeDropdown(),
+                      const SizedBox(height: 5),
+                      _buildDeliveryNote(),
+                      const SizedBox(height: 16),
+                      _buildDeliveryDateSelectionToggle(),
+                      const SizedBox(height: 16),
+                      _buildOptionsNote(),
                       ...predefinedOptions.keys.map((optionGroup) {
                         return _buildOptionCard(optionGroup);
                       }),
@@ -416,6 +444,54 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     );
   }
 
+  Widget _buildAvailablityNote() {
+    return Container(
+      padding: const EdgeInsets.only(left: 5),
+      alignment: Alignment.topLeft,
+      child: const Text(
+        "In Stock: Available in set quantities. \nUpon Order: Made only after a customer places an order.",
+        style: TextStyle(fontSize: 12, color: Colors.black54),
+        textAlign: TextAlign.justify,
+      ),
+    );
+  }
+
+  Widget _buildDeliveryNote() {
+    return Container(
+      padding: const EdgeInsets.only(left: 5),
+      alignment: Alignment.topLeft,
+      child: const Text(
+        "Instant: The product is shipped immediately after the customer places the order. \n Scheduled: The product is shipped on specific days or at specific times, as set by you.",
+        style: TextStyle(fontSize: 12, color: Colors.black54),
+        textAlign: TextAlign.justify,
+      ),
+    );
+  }
+
+  Widget _buildTimeRequiredNote() {
+    return Container(
+      padding: const EdgeInsets.only(left: 5),
+      alignment: Alignment.topLeft,
+      child: const Text(
+        "Set the time needed to prepare this product before delivery.",
+        style: TextStyle(fontSize: 12, color: Colors.black54),
+        textAlign: TextAlign.justify,
+      ),
+    );
+  }
+
+  Widget _buildOptionsNote() {
+    return Container(
+      padding: const EdgeInsets.only(left: 5),
+      alignment: Alignment.topLeft,
+      child: const Text(
+        "** These are starting points to help you set up your product options. You can use them, or add your own custom options. It's entirely flexible!.**",
+        style: TextStyle(fontSize: 12, color: Colors.black54),
+        textAlign: TextAlign.justify,
+      ),
+    );
+  }
+
   // Helper Widgets
   Widget _buildInputField(TextEditingController controller, String label) {
     return TextField(
@@ -424,6 +500,68 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         labelText: label,
         border: const OutlineInputBorder(),
       ),
+    );
+  }
+
+  Widget _buildDeliveryTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: selectedAvailability == 'Upon Order' ? 'scheduled' : deliveryType,
+      decoration: const InputDecoration(
+        labelText: 'Delivery Type',
+        border: OutlineInputBorder(),
+      ),
+      items: const [
+        DropdownMenuItem(value: 'instant', child: Text('Instant')),
+        DropdownMenuItem(value: 'scheduled', child: Text('Scheduled')),
+      ],
+      onChanged: selectedAvailability == 'Upon Order'
+          ? null // Disable dropdown if "Upon Order" is selected
+          : (value) {
+              setState(() {
+                deliveryType = value!;
+                if (deliveryType == 'instant') {
+                  allowDeliveryDateSelection = false; // Reset to false
+                }
+              });
+            },
+    );
+  }
+
+  Widget _buildDeliveryDateSelectionToggle() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Adjust spacing
+      children: [
+        Column(
+          //mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Allow Customer to Select Delivery Date?',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Container(
+              alignment: Alignment.topLeft,
+              child: const Text(
+                " ** only for scheduled deliveries.",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+                textAlign: TextAlign.left,
+              ),
+            ),
+          ],
+        ),
+        Switch(
+          value:
+              deliveryType == 'scheduled' ? allowDeliveryDateSelection : false,
+          activeColor: myColor,
+          onChanged: deliveryType == 'scheduled'
+              ? (value) {
+                  setState(() {
+                    allowDeliveryDateSelection = value;
+                  });
+                }
+              : null, // Disable if deliveryType is not 'scheduled'
+        ),
+      ],
     );
   }
 
@@ -436,7 +574,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       ),
       items: const [
         DropdownMenuItem(value: 'In Stock', child: Text('In Stock')),
-        DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
+        //DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
         DropdownMenuItem(value: 'Upon Order', child: Text('Upon Order')),
       ],
       onChanged: (value) {

@@ -5,6 +5,7 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import '../User/addCard.dart';
+import '../../navigationBars/UserBottomNavigationBar.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String type; // 'instant' or 'scheduled'
@@ -30,8 +31,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? selectedPaymentMethod;
   final TextEditingController streetController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
+  Map<String, List<Map<String, dynamic>>> storeDeliveryCities = {};
+// Store delivery cities by storeId
   bool isEditingPhoneNumber = false; // Add this at the class level
   bool isScheduleSectionExpanded = true;
+  bool isCityValid = true; // Flag to track city validation status
 
   @override
   void dispose() {
@@ -45,6 +49,86 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _fetchCities();
     _fetchContactNumber();
     _fetchCreditCards();
+    _fetchStoreDeliveryCities();
+  }
+
+  Future<void> _fetchStoreDeliveryCities() async {
+    final storeIds = widget.cartItems
+        .map((item) => item['storeId']['_id'])
+        .toSet(); // Get unique store IDs
+
+    for (var storeId in storeIds) {
+      final response = await http.get(
+        Uri.parse('$getStoreDeliveryCitiesByID/$storeId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Extract city names
+        final cities = data['deliveryCities']
+            .map<Map<String, dynamic>>((city) => {
+                  'cityName': city['cityName'],
+                  'deliveryCost': city['deliveryCost'],
+                })
+            .toList();
+
+        storeDeliveryCities[storeId] = cities;
+
+        print('storeDeliveryCities[$storeId]: ${storeDeliveryCities[storeId]}');
+      } else {
+        storeDeliveryCities[storeId] =
+            []; // Default to empty if an error occurs
+      }
+    }
+  }
+
+  void _validateSelectedCity(String selectedCity) {
+    Set<String> failingStores = {}; // Track stores that don't deliver
+
+    for (var item in widget.cartItems) {
+      final storeId = item['storeId']['_id']; // Get the store ID
+      final storeCities =
+          storeDeliveryCities[storeId] ?? []; // Get cities for the store
+
+      // Check if the selected city exists in the delivery cities for the store
+      final deliversToCity =
+          storeCities.any((city) => city['cityName'] == selectedCity);
+
+      if (!deliversToCity) {
+        failingStores.add(item['storeId']['storeName']);
+      }
+    }
+
+    if (failingStores.isNotEmpty) {
+      // Update validation flag
+      setState(() {
+        isCityValid = false;
+        this.selectedCity = null; // Reset selected city
+      });
+
+      // Notify the user
+      String message;
+      if (failingStores.length == 1) {
+        message =
+            'Unfortunately, ${failingStores.first} does not deliver to $selectedCity.';
+      } else {
+        final storeList = failingStores.join(', ');
+        message =
+            'Unfortunately, the following stores do not deliver to $selectedCity: $storeList.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+    } else {
+      // Update validation flag
+      setState(() {
+        isCityValid = true;
+        this.selectedCity = selectedCity;
+      });
+    }
   }
 
   Future<void> _fetchCities() async {
@@ -98,10 +182,79 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+//This function calculates the total delivery cost across all stores for the selected city.
+  double _calculateDeliveryCosts(String selectedCity) {
+    double totalDeliveryCost = 0.0;
+    final Set<String> processedStores = {}; // To track processed store IDs
+
+    for (var item in widget.cartItems) {
+      final storeId = item['storeId']['_id'];
+
+      // Skip this store if it has already been processed
+      if (processedStores.contains(storeId)) {
+        continue;
+      }
+
+      final storeCities = storeDeliveryCities[storeId] ?? [];
+
+      // Find the city's delivery cost for the store
+      final cityData = storeCities.firstWhere(
+        (city) => city['cityName'] == selectedCity,
+        orElse: () => {},
+      );
+
+      if (cityData != null) {
+        final deliveryCost = (cityData['deliveryCost'] ?? 0).toDouble();
+        totalDeliveryCost += deliveryCost;
+      }
+
+      // Mark this store as processed
+      processedStores.add(storeId);
+    }
+
+    return totalDeliveryCost;
+  }
+//This function calculates the delivery cost for each store individually for the selected city.
+
+  Map<String, double> _getDeliveryCostsByStore(String selectedCity) {
+    Map<String, double> deliveryCostsByStore = {};
+    final Set<String> processedStores = {}; // To track processed store IDs
+
+    for (var item in widget.cartItems) {
+      final storeId = item['storeId']['_id'];
+      final storeName = item['storeId']['storeName'];
+
+      // Skip this store if it has already been processed
+      if (processedStores.contains(storeId)) {
+        continue;
+      }
+
+      final storeCities = storeDeliveryCities[storeId] ?? [];
+
+      // Find the city's delivery cost for the store
+      final cityData = storeCities.firstWhere(
+        (city) => city['cityName'] == selectedCity,
+        orElse: () => {},
+      );
+
+      if (cityData != null) {
+        final deliveryCost =
+            (cityData['deliveryCost'] ?? 0).toDouble(); // Safely cast to double
+        deliveryCostsByStore[storeName] = deliveryCost;
+      }
+
+      // Mark this store as processed
+      processedStores.add(storeId);
+    }
+
+    return deliveryCostsByStore;
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
-
+    print('widget.cartItems');
+    print(widget.cartItems);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
@@ -129,9 +282,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.type == 'scheduled') _buildTimePickerSection(),
-            const SizedBox(
-              height: 15,
-            ),
             _buildAddressSection(),
             const SizedBox(
               height: 7,
@@ -218,15 +368,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget _buildTimePickerSection() {
     // Filter cart items to include only "upon order" items
     final uponOrderItems = widget.cartItems
-        .where((item) => item['productId']['isUponOrder'] == true)
+        .where((item) =>
+            item['productId']['allowDeliveryDateSelection'] == true &&
+            item['productId']['deliveryType'] == 'scheduled')
         .toList();
 
     if (uponOrderItems.isEmpty) {
-      return const Text(
-        'No items require scheduling.',
-        style: TextStyle(fontSize: 16, color: Colors.black54),
-        textAlign: TextAlign.center,
-      );
+      return SizedBox.shrink(); // Returns an empty widget
     }
 
     return Column(
@@ -382,8 +530,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
               );
             },
           ),
+          _buildCustomDivider(),
         ],
-        _buildCustomDivider(),
+        const SizedBox(
+          height: 15,
+        ),
       ],
     );
   }
@@ -408,8 +559,25 @@ class _CheckoutPageState extends State<CheckoutPage> {
           items: cities
               .map((city) => DropdownMenuItem(value: city, child: Text(city)))
               .toList(),
-          onChanged: (value) => setState(() => selectedCity = value),
+          onChanged: (value) {
+            setState(() => selectedCity = value);
+            if (value != null) {
+              _validateSelectedCity(value); // Validate the selected city
+            }
+          },
         ),
+        if (!isCityValid) // Show error message when isCityValid is false
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'One or more stores in your cart do not deliver to the selected city.',
+              style: TextStyle(
+                  color: Colors.red[300],
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold),
+              textAlign: TextAlign.justify,
+            ),
+          ),
         const SizedBox(height: 10),
         TextField(
           controller: streetController,
@@ -716,30 +884,58 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildSummarySection() {
+    double deliveryCost =
+        selectedCity != null ? _calculateDeliveryCosts(selectedCity!) : 0.0;
+    Map<String, double> deliveryCostsByStore =
+        selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
+
     return Column(
       children: [
-        _buildSummaryRow('Sub Total', '${(widget.total).toStringAsFixed(2)}₪'),
-        _buildSummaryRow('Delivery Cost', '10.0₪'),
-        _buildSummaryRow('Discount', '0.0₪'),
+        _buildSummaryRow('Sub Total', '${(widget.total).toStringAsFixed(2)}₪',
+            isLight: true),
         const Divider(thickness: 1.5),
-        _buildSummaryRow('Total', '${widget.total.toStringAsFixed(2)}₪',
-            isBold: true),
+        for (var entry in deliveryCostsByStore.entries)
+          _buildSummaryRow('${entry.key} Delivery Cost',
+              '${entry.value.toStringAsFixed(2)}₪',
+              isLight: true),
+        const Divider(thickness: 1.5),
+        _buildSummaryRow(
+            'Total Delivery Cost', '${deliveryCost.toStringAsFixed(2)}₪'),
+        const SizedBox(
+          height: 8,
+        ),
+        _buildSummaryRow(
+          'Total',
+          '${(widget.total + deliveryCost).toStringAsFixed(2)}₪',
+          isBold: true,
+        ),
       ],
     );
   }
 
-  Widget _buildSummaryRow(String title, String value, {bool isBold = false}) {
+  Widget _buildSummaryRow(String title, String value,
+      {bool isBold = false, bool isLight = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              color: isLight
+                  ? Colors.black54
+                  : Colors.black, // Use black for normal, black54 for light
+            ),
+          ),
           Text(
             value,
             style: TextStyle(
               fontSize: 16,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              color: isLight ? Colors.black54 : Colors.black, // Same logic here
             ),
           ),
         ],
@@ -747,8 +943,49 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Future<void> _reduceProductQuantities() async {
+    final token = await _fetchToken(); // Fetch authentication token
+    if (token == null) return;
+
+    for (var item in widget.cartItems) {
+      final product = item['productId'];
+      final isUponOrder =
+          product['isUponOrder'] ?? false; // Check if "upon order"
+      final quantityToReduce =
+          item['quantity'] ?? 1; // Use cart quantity, default to 1
+
+      if (!isUponOrder) {
+        final productId = product['_id'];
+        final reduceQuantityUrl = '$reduceProductQuantity/$productId';
+
+        try {
+          final response = await http.put(
+            Uri.parse(reduceQuantityUrl),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json
+                .encode({'quantity': quantityToReduce}), // Pass the quantity
+          );
+
+          if (response.statusCode == 200) {
+            print(
+                'Product quantity reduced successfully for product: $productId by $quantityToReduce');
+          } else {
+            print(
+                'Failed to reduce quantity for product: $productId. Status Code: ${response.statusCode}');
+          }
+        } catch (e) {
+          print('Error reducing quantity for product $productId: $e');
+        }
+      }
+    }
+  }
+
   bool _isPlaceOrderButtonEnabled() {
-    return selectedCity != null &&
+    return isCityValid && // Include the city validation flag
+        selectedCity != null &&
         streetController.text.isNotEmpty &&
         selectedPaymentMethod != null &&
         contactNumber != null &&
@@ -760,9 +997,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: _isPlaceOrderButtonEnabled()
-            ? () {
-                print('Order Placed');
-                // Add your order placement logic here
+            ? () async {
+                print('Placing Order...');
+
+                // Reduce product quantities
+                await _reduceProductQuantities();
+
+                // Proceed to place the order
+                print('Order placed successfully!');
+                _showThankYouModal(context); // Show Thank You modal
               }
             : null, // Disable button if conditions are not met
         style: ElevatedButton.styleFrom(
@@ -777,6 +1020,90 @@ class _CheckoutPageState extends State<CheckoutPage> {
         child: const Text(
           'Place Order',
           style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showThankYouModal(BuildContext context) async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => SizedBox(
+        height:
+            MediaQuery.of(context).size.height * 0.5, // Half the screen height
+        width: MediaQuery.of(context).size.width, // Half the screen height
+
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Thank You Illustration
+            Image.asset(
+              'assets/images/thank_you_image.jpg', // Add your custom image here
+              height: 120,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 20),
+
+            // Thank You Message
+            const Text(
+              'Thank You!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Subtext
+            const Text(
+              'Your order is now being processed.\nThank you for shopping with us!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Back to Home Button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserBottomNavigationBar(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: myColor.withOpacity(.8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Back To Home',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
+import '../pages/Store/storeProfile_page.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
   const OwnerBottomNavigationBar({super.key});
@@ -20,7 +21,7 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
   final List<Widget> _ownerPages = [
     const PastryOwnerPage(), // Manage Store
     const SpecialOrdersPage(),
-    const ProfileScreen(), // Special Orders
+    const StoreProfileScreen(), // Special Orders
     AllChats(),
     //add more
   ];
