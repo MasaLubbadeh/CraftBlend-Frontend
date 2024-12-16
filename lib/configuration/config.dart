@@ -34,6 +34,8 @@ const String getStoreDetails = '${url}store/details';
 
 const String getFirstLast = '${url}getFullName';
 const String createPost = '${url}posts';
+const String fetchAllPosts = '${url}fetchAllPosts';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 

@@ -1,10 +1,52 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../components/post.dart';
+import '../configuration/config.dart';
 import 'Posts/createPost.dart';
-import 'chatting/chat_page.dart';
 
-class FeedPage extends StatelessWidget {
+class FeedPage extends StatefulWidget {
+  @override
+  _FeedPageState createState() => _FeedPageState();
+}
+
+class _FeedPageState extends State<FeedPage> {
+  List<dynamic> posts = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts();
+  }
+
+  Future<void> fetchPosts() async {
+    try {
+      // Replace with your backend URL
+      // const String url = 'http://your-backend-url/api/posts';
+
+      // Fetch posts
+      final response = await http.get(Uri.parse(fetchAllPosts));
+
+      if (response.statusCode == 200) {
+        // Parse JSON response
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          posts = data;
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to fetch posts');
+      }
+    } catch (e) {
+      print('Error fetching posts: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,69 +64,65 @@ class FeedPage extends StatelessWidget {
             ),
           ],
         ),
-        backgroundColor: const Color.fromARGB(
-            40, 40, 40, 40), // Match background color to PostCard
-        elevation: 4, // Add shadow similar to PostCard's elevation
-        leading: SizedBox(
-          width: 0,
-        ), // Removes the default back arrow
+        backgroundColor: const Color.fromARGB(40, 40, 40, 40),
+        elevation: 4,
+        leading: SizedBox(width: 0),
         actions: [
-          // Add Icon (Navigates to CreatePostPage)
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () {
-              print("Add icon pressed!");
-              // Navigate to CreatePostPage
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CreatePostPage()),
               );
             },
           ),
-          SizedBox(width: 10), // Adds space between icons
-          // Chat Icon (Navigates to ChatPage)
+          const SizedBox(width: 10),
           IconButton(
-            icon: Icon(Icons.chat_bubble_outline),
+            icon: const Icon(Icons.chat_bubble_outline),
             onPressed: () {
-              print("Chat icon pressed!");
-              // Navigate to ChatPage (You can uncomment this when you have the ChatPage)
-              /* Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ChatPage()),
-              );*/
+              // Navigate to ChatPage when available
             },
           ),
-          SizedBox(width: 10), // Adds space between icons
+          const SizedBox(width: 10),
         ],
       ),
-      body: ListView(
-        children: [
-          PostCard(
-            profileImageUrl:
-                'https://via.placeholder.com/100', // Replace with the actual profile image URL
-            username: 'Bees Masa', // Replace with the actual username
-            content: "I'm going to do a Black Friday sale next week.",
-            likes: 10,
-            initialUpvotes: 5, // Initial upvotes passed to the PostCard
-            commentsCount: 2, // Initial comment count displayed
-            onLike: () {
-              print("Post liked!");
-              // Perform any additional actions on like
-            },
-            onUpvote: (newUpvotes) {
-              print("Updated upvotes: $newUpvotes");
-              // Perform any additional actions when upvotes are updated
-              // For example, updating the backend or re-sorting posts in the feed
-            },
-            onComment: () {
-              print("Comment button pressed!");
-              // Handle any additional actions on comment, such as showing a comments page
-            },
-            photoUrl: 'assets/images/flowers.png',
-          ),
-          // Add more PostCard widgets here
-        ],
-      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : posts.isEmpty
+              ? const Center(child: Text('No posts available'))
+              : ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    final post = posts[index];
+                    return PostCard(
+                      profileImageUrl:
+                          'https://via.placeholder.com/100', // Placeholder for profile image
+                      username:
+                          '${post['firstName']} ${post['lastName']}', // Username from post data
+                      content: post['content'], // Post content
+                      likes:
+                          0, // Set default likes or handle likes from backend
+                      initialUpvotes:
+                          0, // Default upvotes or fetch from backend
+                      commentsCount:
+                          0, // Default comments or fetch from backend
+                      onLike: () {
+                        print("Post liked!");
+                      },
+                      onUpvote: (newUpvotes) {
+                        print("Updated upvotes: $newUpvotes");
+                      },
+                      onComment: () {
+                        print("Comment button pressed!");
+                      },
+                      photoUrl:
+                          post['images'] != null && post['images'].isNotEmpty
+                              ? post['images'][0] // Display the first image
+                              : null, // No image if none is provided
+                    );
+                  },
+                ),
     );
   }
 }
