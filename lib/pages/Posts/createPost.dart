@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../categoriesPage.dart'; // Add this import
 
 class CreatePostPage extends StatefulWidget {
   @override
@@ -14,6 +17,120 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final TextEditingController _contentController = TextEditingController();
   final List<File> _selectedImages = [];
   int _currentPage = 0;
+
+  String firstName = ''; // To hold the first name
+  String lastName = ''; // To hold the last name
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDetails();
+  }
+
+  Future<void> _loadUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      firstName = prefs.getString('firstName') ?? 'Guest';
+      lastName = prefs.getString('lastName') ?? 'User';
+    });
+  }
+
+  Future<void> sendPostToBackend(BuildContext context, String content) async {
+    try {
+      // Fetch user details from SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? email = prefs.getString('email');
+      String? firstName = prefs.getString('firstName');
+      String? lastName = prefs.getString('lastName');
+      print("email:{$email}");
+      print("firstname:{$firstName}");
+      print("lastname:{$lastName}");
+
+      // Validate if the necessary data exists
+      /*  if (email == null || firstName == null || lastName == null) {
+        throw Exception("User details are missing from SharedPreferences");
+      }*/
+
+      // API endpoint for storing the post
+      // String url = "https://your-backend-url.com/api/posts";
+
+      // Prepare post data
+      Map<String, dynamic> postData = {
+        // "email": email,
+        "firstName": firstName,
+        "lastName": lastName,
+        "content": content, // Post content
+      };
+
+      // Make the HTTP POST request
+      var response = await http.post(
+        Uri.parse(createPost),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(postData),
+      );
+
+      // Check response status
+      if (response.statusCode == 201) {
+        print("it worked");
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 50,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "Posted Successfully",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close the dialog
+                      Navigator.pop(context); // Navigate back
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text("OK"),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        print("Failed to save post: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        //print("message:${response.m}")
+      }
+    } catch (e) {
+      print("Error sending post to backend: $e");
+    }
+  }
 
   Future<void> _pickImages() async {
     final ImagePicker _picker = ImagePicker();
@@ -39,44 +156,28 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return _contentController.text.isNotEmpty || _selectedImages.isNotEmpty;
   }
 
-  Future<void> _submitPost() async {
-    if (_contentController.text.isEmpty && _selectedImages.isEmpty) {
-      return; // Don't submit if there's no content or images
-    }
+  void _submitPost() async {
+    String content = _contentController.text.trim();
 
-    String url = "https://yourserver.com/api/posts"; // Your server URL
-
-    // Create a multipart request
-    var request = http.MultipartRequest('POST', Uri.parse(url));
-
-    // Add text content (post content)
-    request.fields['content'] = _contentController.text;
-
-    // Add images to the request
-    for (var image in _selectedImages) {
-      var imageBytes = await image.readAsBytes();
-      var imageMultipart = http.MultipartFile.fromBytes(
-        'images[]', // 'images[]' is the key in the server
-        imageBytes,
-        filename: image.uri.pathSegments.last,
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Post content cannot be empty")),
       );
-      request.files.add(imageMultipart);
+      return;
     }
 
-    // Send the request
-    try {
-      var response = await request.send();
-      if (response.statusCode == 200) {
-        // Post uploaded successfully
-        print("Post uploaded successfully");
-        Navigator.pop(context);
-      } else {
-        // Handle error
-        print("Failed to upload post. Status code: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error: $e");
-    }
+    await sendPostToBackend(context, content);
+
+    // Clear the form or navigate away
+    setState(() {
+      _contentController.clear();
+    });
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FeedPage(),
+      ),
+    );
   }
 
   void _removeImage(File image) {
@@ -130,8 +231,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     backgroundImage:
                         NetworkImage('https://via.placeholder.com/150'),
                   ),
-                  title: const Text(
-                    "masa_lubbadeh",
+                  title: Text(
+                    "$firstName $lastName",
                     style: TextStyle(
                         color: Colors.black, fontWeight: FontWeight.bold),
                   ),
