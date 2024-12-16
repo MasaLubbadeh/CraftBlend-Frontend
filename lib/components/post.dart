@@ -10,6 +10,7 @@ class PostCard extends StatefulWidget {
   final VoidCallback onLike;
   final Function(int) onUpvote;
   final VoidCallback onComment;
+  final String? photoUrl; // Optional photo URL
 
   const PostCard({
     Key? key,
@@ -22,6 +23,7 @@ class PostCard extends StatefulWidget {
     required this.onLike,
     required this.onUpvote,
     required this.onComment,
+    this.photoUrl, // Optional parameter
   }) : super(key: key);
 
   @override
@@ -34,7 +36,6 @@ class _PostCardState extends State<PostCard> {
   bool isLiked = false;
   bool isUpvoted = false;
 
-  // Modified to store comments as a list of maps containing username and comment text
   final List<Map<String, String>> comments = [];
 
   @override
@@ -98,16 +99,29 @@ class _PostCardState extends State<PostCard> {
               style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ),
-          // Static Image Section
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.asset(
-              'assets/images/flowers.png', // Replace with your static image path
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          // Optional Image Section
+// Optional Image Section
+          if (widget.photoUrl != null && widget.photoUrl!.isNotEmpty)
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              child: widget.photoUrl!
+                      .startsWith('http') // Check if it's a network URL
+                  ? Image.network(
+                      widget.photoUrl!, // Network image
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      // Local asset image
+                      widget.photoUrl!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
             ),
-          ),
+
           // Action Buttons Section
           Padding(
             padding:

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
@@ -35,34 +37,94 @@ class _CreatePostPageState extends State<CreatePostPage> {
     });
   }
 
-  Future<void> sendPostToBackend(BuildContext context, String content) async {
+  Future<List<String>> _uploadImagesToFirebase(List<File> images) async {
+    List<String> downloadUrls = [];
     try {
-      // Fetch user details from SharedPreferences
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+        user = FirebaseAuth.instance.currentUser;
+      }
+
+      for (var image in images) {
+        String uniqueFileName =
+            'posts_images/${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
+
+        UploadTask uploadTask =
+            FirebaseStorage.instance.ref().child(uniqueFileName).putFile(image);
+
+        TaskSnapshot snapshot = await uploadTask;
+
+        if (snapshot.state == TaskState.success) {
+          String downloadUrl = await snapshot.ref.getDownloadURL();
+          downloadUrls.add(downloadUrl);
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    }
+
+    return downloadUrls;
+  }
+
+  Future<void> _submitPost() async {
+    String content = _contentController.text.trim();
+
+    if (content.isEmpty && _selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                "Post content cannot be empty or select at least one image")),
+      );
+      return;
+    }
+
+    // Upload images to Firebase
+    List<String> uploadedImageUrls =
+        await _uploadImagesToFirebase(_selectedImages);
+
+    if (uploadedImageUrls.isEmpty && _selectedImages.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to upload images. Please try again.")),
+      );
+      return;
+    }
+
+    // Add uploaded image URLs to post data
+    await sendPostToBackend(context, content, uploadedImageUrls);
+
+    // Clear the form or navigate away
+    setState(() {
+      _contentController.clear();
+      _selectedImages.clear();
+    });
+
+    // Optionally navigate to another page
+    /* Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => FeedPage(),
+    ),
+  ); */
+  }
+
+  Future<void> sendPostToBackend(
+      BuildContext context, String content, List<String> imageUrls) async {
+    try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? email = prefs.getString('email');
       String? firstName = prefs.getString('firstName');
       String? lastName = prefs.getString('lastName');
-      print("email:{$email}");
-      print("firstname:{$firstName}");
-      print("lastname:{$lastName}");
 
-      // Validate if the necessary data exists
-      /*  if (email == null || firstName == null || lastName == null) {
-        throw Exception("User details are missing from SharedPreferences");
-      }*/
-
-      // API endpoint for storing the post
-      // String url = "https://your-backend-url.com/api/posts";
-
-      // Prepare post data
       Map<String, dynamic> postData = {
-        // "email": email,
         "firstName": firstName,
         "lastName": lastName,
-        "content": content, // Post content
+        "content": content,
+        "images": imageUrls, // Add uploaded image URLs
       };
 
-      // Make the HTTP POST request
       var response = await http.post(
         Uri.parse(createPost),
         headers: {
@@ -71,10 +133,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         body: jsonEncode(postData),
       );
 
-      // Check response status
       if (response.statusCode == 201) {
-        print("it worked");
-        // Show success dialog
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -107,7 +166,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context); // Close the dialog
-                      Navigator.pop(context); // Navigate back
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -123,12 +181,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
           },
         );
       } else {
-        print("Failed to save post: ${response.statusCode}");
-        print("Response body: ${response.body}");
-        //print("message:${response.m}")
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save post. Try again later.")),
+        );
       }
     } catch (e) {
-      print("Error sending post to backend: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error sending post: $e")),
+      );
     }
   }
 
@@ -154,30 +214,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   bool get _isPostButtonEnabled {
     return _contentController.text.isNotEmpty || _selectedImages.isNotEmpty;
-  }
-
-  void _submitPost() async {
-    String content = _contentController.text.trim();
-
-    if (content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Post content cannot be empty")),
-      );
-      return;
-    }
-
-    await sendPostToBackend(context, content);
-
-    // Clear the form or navigate away
-    setState(() {
-      _contentController.clear();
-    });
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FeedPage(),
-      ),
-    );
   }
 
   void _removeImage(File image) {

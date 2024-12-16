@@ -80,6 +80,7 @@ class FeedPage extends StatelessWidget {
               print("Comment button pressed!");
               // Handle any additional actions on comment, such as showing a comments page
             },
+            photoUrl: 'assets/images/flowers.png',
           ),
           // Add more PostCard widgets here
         ],
