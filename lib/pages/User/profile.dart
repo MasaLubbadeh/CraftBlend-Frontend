@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'editProfile.dart';
@@ -364,6 +365,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           ListTile(
                             onTap: () async {
+                              final _auth = AuthService();
+                              _auth.signOut();
                               final prefs =
                                   await SharedPreferences.getInstance();
                               await prefs.clear();

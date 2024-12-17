@@ -101,14 +101,16 @@ class _LoginPageState extends State<LoginPage> {
       print(jsonResponse);
 
       if (jsonResponse['status']) {
+        // Extract token and user details
         var myToken = jsonResponse['token'];
         var userType = jsonResponse['userType'];
 
-// Assuming the API also sends firstName, lastName, and email in the response
+        // Assuming the API also sends firstName, lastName, and email in the response
         var firstName = jsonResponse['data']['firstName'];
         var lastName = jsonResponse['data']['lastName'];
         var email = jsonResponse['data']['email'];
 
+        // Save data in SharedPreferences
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
         prefs.setString('userType', userType);
@@ -116,6 +118,7 @@ class _LoginPageState extends State<LoginPage> {
         prefs.setString('lastName', lastName);
         prefs.setString('email', email);
 
+        // Save email and password only if "remember me" is checked
         if (rememberUser) {
           prefs.setString('email', email);
           prefs.setString('password', password);
@@ -163,6 +166,7 @@ class _LoginPageState extends State<LoginPage> {
   void loginUser() async {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
+    //prefs.remove('token');
 
     if (email.isEmpty || password.isEmpty) {
       setState(() {
@@ -170,8 +174,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-
-    ///firebse_login(email, password, context);
+    // firebse_login(email, password, context);
     loginUserWithCredentials(email, password);
   }
 
