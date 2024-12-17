@@ -3,12 +3,8 @@ import 'dart:convert'; // For JSON encoding/decoding
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../configuration/config.dart';
-import 'profile.dart';
 import 'forgotPassword.dart';
 import '../../pages/signUp/account_type_selection_page.dart';
-import '../Product/Pastry/pastryUser_page.dart';
-import '../Product/Pastry/pastryOwner_page.dart';
-import '../Admin/adminDashboard.dart';
 import '../../main.dart';
 import '../../services/authentication/auth_service.dart';
 
@@ -178,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-    firebse_login(email, password, context);
+    // firebse_login(email, password, context);
     loginUserWithCredentials(email, password);
   }
 

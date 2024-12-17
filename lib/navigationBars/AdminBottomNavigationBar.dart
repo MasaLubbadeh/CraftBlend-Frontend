@@ -6,6 +6,8 @@ import '../pages/chatting/allChats.dart';
 //import '../pages/Admin/manageStores.dart';
 
 class AdminBottomNavigationBar extends StatefulWidget {
+  const AdminBottomNavigationBar({super.key});
+
   @override
   _AdminBottomNavigationBarState createState() =>
       _AdminBottomNavigationBarState();
@@ -16,9 +18,9 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
 
   // List of pages corresponding to the bottom navigation items
   final List<Widget> _adminPages = [
-    AdminDashboardPage(), // Admin Dashboard
+    const AdminDashboardPage(), // Admin Dashboard
     //ManageUsersPage(), // Manage Users
-    AdminManageStoresPage(), // Manage Stores
+    const AdminManageStoresPage(), // Manage Stores
     AllChats(),
   ];
 

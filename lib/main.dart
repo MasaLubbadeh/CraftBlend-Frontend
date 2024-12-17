@@ -1,6 +1,6 @@
-import 'package:craft_blend_project/configuration/config.dart';
-import 'package:craft_blend_project/pages/User/profile.dart';
-import 'package:craft_blend_project/pages/signUp/UserSignUp/profilePageState.dart';
+import "configuration/config.dart";
+import 'pages/User/profile.dart';
+import 'pages/signUp/UserSignUp/profilePageState.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/User/login_page.dart';
@@ -12,11 +12,21 @@ import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
+import 'pages/googleMapsPage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  //await FirebaseAppCheck.instance.activate(androidProvider: null);
+  // Disable App Check for development
+  /*await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+  );*/
+  await dotenv.load(fileName: "assets/.env");
+
   runApp(const MyApp());
 }
 
@@ -26,21 +36,34 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Craft Blend',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: WelcomePage(), // Start with WelcomePage
-    );
+        debugShowCheckedModeBanner: false,
+        title: 'Craft Blend',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          dialogTheme: const DialogTheme(
+            backgroundColor: Colors.white,
+            titleTextStyle: TextStyle(
+              color: myColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            contentTextStyle: TextStyle(
+              color: Colors.black38,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        home:
+            const WelcomePage() //MapPage(), // WelcomePage(), //MapPage(), //WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
+        );
   }
 }
 
 class MainPage extends StatelessWidget {
   final bool isOwner; // Determined after login
 
-  MainPage({required this.isOwner});
+  const MainPage({super.key, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {

@@ -84,7 +84,7 @@ class _AddCardViewState extends State<AddCardView> {
                   ),
                   child: Column(
                     children: [
-                      Row(
+                      const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -173,7 +173,7 @@ class _AddCardViewState extends State<AddCardView> {
   Row _buildExpiryRow() {
     return Row(
       children: [
-        Text(
+        const Text(
           "Expiry",
           style: TextStyle(
             color: myColor,
@@ -323,7 +323,7 @@ class RoundTextfield extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       onSaved: onSaved,
-      style: TextStyle(color: myColor, fontWeight: FontWeight.w400),
+      style: const TextStyle(color: myColor, fontWeight: FontWeight.w400),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(10),
         hintText: hintText,
@@ -338,9 +338,9 @@ class RoundTextfield extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: myColor),
+          borderSide: const BorderSide(color: myColor),
         ),
-        errorStyle: TextStyle(color: myColor),
+        errorStyle: const TextStyle(color: myColor),
       ),
     );
   }

@@ -1,5 +1,5 @@
-import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
+import '../configuration/config.dart';
 
 class MessageBubble extends StatelessWidget {
   final String message;

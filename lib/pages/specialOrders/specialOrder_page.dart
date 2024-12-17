@@ -299,13 +299,16 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   void _navigateToSetupFormPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SpecialOrdersOverviewPage()),
+      MaterialPageRoute(
+          builder: (context) => const SpecialOrdersOverviewPage()),
     );
   }
 }
 
 // Placeholder for the ReviewSpecialOrdersPage
 class ReviewSpecialOrdersPage extends StatelessWidget {
+  const ReviewSpecialOrdersPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;

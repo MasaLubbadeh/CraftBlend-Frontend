@@ -23,7 +23,7 @@ class UserTile extends StatelessWidget {
         child: Row(
           children: [
             //icon
-            Icon(Icons.person),
+            const Icon(Icons.person),
 
             const SizedBox(width: 20),
             //user

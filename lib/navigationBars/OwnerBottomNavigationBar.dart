@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
+import '../pages/Store/storeProfile_page.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
+  const OwnerBottomNavigationBar({super.key});
+
   @override
   _OwnerBottomNavigationBarState createState() =>
       _OwnerBottomNavigationBarState();
@@ -16,9 +19,9 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
 
   // List of pages corresponding to the bottom navigation items
   final List<Widget> _ownerPages = [
-    PastryOwnerPage(), // Manage Store
-    SpecialOrdersPage(),
-    ProfileScreen(), // Special Orders
+    const PastryOwnerPage(), // Manage Store
+    const SpecialOrdersPage(),
+    const StoreProfileScreen(), // Special Orders
     AllChats(),
     //add more
   ];
@@ -52,10 +55,11 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
             label: 'Chat',
           ),
         ],
-        //add here too
         currentIndex: _currentIndex,
-        selectedItemColor: myColor,
-        backgroundColor: Colors.white70,
+        selectedItemColor: myColor, // Color for selected icon
+        unselectedItemColor: Colors.black45, // Color for unselected icons
+        backgroundColor: Colors.white70, // Background of the navigation bar
+        type: BottomNavigationBarType.fixed, // Ensure all icons are displayed
         onTap: _onItemTapped,
       ),
     );

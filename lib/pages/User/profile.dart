@@ -163,7 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: myColor, // Change to your desired color
-          title: Text(tProfile,
+          title: const Text(tProfile,
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w700,

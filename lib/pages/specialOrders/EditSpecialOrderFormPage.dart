@@ -80,12 +80,12 @@ class _EditSpecialOrderFormPageState extends State<EditSpecialOrderFormPage> {
             ),
             ElevatedButton(
               onPressed: _addNewField,
-              child: const Text('Add New Field'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: myColor,
                 padding: const EdgeInsets.symmetric(
                     vertical: 12.0, horizontal: 24.0),
               ),
+              child: const Text('Add New Field'),
             ),
           ],
         ),

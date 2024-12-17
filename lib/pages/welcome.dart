@@ -2,7 +2,6 @@ import 'package:craft_blend_project/pages/User/login_page.dart';
 import 'package:craft_blend_project/services/authentication/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../configuration/config.dart';
-import 'signUp/account_type_selection_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
