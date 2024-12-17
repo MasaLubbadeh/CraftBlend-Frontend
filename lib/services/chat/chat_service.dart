@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:craft_blend_project/models/message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class ChatService {
   //get instance of firestore & auth
@@ -20,7 +21,10 @@ class ChatService {
   }
 
   //send message
-  Future<void> sendMessage(String receiverID, message) async {
+  Future<void> sendMessage(
+    String receiverID,
+    message,
+  ) async {
     //get current user info
     final String currentUserID = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;

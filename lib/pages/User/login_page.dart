@@ -104,9 +104,17 @@ class _LoginPageState extends State<LoginPage> {
         var myToken = jsonResponse['token'];
         var userType = jsonResponse['userType'];
 
+// Assuming the API also sends firstName, lastName, and email in the response
+        var firstName = jsonResponse['data']['firstName'];
+        var lastName = jsonResponse['data']['lastName'];
+        var email = jsonResponse['data']['email'];
+
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
         prefs.setString('userType', userType);
+        prefs.setString('firstName', firstName);
+        prefs.setString('lastName', lastName);
+        prefs.setString('email', email);
 
         if (rememberUser) {
           prefs.setString('email', email);

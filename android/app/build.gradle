@@ -9,18 +9,16 @@ plugins {
     
 }
 dependencies {
-    // Firebase SDKs
     implementation platform('com.google.firebase:firebase-bom:32.0.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
-    implementation 'com.google.firebase:firebase-messaging' // For notifications (optional)
-    implementation 'com.google.firebase:firebase-storage' // For media sharing (optional)
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-storage'
     implementation 'com.google.android.gms:play-services-base:18.0.1'
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
+    }
 
-
-}
 
 android {
     namespace = "com.example.craft_blend_project"
@@ -41,7 +39,7 @@ android {
         applicationId = "com.example.craft_blend_project"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"

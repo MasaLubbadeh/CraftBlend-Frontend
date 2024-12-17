@@ -109,9 +109,11 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == true) {
           print("Registration successful!");
           final auth = AuthService();
-          auth.signUpWithEmainPassword(
+          auth.signUpWithEmailPassword(
             widget.signUpData.email!,
             widget.signUpData.password!,
+            widget.signUpData.firstName!,
+            widget.signUpData.lastName!,
           );
           // Save token and user type to SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
