@@ -64,7 +64,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
 
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content:
                   Text('Authentication token not found. Please log in again.')),
         );
@@ -546,7 +546,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.black54),
         border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: myColor, width: 2.0),
         ),
       ),

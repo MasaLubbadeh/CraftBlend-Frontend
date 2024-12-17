@@ -7,6 +7,7 @@ class StoreSignUpData {
   String? selectedGenreId; // This stores the ID of the selected genre/category
   String? country;
   String? city;
+  String? logo;
   bool? allowSpecialOrders;
 
   StoreSignUpData({
@@ -18,12 +19,13 @@ class StoreSignUpData {
     this.selectedGenreId,
     this.allowSpecialOrders,
     this.city,
+    this.logo,
     this.country,
   });
 
   @override
   String toString() {
-    return 'StoreSignUpData(storename: $storeName, contactEmail: $contactEmail, allowSpecialOrders: $allowSpecialOrders, phoneNumber: $phoneNumber, password: $password, accountType: $accountType, selectedGenreId: $selectedGenreId, city: $city, country: $country)';
+    return 'StoreSignUpData(storename: $storeName, contactEmail: $contactEmail, allowSpecialOrders: $allowSpecialOrders, phoneNumber: $phoneNumber, password: $password, accountType: $accountType, selectedGenreId: $selectedGenreId, city: $city, logo:$logo, country: $country)';
   }
 
   Map<String, dynamic> toJson() {
@@ -36,6 +38,7 @@ class StoreSignUpData {
       "selectedGenreId": selectedGenreId,
       "country": country,
       "city": city,
+      "logo": logo,
       "allowSpecialOrders": allowSpecialOrders,
     };
   }

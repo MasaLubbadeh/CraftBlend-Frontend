@@ -3,7 +3,7 @@ import 'package:craft_blend_project/pages/Posts/createPost.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 import '../pages/chatting/allChats.dart';
-import '../pages/categoriesPage.dart'; // Ensure you have all pages imported
+import '../pages/feedPage.dart'; // Ensure you have all pages imported
 
 class UserBottomNavigationBar extends StatefulWidget {
   @override

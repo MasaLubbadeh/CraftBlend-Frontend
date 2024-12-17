@@ -1,5 +1,11 @@
+import 'package:craft_blend_project/components/badge.dart';
+
 import '../../configuration/config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -43,6 +49,7 @@ class _DetailPageState extends State<DetailPage> {
         backgroundColor: myColor,
         elevation: 5,
         toolbarHeight: appBarHeight,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -83,9 +90,11 @@ class _DetailPageState extends State<DetailPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
+
                   _buildProductSpecialNote(),
                   const SizedBox(height: 16),
                   _buildProductDescription(),
+                  //const Spacer(),
                   const SizedBox(height: 20),
                   Card(
                     color: myColor,
@@ -138,12 +147,20 @@ class _DetailPageState extends State<DetailPage> {
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/images/donut.jpg',
-          width: screenWidth * 0.8,
-          height: screenWidth * 0.8,
-          fit: BoxFit.cover,
-        ),
+        child: widget.product['image'] != null &&
+                widget.product['image'].isNotEmpty
+            ? Image.network(
+                widget.product['image'],
+                width: screenWidth * 0.8,
+                height: screenWidth * 0.8,
+                fit: BoxFit.cover,
+              )
+            : Image.asset(
+                'assets/images/donut.jpg',
+                width: screenWidth * 0.8,
+                height: screenWidth * 0.8,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }
@@ -160,19 +177,41 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildProductSpecialNote() {
-    return Text(
-      widget.product['specialNote'] ?? 'New Product',
-      style: const TextStyle(
-        fontSize: 18,
-        color: myColor,
-        fontStyle: FontStyle.italic,
-      ),
-    );
+    if (widget.product['isUponOrder'] == true) {
+      // Upon Order badge with special note
+      return Row(
+        children: [
+          const badge(
+            text: 'Upon Order',
+            color: Colors.orangeAccent,
+          ),
+          const SizedBox(width: 8), // Add spacing between badges
+          badge(
+            text: widget.product['specialNote'] ?? 'Special Product',
+            color: const Color.fromARGB(
+                172, 219, 174, 227), // Adjust color as needed
+          ),
+        ],
+      );
+    } else if (widget.product['inStock'] == false) {
+      // Out of Stock badge
+      return const badge(
+        text: 'Out of Stock',
+        color: Colors.redAccent,
+      );
+    } else {
+      // Special note badge or text
+      return badge(
+        text: widget.product['specialNote'] ?? 'New Product',
+        color:
+            const Color.fromARGB(191, 123, 211, 168), // Adjust color as needed
+      );
+    }
   }
 
   Widget _buildProductPrice(double screenWidth) {
     return Text(
-      '${widget.product['price']?.toStringAsFixed(2) ?? '0.00'} ₪',
+      '${calculatePriceWithExtra().toStringAsFixed(2)} ₪',
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -181,12 +220,29 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
+  double calculatePriceWithExtra() {
+    double basePrice = (widget.product['price'] ?? 0.0)
+        .toDouble(); // Ensure basePrice is a double
+    double extraCost = 0.0;
+
+    _selectedOptions.forEach((key, value) {
+      if (value != null && value['extraCost'] != null) {
+        extraCost += (value['extraCost'] as num)
+            .toDouble(); // Safely cast extraCost to double
+      }
+    });
+
+    return (basePrice + extraCost);
+  }
+
   Widget _buildProductDescription() {
-    return Text(
-      widget.product['description'] ?? 'No description available.',
-      style: const TextStyle(
-        fontSize: 16,
-        color: Colors.black54,
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        widget.product['description'] ?? 'No description available.',
+        style: const TextStyle(
+            fontSize: 16, color: Colors.black54, letterSpacing: 1.5),
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -319,7 +375,7 @@ class _DetailPageState extends State<DetailPage> {
                       style: const TextStyle(color: Colors.black87),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             )
           ],
@@ -330,7 +386,7 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _buildAddToCartButton() {
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
         // Validate required options
         for (final key in _selectedOptions.keys) {
           bool isOptional =
@@ -342,13 +398,62 @@ class _DetailPageState extends State<DetailPage> {
             return;
           }
         }
-        print('Adding to cart:');
-        print('Product: ${widget.product['name']}');
-        print('Quantity: $_quantity');
-        print('Selected Options: $_selectedOptions');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${widget.product['name']} added to cart!')),
-        );
+
+        // Prepare data to send to the backend
+        final Map<String, dynamic> cartItem = {
+          'productId': widget.product['_id'],
+          'storeId': widget.product['store'],
+          'quantity': _quantity,
+          'selectedOptions': _selectedOptions.map((key, value) =>
+              MapEntry(key, value != null ? value['name'] : null)),
+          'pricePerUnitWithOptionsCost':
+              calculatePriceWithExtra(), // Add the final price to the payload
+        };
+
+        try {
+          // Fetch the token from SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          final String? token = prefs.getString('token');
+          if (token == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('You are not logged in.')),
+            );
+            return;
+          }
+
+          // Make the POST request to add to the cart
+          final response = await http.post(
+            Uri.parse(addNewCartItem),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(cartItem),
+          );
+
+          // Handle the response
+          if (response.statusCode == 200) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${widget.product['name']} added to cart!'),
+              ),
+            );
+            // Pop to the previous page
+            Navigator.pop(context);
+          } else {
+            print(cartItem);
+
+            final error =
+                json.decode(response.body)['message'] ?? 'Unknown error';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to add to cart: $error')),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('An error occurred: $e')),
+          );
+        }
       },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/store_sign_up_data.dart';
-import '../StoreSignUp/store_sign_up_page.dart';
+import '../StoreSignUp/store_signUp_addLogo.dart';
 
 class StoreGenreSelectionScreen extends StatefulWidget {
   final StoreSignUpData storeSignUpData;
@@ -24,7 +24,6 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
     _fetchGenres();
   }
 
-  // Function to fetch genres from the backend
   Future<void> _fetchGenres() async {
     try {
       final response = await http.get(
@@ -34,25 +33,40 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> genreList = jsonDecode(response.body)['categories'];
-        setState(() {
-          genres = genreList
-              .map((genre) => {
-                    'id': genre['_id'], // Assuming the category ID is `_id`
-                    'title': genre['name'],
-                    'image': 'assets/images/${genre['name'].toLowerCase()}.jpg',
-                  })
-              .toList();
-        });
+        print("genreList");
+
+        for (var genre in genreList) {
+          print(genre);
+        }
+
+        if (mounted) {
+          // Check if the widget is still mounted
+          setState(() {
+            genres = genreList
+                .map((genre) => {
+                      'id': genre['_id'],
+                      'title': genre['name'],
+                      'image': genre['image'] ?? '',
+                    })
+                .toList();
+          });
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Failed to fetch categories: ${response.body}')),
-        );
+        if (mounted) {
+          // Check if the widget is still mounted
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to fetch categories: ${response.body}')),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error occurred: $e')),
-      );
+      if (mounted) {
+        // Check if the widget is still mounted
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error occurred: $e')),
+        );
+      }
     }
   }
 
@@ -61,10 +75,12 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
       // Update the StoreSignUpData with the selected genre ID
       widget.storeSignUpData.selectedGenreId = selectedGenreId;
 
+      // Navigate to the logo upload page
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) =>
-              StoreSignUpPage(SignUpData: widget.storeSignUpData),
+          builder: (context) => StoreSignUpLogoPage(
+            storeSignUpData: widget.storeSignUpData,
+          ),
         ),
       );
     } else {
@@ -179,14 +195,16 @@ class GenreCard extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            image: DecorationImage(
-              image: AssetImage(imagePath),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
-                BlendMode.darken,
-              ),
-            ),
+            image: imagePath.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(imagePath),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
+                      BlendMode.darken,
+                    ),
+                  )
+                : null, // No image decoration if imagePath is empty
             border:
                 isSelected ? Border.all(color: Colors.white, width: 3) : null,
           ),
@@ -197,10 +215,7 @@ class GenreCard extends StatelessWidget {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: isSelected
-                      ? Colors.black
-                      : const Color.fromARGB(
-                          255, 161, 134, 134), // Highlight color for selected
+                  color: isSelected ? Colors.grey : Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
