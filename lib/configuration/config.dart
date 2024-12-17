@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.17:3000/';
+const String url = 'http://172.23.12.249:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -18,6 +18,7 @@ const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
+const String reduceProductQuantity = '${url}product/reduce-quantity';
 
 const String addNewCategory = '${url}category/add';
 const String deleteCategory = '${url}category/delete';
@@ -31,6 +32,27 @@ const String getStoreProducts =
     '${url}store/getAllProducts'; //categories-and-stores ////getProductsByStoreId
 const String getStoreProductsForUser = '${url}store/getProductsByStoreId';
 const String getStoreDetails = '${url}store/details';
+const String getStoreDeliveryCities = '${url}store/getDelivery-cities';
+const String getStoreDeliveryCitiesByID = '${url}store/getDelivery-citiesByID';
+
+const String updateDeliveryCitiesUrl = '${url}store/UpdateDelivery-cities';
+
+const String addNewCartItem = '${url}cart/addNewCartItem';
+const String getCartData = '${url}cart/getCartData';
+const String updateCartItem = '${url}cart/updateCartItem';
+const String removeCartItem = '${url}cart/removeCartItem';
+const String fetchInstantCartItems = '${url}cart/fetchInstantItems';
+const String fetchScheduledCartItems = '${url}cart/fetchScheduledItems';
+
+const String getFirstLast = '${url}getFullName';
+const String createPost = '${url}posts';
+const String fetchAllPosts = '${url}fetchAllPosts';
+const String likes = '${url}';
+const String upvotes = '${url}';
+const String comments = '${url}';
+
+const String getAllCities = '${url}city/getAll';
+const String incrementCityStoreCount = '${url}city/';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../configuration/config.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ManageCategoriesPage extends StatefulWidget {
   const ManageCategoriesPage({super.key});
@@ -19,7 +21,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   File? _selectedImage;
-
+  bool _isUploading = false;
+  double _uploadProgress = 0.0;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -45,7 +48,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 'id': category['_id'],
                 'name': category['name'],
                 'description': category['description'],
-                'image': null, // Add your image handling logic if needed
+                'image': category[
+                    'image'], // Add your image handling logic if needed
               }));
         });
       } else {
@@ -63,6 +67,22 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
 
   Future<void> _addCategory() async {
     if (nameController.text.isNotEmpty) {
+      // Disable button while uploading
+      setState(() {
+        _isUploading = true;
+      });
+
+      String? imageUrl = await _uploadImageToFirebase(_selectedImage!);
+      if (imageUrl == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload image')),
+        );
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
       try {
         final response = await http.post(
           Uri.parse(addNewCategory),
@@ -70,6 +90,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           body: jsonEncode({
             'name': nameController.text,
             'description': descriptionController.text,
+            'image': imageUrl, // Include the image URL here
           }),
         );
 
@@ -81,8 +102,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
               'id': newCategory['_id'],
               'name': newCategory['name'],
               'description': newCategory['description'],
-              'image': _selectedImage,
+              'image': imageUrl, // Save the image URL in the local list
             });
+            _isUploading = false;
           });
 
           nameController.clear();
@@ -98,11 +120,17 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to add category: ${response.body}')),
           );
+          setState(() {
+            _isUploading = false;
+          });
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error occurred: $e')),
         );
+        setState(() {
+          _isUploading = false;
+        });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +169,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     try {
       final categoryId = categories[index]['id'];
       final response = await http.delete(
-        Uri.parse('${deleteCategory}/$categoryId'),
+        Uri.parse('$deleteCategory/$categoryId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -164,6 +192,60 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         SnackBar(content: Text('Error occurred: $e')),
       );
     }
+  }
+
+  Future<void> signInAnonymously() async {
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+      print("User signed in anonymously");
+    } catch (e) {
+      print("Failed to sign in anonymously: $e");
+    }
+  }
+
+  Future<String?> _uploadImageToFirebase(File image) async {
+    try {
+      // Make sure user is logged in
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+      }
+
+      // Get the category name and sanitize it for the file name
+      String categoryName = nameController.text
+          .trim()
+          .replaceAll(RegExp(r'[^\w\s]+'), '')
+          .replaceAll(' ', '_');
+
+      // Generate a unique file name based on the category name and the current time
+      String fileName =
+          '${categoryName}_${DateTime.now().millisecondsSinceEpoch.toString()}.jpg';
+
+      // Upload the image to Firebase Storage
+      UploadTask uploadTask = FirebaseStorage.instance
+          .ref()
+          .child('category_images/$fileName')
+          .putFile(image);
+
+      // Track upload progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        setState(() {
+          _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+        });
+      });
+
+      TaskSnapshot snapshot = await uploadTask;
+      if (snapshot.state == TaskState.success) {
+        // Get the download URL of the uploaded image
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        return downloadUrl;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    }
+    return null;
   }
 
   Future<void> _pickImage() async {
@@ -230,6 +312,24 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                             ),
                     ),
                   ),
+                  if (_isUploading) ...[
+                    const SizedBox(height: 16),
+                    Stack(
+                      children: [
+                        LinearProgressIndicator(
+                          value: _uploadProgress,
+                          backgroundColor: Colors.grey,
+                          color: Colors.green,
+                        ),
+                        Center(
+                          child: Text(
+                            '${(_uploadProgress * 100).toStringAsFixed(2)}%',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -241,7 +341,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 child: const Text('Cancel'),
               ),
               TextButton(
-                onPressed: _addCategory,
+                onPressed: _isUploading ? null : _addCategory,
                 child: const Text('Add'),
               ),
             ],
@@ -278,14 +378,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         children: [
           Opacity(
             opacity: 0.2,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/categories_bg.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+            child: Container(),
           ),
           SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -293,7 +386,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _showAddCategoryDialog,
+                  onPressed: _isUploading ? null : _showAddCategoryDialog,
                   icon: const Icon(Icons.add_circle_rounded,
                       color: Colors.white70),
                   label: const Text(
@@ -315,11 +408,11 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                     elevation: 6,
                     margin: const EdgeInsets.symmetric(vertical: 10),
                     child: ListTile(
-                      leading: category['image'] != null
+                      leading: category['image'].isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8.0),
-                              child: Image.file(
-                                category['image'],
+                              child: Image.network(
+                                category['image'], // URL of the image
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
@@ -351,7 +444,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

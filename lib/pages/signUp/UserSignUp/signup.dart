@@ -26,7 +26,7 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   bool showPassword = false;
-  bool _isNotValid = false;
+  final bool _isNotValid = false;
 
   // Form Key to validate fields
   final _formKey = GlobalKey<FormState>();
@@ -34,7 +34,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Future<bool> _isEmailAvailable(String email) async {
     try {
       final response = await http.get(
-        Uri.parse('${checkEmail}?email=$email'), // Update with your endpoint
+        Uri.parse('$checkEmail?email=$email'), // Update with your endpoint
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -222,11 +222,11 @@ class _SignUpPageState extends State<SignUpPage> {
       height: 40,
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(
-          focusedBorder: const UnderlineInputBorder(
+        decoration: const InputDecoration(
+          focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: myColor),
           ),
-          enabledBorder: const UnderlineInputBorder(
+          enabledBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: myColor),
           ),
         ),
@@ -305,7 +305,7 @@ class _SignUpPageState extends State<SignUpPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
             style: ElevatedButton.styleFrom(

@@ -1,19 +1,16 @@
 import 'package:craft_blend_project/main.dart';
 import 'package:flutter/material.dart';
 import '../../../models/store_sign_up_data.dart';
-import '../../../models/store_sign_up_data.dart';
 import '../../../configuration/config.dart';
 import '../../../pages/User/login_page.dart';
-import '../../../pages/Product/Pastry/pastryOwner_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
 
 class StoreSignUpPage extends StatefulWidget {
-  final StoreSignUpData SignUpData;
+  final StoreSignUpData signUpData;
 
-  const StoreSignUpPage({super.key, required this.SignUpData});
+  const StoreSignUpPage({super.key, required this.signUpData});
 
   @override
   _StoreSignUpPageState createState() => _StoreSignUpPageState();
@@ -23,7 +20,6 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
   TextEditingController storeNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
-  TextEditingController cityController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   bool allowSpecialOrders = false; // Tracks Yes/No toggle for special orders
@@ -31,22 +27,43 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
 
   late Size mediaSize;
 
-  List<String> countries = [
-    'Palestine',
-    'Bahrain',
-    'Iran',
-    'Iraq',
-    'Jordan',
-    'Kuwait',
-    'Lebanon',
-    'Oman',
-    'Qatar',
-    'Saudi Arabia',
-    'Syria',
-    'United Arab Emirates',
-    'Yemen'
-  ];
-  String? selectedCountry;
+  String? selectedCountry = 'Palestine'; // Default country
+  List<String> countries = ['Palestine'];
+  List<Map<String, dynamic>> cities =
+      []; // List of city objects with id and name
+  String? selectedCity;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCities(); // Fetch cities for the default country
+  }
+
+  Future<void> _fetchCities() async {
+    try {
+      var url = Uri.parse(getAllCities);
+      var response = await http.get(url);
+
+      if (response.statusCode == 200 && response.body.contains('cities')) {
+        final List<dynamic> cityList = jsonDecode(response.body)['cities'];
+        setState(() {
+          cities = cityList
+              .map((city) =>
+                  {'id': city['_id'].toString(), 'name': city['name']})
+              .toList();
+          selectedCity = cities.isNotEmpty ? cities.first['id'] : null;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load cities: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching cities: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,14 +132,9 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
           const SizedBox(height: 12),
           _buildGreyText("Phone Number"),
           _buildInputField(phoneController, myColor, isNumber: true),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCountryDropdown(myColor),
-              const SizedBox(height: 14),
-              _buildInputField(cityController, myColor, label: "City"),
-            ],
-          ),
+          _buildCountryDropdown(myColor),
+          const SizedBox(height: 12),
+          _buildCityDropdown(myColor),
           const SizedBox(height: 12),
           _buildGreyText("Password"),
           _buildInputField(passwordController, myColor, isPassword: true),
@@ -171,10 +183,39 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       onChanged: (value) {
         setState(() {
           selectedCountry = value;
+          _fetchCities();
         });
       },
       decoration: InputDecoration(
         labelText: "Country",
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: myColor),
+        ),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: myColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown(Color myColor) {
+    return DropdownButtonFormField<String>(
+      value: selectedCity,
+      items: cities
+          .map(
+            (city) => DropdownMenuItem<String>(
+              value: city['id'], // Use city ID as the value
+              child: Text(city['name']), // Display city name
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedCity = value; // Update the selected city ID
+        });
+      },
+      decoration: InputDecoration(
+        labelText: "City",
         focusedBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: myColor),
         ),
@@ -193,7 +234,7 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
   }
 
   Widget _buildInputField(TextEditingController controller, Color myColor,
-      {String? label, bool isPassword = false, bool isNumber = false}) {
+      {bool isPassword = false, bool isNumber = false}) {
     return SizedBox(
       height: 40,
       child: TextField(
@@ -201,8 +242,6 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
         obscureText: isPassword ? !showPassword : false,
         decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.grey),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
@@ -235,8 +274,6 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
         elevation: 12,
-        //elevation: 12,
-        shadowColor: myColor,
         minimumSize: const Size.fromHeight(50),
       ),
       child: Text(
@@ -260,17 +297,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
                   builder: (context) => const LoginPage(),
                 ),
               );
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const LoginPage(),
-                ),
-              );
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),
               elevation: 0,
               backgroundColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
             ),
             child: Text(
               "Log In",
@@ -283,94 +314,79 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
   }
 
   void _validateAndSubmit() async {
-    String password = passwordController.text;
-    String confirmPassword = confirmPasswordController.text;
-
-    if (password != confirmPassword) {
+    if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Passwords do not match!"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("Passwords do not match!")),
       );
       return;
     }
 
-    if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password must be at least 6 characters long"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Save the entered data to the shared variable
     StoreSignUpData signUpData = StoreSignUpData(
       storeName: storeNameController.text.trim(),
       contactEmail: emailController.text.trim(),
-      phoneNumber: phoneController.text,
+      phoneNumber: phoneController.text.trim(),
       password: passwordController.text.trim(),
       country: selectedCountry,
-      city: cityController.text,
+      city: selectedCity,
       allowSpecialOrders: allowSpecialOrders,
-      accountType: widget.SignUpData.accountType,
-      selectedGenreId: widget.SignUpData.selectedGenreId,
+      accountType: widget.signUpData.accountType,
+      selectedGenreId: widget.signUpData.selectedGenreId,
+      logo: widget.signUpData.logo, // Include logo URL if applicable
     );
 
-    // Register user
+    // Validate required fields
+    if (signUpData.storeName == null ||
+        signUpData.contactEmail == null ||
+        signUpData.phoneNumber == null ||
+        signUpData.password == null ||
+        signUpData.country == null ||
+        signUpData.city == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all required fields!")),
+      );
+      return;
+    }
+    print("await registerUser(signUpData);");
     await registerUser(signUpData);
   }
 
   Future<void> registerUser(StoreSignUpData signUpData) async {
-    if (signUpData.storeName != null &&
-        signUpData.contactEmail != null &&
-        signUpData.phoneNumber != null &&
-        signUpData.password != null &&
-        signUpData.country != null &&
-        signUpData.city != null) {
-      try {
-        // Prepare request body using StoreSignUpData model as JSON
-        var url = Uri.parse(storeRegistration);
+    try {
+      var url = Uri.parse(storeRegistration);
+      var response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(signUpData.toJson()),
+      );
 
-        // Send data as JSON
-        var response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json', // Set content-type to JSON
-          },
-          body: jsonEncode(signUpData.toJson()),
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        print(jsonResponse);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
         );
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          final jsonResponse = jsonDecode(response.body);
+        // Save token and navigate
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('token', jsonResponse['token']);
+        prefs.setString('userType', jsonResponse['userType']);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registration successful!')),
-          );
-
-          // Save token and user type to SharedPreferences
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setString('token', jsonResponse['token']);
-          prefs.setString('userType', jsonResponse['userType']);
-
-          // Navigate to MainScreen after successful registration
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          final errorMessage = jsonDecode(response.body)['message'] ??
-              'Registration failed. Please try again.';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $errorMessage')),
-          );
-        }
-      } catch (e) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      } else {
+        final errorMessage = jsonDecode(response.body)['message'] ??
+            'Registration failed. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
+          SnackBar(content: Text('Error: $errorMessage')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
     }
   }
 }

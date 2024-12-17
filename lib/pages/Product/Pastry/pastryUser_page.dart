@@ -1,57 +1,76 @@
-import '../../../configuration/config.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../../configuration/config.dart';
 import '../productDetails_page.dart';
+import '../../../components/badge.dart';
 
 class PastryPage extends StatefulWidget {
   final String storeId;
   final String storeName;
 
-  const PastryPage({required this.storeId, required this.storeName});
+  const PastryPage({super.key, required this.storeId, required this.storeName});
 
   @override
   _PastryPageState createState() => _PastryPageState();
 }
 
 class _PastryPageState extends State<PastryPage> {
-  List<dynamic> pastries = []; // Dynamic list to hold fetched pastries
-  bool isLoading = true; // Loading indicator
-  String errorMessage = ''; // Error message for display
+  List<Map<String, dynamic>> pastries = [];
+  List<Map<String, dynamic>> filteredPastries = [];
+  bool isLoading = true;
+  bool _isSearching = false;
+  bool isFavorite = false;
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _fetchPastries(); // Fetch pastries from the backend
+    _fetchPastries();
   }
 
   Future<void> _fetchPastries() async {
     try {
       final response = await http
-          .get(Uri.parse('${getStoreProductsForUser}/${widget.storeId}'));
+          .get(Uri.parse('$getStoreProductsForUser/${widget.storeId}'));
       if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
           setState(() {
-            pastries = jsonResponse['data'];
+            pastries = List<Map<String, dynamic>>.from(jsonResponse['data']);
+            filteredPastries = pastries;
             isLoading = false;
           });
         } else {
           setState(() {
-            errorMessage = 'No products found.';
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Failed to load pastries: ${response.body}';
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'An error occurred: $e';
         isLoading = false;
+      });
+    }
+  }
+
+  void _filterPastries(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        filteredPastries = pastries;
+      });
+    } else {
+      setState(() {
+        filteredPastries = pastries
+            .where((pastry) =>
+                pastry['name'] != null &&
+                pastry['name'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
       });
     }
   }
@@ -64,7 +83,7 @@ class _PastryPageState extends State<PastryPage> {
       appBar: AppBar(
         backgroundColor: myColor,
         elevation: 0,
-        toolbarHeight: appBarHeight, // Responsive height for the AppBar
+        toolbarHeight: appBarHeight,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: Colors.white70,
@@ -78,117 +97,191 @@ class _PastryPageState extends State<PastryPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_border),
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
             color: Colors.white70,
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        '${widget.storeName} added to your favorites stores')),
-              );
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchController.clear();
+                  filteredPastries = pastries;
+                } else {
+                  _isSearching = true;
+                }
+              });
             },
           ),
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // Background image with opacity
-          Opacity(
-            opacity: 0.2,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(
-                      'assets/images/pastry.jpg'), // Background image path
-                  fit: BoxFit.cover,
+          if (_isSearching)
+            Container(
+              color: const Color.fromARGB(171, 243, 229, 245),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterPastries,
+                style: const TextStyle(color: myColor),
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  hintStyle: TextStyle(color: myColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white24,
                 ),
               ),
             ),
-          ),
-          // Main content
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          Expanded(
             child: isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: myColor),
                   )
-                : errorMessage.isNotEmpty
-                    ? Center(
+                : filteredPastries.isEmpty
+                    ? const Center(
                         child: Text(
-                          errorMessage,
-                          style:
-                              const TextStyle(fontSize: 18, color: Colors.red),
+                          'No pastries available.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       )
-                    : ListView.builder(
-                        itemCount: pastries.length,
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(10.0),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 0.7,
+                        ),
+                        itemCount: filteredPastries.length,
                         itemBuilder: (context, index) {
-                          final pastry = pastries[index];
-                          return Card(
-                            elevation: 4,
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Pastry Image
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      image: const DecorationImage(
-                                        image: AssetImage(
-                                            'assets/images/pastry.jpg'), // Static image for now
-                                        fit: BoxFit.cover,
+                          final pastry = filteredPastries[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DetailPage(product: pastry),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              color: const Color.fromARGB(171, 243, 229, 245),
+                              elevation: 5,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        image: DecorationImage(
+                                          image: pastry['image'] != null &&
+                                                  pastry['image'].isNotEmpty
+                                              ? NetworkImage(pastry['image'])
+                                                  as ImageProvider
+                                              : const AssetImage(
+                                                  'assets/images/pastry.jpg'),
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Pastry details
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        // Pastry title
-                                        Text(
-                                          pastry['name'] ??
-                                              'No Name', // Use 'name' from the backend
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
+                                        // Product Title
+                                        Expanded(
+                                          child: Text(
+                                            pastry['name'] ?? 'No Name',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow
+                                                .ellipsis, // Prevent overflow
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        // Price
-                                        Text(
-                                          '${pastry['price'].toStringAsFixed(2)} ₪', // Format price
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
+                                        const SizedBox(
+                                            width:
+                                                8), // Add spacing between title and badge
+                                        // Badge for Out of Stock or Special Note
+                                        if ((pastry['inStock'] == false) &&
+                                            (pastry['isUponOrder'] ==
+                                                false)) // Out of Stock
+                                          const badge(
+                                            text: 'Out of Stock',
+                                            color: Colors.redAccent,
+                                          )
+                                        else if (pastry['specialNote'] !=
+                                            null) // Special Note
+                                          badge(
+                                            text: pastry['specialNote'] ?? '',
+                                            color: Colors
+                                                .blueAccent, // Adjust color as needed
                                           ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            if (pastry['isUponOrder'] ==
+                                                true) // Upon Order badge
+                                              const badge(
+                                                text: 'Upon Order',
+                                                color: Colors.orangeAccent,
+                                              ),
+                                            if ((pastry['inStock'] == false) &&
+                                                (pastry['isUponOrder'] ==
+                                                    false)) // Out of Stock badge
+                                              const badge(
+                                                text: 'Out of Stock',
+                                                color: Colors.redAccent,
+                                              ),
+                                          ],
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.arrow_forward,
+                                            color: myColor,
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    DetailPage(product: pastry),
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  // Arrow button
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_forward),
-                                    color: myColor,
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => DetailPage(
-                                              product:
-                                                  pastry), // Pass the product
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -196,6 +289,27 @@ class _PastryPageState extends State<PastryPage> {
                       ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            isFavorite = !isFavorite;
+          });
+          // Add to favorites logic
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${widget.storeName} added to favorites!'),
+            ),
+          );
+        },
+        backgroundColor: myColor, //const Color.fromARGB(171, 243, 229, 245),
+        foregroundColor: isFavorite
+            ? const Color.fromARGB(171, 243, 229, 245)
+            : const Color.fromARGB(227, 255, 255, 255),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ), //Colors.white70,
+        child: const Icon(Icons.favorite),
       ),
     );
   }

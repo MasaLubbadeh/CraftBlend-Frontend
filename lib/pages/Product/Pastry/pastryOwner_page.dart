@@ -17,7 +17,11 @@ class PastryOwnerPage extends StatefulWidget {
 class _PastryOwnerPageState extends State<PastryOwnerPage> {
   String businessName = 'Pastry Delights';
   List<Map<String, dynamic>> pastries = [];
+  List<Map<String, dynamic>> filteredPastries = [];
   bool isLoading = true;
+  bool _isAddingProduct = false;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -33,8 +37,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
       if (token != null) {
         final response = await http.get(
-          Uri.parse(
-              getStoreDetails), // Your backend endpoint for fetching store details
+          Uri.parse(getStoreDetails),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -58,12 +61,9 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
-      print('STORE token :');
-      print(token);
 
       final response = await http.get(
-        Uri.parse(
-            getStoreProducts), // Make sure the backend is setup to handle this endpoint
+        Uri.parse(getStoreProducts),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -76,6 +76,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         if (mounted) {
           setState(() {
             pastries = List<Map<String, dynamic>>.from(data);
+            filteredPastries = pastries; // Initialize filtered list
             isLoading = false;
           });
         }
@@ -92,6 +93,22 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     }
   }
 
+  void _filterPastries(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        filteredPastries = pastries;
+      });
+    } else {
+      setState(() {
+        filteredPastries = pastries
+            .where((pastry) =>
+                pastry['name'] != null &&
+                pastry['name'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      });
+    }
+  }
+
   Future<void> _deleteProduct(String productId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -99,7 +116,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content:
                   Text('Authentication token not found. Please log in again.')),
         );
@@ -107,7 +124,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       }
 
       final response = await http.delete(
-        Uri.parse('${deleteProductByID}/$productId'),
+        Uri.parse('$deleteProductByID/$productId'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -137,14 +154,17 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         title: const Text('Confirm Delete'),
         content: Text(
           'Are you sure you want to delete "$productName"?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: myColor),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -180,147 +200,214 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            color: Colors.white70,
+            onPressed: () {
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchController.clear();
+                  filteredPastries = pastries; // Reset the filtered list
+                } else {
+                  _isSearching = true;
+                }
+              });
+            },
+          ),
+        ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
+      body: Column(
+        children: [
+          if (_isSearching) // Show the search box only when searching
+            Container(
+              color: const Color.fromARGB(171, 243, 229, 245),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterPastries,
+                style: const TextStyle(color: myColor),
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  hintStyle: TextStyle(color: myColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor:
+                      Colors.white24, // Lighten the background of the box
+                ),
+              ),
+            ),
+          Expanded(
+            child: Stack(
               children: [
                 Opacity(
                   opacity: 0.2,
                   child: Container(
                     decoration: const BoxDecoration(
+                        color: Color.fromARGB(135, 209, 183, 208)
+                        /*
                       image: DecorationImage(
                         image: AssetImage('assets/images/pastry.jpg'),
                         fit: BoxFit.cover,
-                      ),
-                    ),
+                      ),*/
+                        ),
                   ),
                 ),
-                ListView.builder(
-                  itemCount: 1 + pastries.length,
-                  padding: const EdgeInsets.all(8.0),
+                GridView.builder(
+                  padding: const EdgeInsets.all(10.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 items per row
+                    crossAxisSpacing: 10, // Space between columns
+                    mainAxisSpacing: 10, // Space between rows
+                    childAspectRatio: 3 / 4, // Adjust for item shape
+                  ),
+                  itemCount: filteredPastries.length +
+                      1, // Include "Add Product" button
                   itemBuilder: (context, index) {
                     if (index == 0) {
-                      return Card(
-                        elevation: 4,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        child: ListTile(
-                          leading: const Icon(Icons.add, color: myColor),
-                          title: const Text(
-                            'Add New Product',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                      return GestureDetector(
+                        onTap: _isAddingProduct
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isAddingProduct = true;
+                                });
+
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddPastryProduct(),
+                                  ),
+                                );
+                                await fetchPastries(); // Refresh data
+
+                                setState(() {
+                                  _isAddingProduct = false;
+                                });
+                              },
+                        child: Card(
+                          elevation: 4,
+                          color: const Color.fromARGB(171, 243, 229, 245),
+                          child: Center(
+                            child: _isAddingProduct
+                                ? const CircularProgressIndicator(
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(myColor),
+                                  )
+                                : const Icon(
+                                    Icons.add,
+                                    size: 50,
+                                    color: myColor,
+                                  ),
                           ),
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddPastryProduct(),
-                              ),
-                            );
-                            fetchPastries(); // Refresh after adding a product
-                          },
                         ),
                       );
                     }
 
-                    final productIndex = index - 1;
-                    final pastry = pastries[productIndex];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 6.0, horizontal: 10.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Slidable(
-                          key: ValueKey(pastry['_id']),
-                          endActionPane: ActionPane(
-                            motion: const DrawerMotion(),
-                            extentRatio: 0.26,
-                            children: [
-                              SlidableAction(
-                                onPressed: (context) {
-                                  _showDeleteConfirmationDialog(
-                                      pastry['_id'], pastry['name']);
-                                },
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                icon: Icons.delete,
-                                label: 'Delete',
+                    final pastry = filteredPastries[index - 1];
+                    return Card(
+                      color: const Color.fromARGB(171, 243, 229, 245),
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 120, // Fixed height for the image
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: DecorationImage(
+                                  image: pastry['image'] != null &&
+                                          pastry['image'].isNotEmpty
+                                      ? NetworkImage(pastry['image'])
+                                          as ImageProvider
+                                      : const AssetImage(
+                                          'assets/images/pastry.jpg'),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ],
-                          ),
-                          child: Card(
-                            color: const Color.fromARGB(171, 243, 229, 245),
-                            elevation: 5,
-                            margin: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      image: const DecorationImage(
-                                        image: AssetImage(
-                                            'assets/images/pastry.jpg'),
-                                        fit: BoxFit.cover,
+                            const SizedBox(height: 8),
+                            Text(
+                              pastry['name'] ?? 'No Name',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(), // Pushes icons to the bottom
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final updatedProduct = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EditPastryProduct(product: pastry),
                                       ),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          pastry['name'] ?? 'No Name',
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () async {
-                                      final updatedProduct =
-                                          await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              EditPastryProduct(
-                                                  product: pastry),
-                                        ),
-                                      );
+                                    );
 
-                                      if (updatedProduct != null) {
-                                        setState(() {
-                                          pastries[productIndex] =
-                                              updatedProduct;
-                                        });
-                                      }
-                                    },
+                                    if (updatedProduct != null) {
+                                      setState(() {
+                                        pastries[index - 1] = updatedProduct;
+                                      });
+                                    }
+                                  },
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.transparent,
+                                    ),
+                                    padding: const EdgeInsets.all(3),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      color: myColor,
+                                      size: 20,
+                                    ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => _showDeleteConfirmationDialog(
+                                    pastry['_id'],
+                                    pastry['name'],
+                                  ),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.transparent,
+                                    ),
+                                    padding: const EdgeInsets.all(3),
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: myColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     );
@@ -328,6 +415,9 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 }

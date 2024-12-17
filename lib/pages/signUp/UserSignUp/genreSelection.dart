@@ -42,7 +42,6 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
     _fetchGenres();
   }
 
-  // Function to fetch genres from the backend
   Future<void> _fetchGenres() async {
     try {
       final response = await http.get(
@@ -57,8 +56,8 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
           genres = genreList
               .map((genre) => {
                     'title': genre['name'] as String,
-                    'image':
-                        'assets/images/${(genre['name'] as String).toLowerCase()}.jpg',
+                    'image': genre[
+                        'image'], // Use photo URL directly from the backend
                   })
               .toList();
         });
@@ -109,10 +108,12 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             jsonResponse['status'] == 201 ||
             jsonResponse['status'] == true) {
           print("Registration successful!");
-          final _auth = AuthService();
-          _auth.signUpWithEmainPassword(
+          final auth = AuthService();
+          auth.signUpWithEmailPassword(
             widget.signUpData.email!,
             widget.signUpData.password!,
+            widget.signUpData.firstName!,
+            widget.signUpData.lastName!,
           );
           // Save token and user type to SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -121,7 +122,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
 
           // Navigate to MainScreen after successful registration
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => MainScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -143,7 +144,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Please fill in all fields!"),
           backgroundColor: Colors.red,
         ),
@@ -243,14 +244,14 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
 
 class GenreCard extends StatelessWidget {
   final String title;
-  final String imagePath;
+  final String? imagePath; // Make imagePath nullable
   final bool isSelected;
   final VoidCallback onTap;
 
   const GenreCard({
     super.key,
     required this.title,
-    required this.imagePath,
+    this.imagePath,
     required this.isSelected,
     required this.onTap,
   });
@@ -264,14 +265,19 @@ class GenreCard extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              image: DecorationImage(
-                image: AssetImage(imagePath),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
-                  BlendMode.darken,
-                ),
-              ),
+              image: imagePath != null && imagePath!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(imagePath!),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
+                        BlendMode.darken,
+                      ),
+                    )
+                  : null, // If no image, keep it null
+              color: imagePath == null || imagePath!.isEmpty
+                  ? Colors.grey[300]
+                  : null, // Show a grey background if there's no image
               border:
                   isSelected ? Border.all(color: Colors.white, width: 3) : null,
             ),
@@ -284,7 +290,7 @@ class GenreCard extends StatelessWidget {
                   style: TextStyle(
                     color: isSelected
                         ? Colors.grey
-                        : Colors.black54, // Change color based on selection
+                        : Colors.white, // Change color based on selection
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
