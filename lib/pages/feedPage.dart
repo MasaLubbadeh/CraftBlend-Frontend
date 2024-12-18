@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/post.dart';
 import '../configuration/config.dart';
@@ -151,8 +152,17 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<void> handleComment(String postId) async {
-    final TextEditingController _usernameController = TextEditingController();
     final TextEditingController _commentController = TextEditingController();
+
+    // Fetch user details from SharedPreferences
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? firstName = prefs.getString('firstName');
+    String? lastName = prefs.getString('lastName');
+
+    // If first name or last name is not available, set a default
+    String username = (firstName != null && lastName != null)
+        ? '$firstName $lastName'
+        : 'Anonymous';
 
     showDialog(
       context: context,
@@ -162,10 +172,6 @@ class _FeedPageState extends State<FeedPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(hintText: 'Your username'),
-              ),
               TextField(
                 controller: _commentController,
                 decoration:
@@ -180,14 +186,15 @@ class _FeedPageState extends State<FeedPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (_usernameController.text.isNotEmpty &&
-                    _commentController.text.isNotEmpty) {
+                if (_commentController.text.isNotEmpty) {
                   try {
                     final response = await http.post(
-                      Uri.parse('${comments}posts/$postId/comment'),
+                      Uri.parse(
+                          'https://your-api-endpoint/posts/$postId/comment'),
                       headers: {'Content-Type': 'application/json'},
                       body: json.encode({
-                        'username': _usernameController.text.trim(),
+                        'username':
+                            username, // Use the username from shared preferences
                         'comment': _commentController.text.trim(),
                       }),
                     );
