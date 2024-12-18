@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../categoriesPage.dart'; // Add this import
+import '../feedPage.dart'; // Add this import
 
 class CreatePostPage extends StatefulWidget {
   @override

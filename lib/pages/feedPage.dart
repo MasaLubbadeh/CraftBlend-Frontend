@@ -14,7 +14,9 @@ class FeedPage extends StatefulWidget {
 class _FeedPageState extends State<FeedPage> {
   List<dynamic> posts = [];
   bool isLoading = true;
-
+  bool isLiked = false;
+  bool isUpvoted = false;
+  // int likes = 0;
   @override
   void initState() {
     super.initState();
@@ -23,18 +25,23 @@ class _FeedPageState extends State<FeedPage> {
 
   Future<void> fetchPosts() async {
     try {
-      // Replace with your backend URL
-      // const String url = 'http://your-backend-url/api/posts';
-
-      // Fetch posts
       final response = await http.get(Uri.parse(fetchAllPosts));
-
       if (response.statusCode == 200) {
-        print("posts fetched succefully");
-        // Parse JSON response
         final List<dynamic> data = json.decode(response.body);
+
+        // Sort posts by upvotes in ascending order before updating state
+        data.sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
+        posts.sort(
+            (a, b) => (a['downvotes'] ?? 0).compareTo(b['downvotes'] ?? 0));
+
         setState(() {
-          posts = data;
+          posts = data.map((post) {
+            return {
+              ...post,
+              'isLiked': false,
+              'isUpvoted': false,
+            };
+          }).toList();
           isLoading = false;
         });
       } else {
@@ -49,6 +56,14 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<void> handleLike(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isLiked']) {
+      print('Post already liked.');
+      return;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('${likes}posts/$postId/like'),
@@ -56,6 +71,10 @@ class _FeedPageState extends State<FeedPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        setState(() {
+          posts[postIndex]['isLiked'] = true;
+          posts[postIndex]['likes'] = data['likes'];
+        });
         print('Post liked successfully. Total likes: ${data['likes']}');
       } else {
         print('Failed to like post: ${response.body}');
@@ -66,6 +85,14 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   Future<void> handleUpvote(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isUpvoted']) {
+      print('Post already upvoted.');
+      return;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('${upvotes}posts/$postId/upvote'),
@@ -73,12 +100,53 @@ class _FeedPageState extends State<FeedPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        setState(() {
+          posts
+              .sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
+
+          posts[postIndex]['isUpvoted'] = true;
+          posts[postIndex]['upvotes'] = data['upvotes'];
+        });
         print('Post upvoted successfully. Total upvotes: ${data['upvotes']}');
       } else {
         print('Failed to upvote post: ${response.body}');
       }
     } catch (e) {
       print('Error upvoting post: $e');
+    }
+  }
+
+  Future<void> handleDownvote(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isDownvoted'] != null &&
+        posts[postIndex]['isDownvoted']) {
+      print('Post already downvoted.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('${downvotes}posts/$postId/downvote'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          posts.sort(
+              (a, b) => (a['downvotes'] ?? 0).compareTo(b['downvotes'] ?? 0));
+
+          posts[postIndex]['isDownvoted'] = true;
+          posts[postIndex]['downvotes'] = data['downvotes'];
+        });
+        print(
+            'Post downvoted successfully. Total downvotes: ${data['downvotes']}');
+      } else {
+        print('Failed to downvote post: ${response.body}');
+      }
+    } catch (e) {
+      print('Error downvoting post: $e');
     }
   }
 
@@ -184,36 +252,56 @@ class _FeedPageState extends State<FeedPage> {
           const SizedBox(width: 10),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : posts.isEmpty
-              ? const Center(child: Text('No posts available'))
-              : ListView.builder(
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) {
-                    final post = posts[index];
-                    print(post); // Debugging line to check the data
+      body: RefreshIndicator(
+        onRefresh: fetchPosts, // Trigger the fetchPosts function on pull-down
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : posts.isEmpty
+                ? const Center(child: Text('No posts available'))
+                : ListView.builder(
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
 
-                    PostCard(
-                      profileImageUrl: 'https://via.placeholder.com/100',
-                      username: '${post['firstName']} ${post['lastName']}',
-                      content: post['content'],
-                      likes: post['likes'] ?? 0,
-                      initialUpvotes: post['upvotes'] ?? 0,
-                      commentsCount: (post['comments'] as List).length,
-                      onLike: () {
-                        handleLike(post['_id']); // Pass the post ID
-                      },
-                      onUpvote: (newUpvotes) {
-                        handleUpvote(post['_id']); // Pass the post ID
-                      },
-                      onComment: () {
-                        handleComment(post['_id']); // Pass the post ID
-                      },
-                      photoUrls: List<String>.from(post['images'] ?? []),
-                    );
-                  },
-                ),
+                      return PostCard(
+                        profileImageUrl: 'https://via.placeholder.com/100',
+                        username: '${post['firstName']} ${post['lastName']}',
+                        content: post['content'],
+                        likes: post['likes'] ??
+                            0, // Fetch likes from the post, default to 0 if null
+                        initialUpvotes: post['upvotes'] ??
+                            0, // Fetch upvotes, default to 0 if null
+                        initialDownvotes:
+                            post['downvotes'] ?? 0, // Pass initial downvotes
+
+                        commentsCount: post['comments']?.length ??
+                            0, // Count comments, default to 0 if null
+                        isLiked: post['isLiked'],
+                        isUpvoted: post['isUpvoted'],
+                        isDownvoted:
+                            post['isDownvoted'] ?? false, // Add downvoted state
+
+                        onLike: () {
+                          handleLike(post['_id']); // Pass the post ID
+                        },
+                        onUpvote: (newUpvotes) {
+                          handleUpvote(post['_id']); // Pass the post ID
+                        },
+                        onDownvote: (newDownvotes) {
+                          handleDownvote(post['_id']); // Pass downvote logic
+                        },
+                        onComment: () {
+                          handleComment(post['_id']); // Pass the post ID
+                        },
+                        photoUrls:
+                            post['images'] != null && post['images'].isNotEmpty
+                                ? List<String>.from(
+                                    post['images']) // Convert to List<String>
+                                : [],
+                      );
+                    },
+                  ),
+      ),
     );
   }
 }

@@ -6,9 +6,14 @@ class PostCard extends StatefulWidget {
   final String content;
   final int likes;
   final int initialUpvotes;
+  final int initialDownvotes;
   final int commentsCount;
+  final bool isLiked;
+  final bool isUpvoted;
+  final bool isDownvoted;
   final VoidCallback onLike;
   final Function(int) onUpvote;
+  final Function(int) onDownvote;
   final VoidCallback onComment;
   final List<String>? photoUrls;
 
@@ -19,9 +24,14 @@ class PostCard extends StatefulWidget {
     required this.content,
     required this.likes,
     required this.initialUpvotes,
+    required this.initialDownvotes,
     required this.commentsCount,
+    required this.isLiked,
+    required this.isUpvoted,
+    required this.isDownvoted,
     required this.onLike,
     required this.onUpvote,
+    required this.onDownvote,
     required this.onComment,
     this.photoUrls,
   }) : super(key: key);
@@ -33,8 +43,10 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   int likes = 0;
   int upvotes = 0;
+  int downvotes = 0;
   bool isLiked = false;
   bool isUpvoted = false;
+  bool isDownvoted = false;
   int currentImageIndex = 0; // Tracks the current image index
   final List<Map<String, String>> comments = [];
 
@@ -43,6 +55,10 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     likes = widget.likes;
     upvotes = widget.initialUpvotes;
+    downvotes = widget.initialDownvotes;
+    isLiked = widget.isLiked;
+    isUpvoted = widget.isUpvoted;
+    isDownvoted = widget.isDownvoted;
   }
 
   void toggleLike() {
@@ -59,6 +75,14 @@ class _PostCardState extends State<PostCard> {
       upvotes += isUpvoted ? 1 : -1;
     });
     widget.onUpvote(upvotes);
+  }
+
+  void toggleDownvote() {
+    setState(() {
+      isDownvoted = !isDownvoted;
+      downvotes += isDownvoted ? 1 : -1;
+    });
+    widget.onDownvote(downvotes);
   }
 
   void addComment(String username, String comment) {
@@ -211,6 +235,19 @@ class _PostCardState extends State<PostCard> {
                       onPressed: toggleUpvote,
                     ),
                     Text('$upvotes'),
+                  ],
+                ),
+                // Downvote Button
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(isDownvoted
+                          ? Icons.arrow_downward
+                          : Icons.arrow_downward_outlined),
+                      color: Colors.red,
+                      onPressed: toggleDownvote,
+                    ),
+                    Text('$downvotes'),
                   ],
                 ),
                 // Comment Button

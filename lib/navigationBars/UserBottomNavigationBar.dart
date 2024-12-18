@@ -1,5 +1,6 @@
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Posts/createPost.dart';
+import 'package:craft_blend_project/pages/feedPage.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 import '../pages/chatting/allChats.dart';
@@ -24,7 +25,7 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   void initState() {
     super.initState();
     _userPages = [
-      CategoriesPage(), // Home
+      FeedPage(), // Home
       const ProfileScreen(), // Profile
       CartPage(onTabChange: _onItemTapped), // Cart with callback
       AllChats(), // Chat

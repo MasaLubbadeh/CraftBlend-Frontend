@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://172.23.12.249:3000/';
+const String url = 'http://192.168.1.6:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -49,6 +49,7 @@ const String createPost = '${url}posts';
 const String fetchAllPosts = '${url}fetchAllPosts';
 const String likes = '${url}';
 const String upvotes = '${url}';
+const String downvotes = '${url}';
 const String comments = '${url}';
 
 const String getAllCities = '${url}city/getAll';
