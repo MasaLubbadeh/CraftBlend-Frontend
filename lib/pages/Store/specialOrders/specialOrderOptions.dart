@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../configuration/config.dart';
+import '../../../configuration/config.dart';
 import 'EditSpecialOrderFormPage.dart';
 
 class SpecialOrdersOverviewPage extends StatefulWidget {

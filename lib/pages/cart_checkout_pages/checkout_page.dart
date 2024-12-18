@@ -1000,12 +1000,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ? () async {
                 print('Placing Order...');
 
-                // Reduce product quantities
-                await _reduceProductQuantities();
+                try {
+                  // Proceed to place the order
+                  await _placeOrder();
 
-                // Proceed to place the order
-                print('Order placed successfully!');
-                _showThankYouModal(context); // Show Thank You modal
+                  // Show success modal on successful order placement
+                  _showThankYouModal(context);
+                } catch (e) {
+                  // Handle errors gracefully
+                  print('Error placing order: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to place order: $e')),
+                  );
+                }
               }
             : null, // Disable button if conditions are not met
         style: ElevatedButton.styleFrom(
@@ -1025,81 +1032,177 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Future<void> _placeOrder() async {
+    final token = await _fetchToken(); // Get authentication token
+    if (token == null) return;
+
+    final orderData = {
+      "items": widget.cartItems.map((item) {
+        return {
+          "productId": item["productId"]["_id"],
+          "storeId": item["storeId"]["_id"],
+          "quantity": item["quantity"],
+          "pricePerUnitWithOptionsCost": item["pricePerUnitWithOptionsCost"],
+          "totalPriceWithQuantity": item["totalPriceWithQuantity"],
+          "selectedOptions": item["selectedOptions"],
+          "deliveryType": item["productId"]["deliveryType"],
+        };
+      }).toList(),
+      "totalPrice": widget.total,
+      "deliveryDetails": {
+        "city": selectedCity,
+        "street": streetController.text,
+        "contactNumber": contactNumber,
+      },
+    };
+
+    try {
+      // API call to place the order
+      final response = await http.post(
+        Uri.parse('$placeOrder'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(orderData),
+      );
+
+      if (response.statusCode == 201) {
+        print('Order placed successfully!');
+
+        // Reduce product quantities (optional step)
+        await _reduceProductQuantities();
+
+        // Optionally refresh the cart after placing the order
+        await _refreshCart();
+      } else {
+        throw Exception('Failed to place order');
+      }
+    } catch (e) {
+      print('Error placing order: $e');
+      throw e; // Re-throw the error to be handled in the calling function
+    }
+  }
+
+  Future<void> _refreshCart() async {
+    final token = await _fetchToken(); // Get the authentication token
+    if (token == null) return;
+
+    try {
+      final productIds =
+          widget.cartItems.map((item) => item['productId']['_id']).toList();
+
+      final response = await http.delete(
+        Uri.parse('$removeCartItem'), // Update endpoint to handle batch delete
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'productIds': productIds}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Removed products from cart successfully.');
+      } else {
+        print(
+            'Failed to remove products from cart. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error refreshing cart: $e');
+    }
+  }
+
   Future<void> _showThankYouModal(BuildContext context) async {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false, // Prevent dismissing the modal by tapping outside
+      enableDrag: false, // Prevent dismissing the modal by dragging
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
-      builder: (context) => SizedBox(
-        height:
-            MediaQuery.of(context).size.height * 0.5, // Half the screen height
-        width: MediaQuery.of(context).size.width, // Half the screen height
-
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.6, // Set the height to 60% of the screen
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Thank You Illustration
-            Image.asset(
-              'assets/images/thank_you_image.jpg', // Add your custom image here
-              height: 120,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 20),
-
-            // Thank You Message
-            const Text(
-              'Thank You!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-            ),
-            const SizedBox(height: 10),
-
-            // Subtext
-            const Text(
-              'Your order is now being processed.\nThank you for shopping with us!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Back to Home Button
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const UserBottomNavigationBar(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: myColor.withOpacity(.8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4, // Upper half
+                child: Image.asset(
+                  'assets/images/ThankYouCard.jpg', // Add your custom image
+                  fit: BoxFit.cover,
                 ),
               ),
-              child: const Text(
-                'Back To Home',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Subtext
+                    const Text(
+                      'Your order is now being processed.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Thank you for shopping with us!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Back to Home Button
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const UserBottomNavigationBar(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: myColor.withOpacity(.7),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'Back To Home',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

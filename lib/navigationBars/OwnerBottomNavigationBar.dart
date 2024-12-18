@@ -1,7 +1,8 @@
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:craft_blend_project/pages/Store/orders_page.dart';
 import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:flutter/material.dart';
-import '../pages/specialOrders/specialOrder_page.dart';
+import '../pages/Store/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
 import '../pages/Store/storeProfile_page.dart';
@@ -17,13 +18,12 @@ class OwnerBottomNavigationBar extends StatefulWidget {
 class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
   int _currentIndex = 0;
 
-  // List of pages corresponding to the bottom navigation items
   final List<Widget> _ownerPages = [
     const PastryOwnerPage(), // Manage Store
-    const SpecialOrdersPage(),
-    const StoreProfileScreen(), // Special Orders
-    AllChats(),
-    //add more
+    // const SpecialOrdersPage(), // Orders
+    const StoreOrdersPage(),
+    const StoreProfileScreen(), // Profile
+    AllChats(), // Chat
   ];
 
   void _onItemTapped(int index) {
@@ -37,30 +37,33 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
     return Scaffold(
       body: _ownerPages[_currentIndex], // Display the current page
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.shifting, // Enable shifting behavior
+        currentIndex: _currentIndex,
+        selectedItemColor: myColor,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.store),
             label: 'Manage Store',
+            backgroundColor: Colors.white, // Background for this tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.description),
-            label: 'Special Orders',
+            label: 'Orders',
+            backgroundColor: Colors.white, // Background for this tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
+            backgroundColor: Colors.white, // Background for this tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
+            backgroundColor: Colors.white, // Background for this tab
           ),
         ],
-        currentIndex: _currentIndex,
-        selectedItemColor: myColor, // Color for selected icon
-        unselectedItemColor: Colors.black45, // Color for unselected icons
-        backgroundColor: Colors.white70, // Background of the navigation bar
-        type: BottomNavigationBarType.fixed, // Ensure all icons are displayed
-        onTap: _onItemTapped,
       ),
     );
   }

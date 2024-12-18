@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://172.23.12.249:3000/';
+const String url = 'http://192.168.1.17:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -40,9 +40,14 @@ const String updateDeliveryCitiesUrl = '${url}store/UpdateDelivery-cities';
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
-const String removeCartItem = '${url}cart/removeCartItem';
 const String fetchInstantCartItems = '${url}cart/fetchInstantItems';
 const String fetchScheduledCartItems = '${url}cart/fetchScheduledItems';
+const String removeCartItem = '${url}cart/removeCartItems';
+
+const String placeOrder = '${url}order/placeOrder';
+const String getOrdersByStoreId = '${url}order/getOrdersByStoreId';
+const String getUserOrders = '${url}order/getUserOrders';
+const String updateOrderStatus = '${url}order';
 
 const String getFirstLast = '${url}getFullName';
 const String createPost = '${url}posts';

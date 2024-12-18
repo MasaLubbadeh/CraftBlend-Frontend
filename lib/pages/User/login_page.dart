@@ -105,17 +105,18 @@ class _LoginPageState extends State<LoginPage> {
         var myToken = jsonResponse['token'];
         var userType = jsonResponse['userType'];
 
-        // Assuming the API also sends firstName, lastName, and email in the response
-        var firstName = jsonResponse['data']['firstName'];
-        var lastName = jsonResponse['data']['lastName'];
-        var email = jsonResponse['data']['email'];
+        // Extract data object, fallback to defaults if fields are missing
+        var data = jsonResponse['data'] ?? {};
+        var firstName = data['firstName'] ?? 'User';
+        var lastName = data['lastName'] ?? '';
+        var email = data['email'] ?? '';
 
         // Save data in SharedPreferences
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
         prefs.setString('userType', userType);
-        prefs.setString('firstName', firstName);
-        prefs.setString('lastName', lastName);
+        //prefs.setString('firstName', firstName);
+        // prefs.setString('lastName', lastName);
         prefs.setString('email', email);
 
         // Save email and password only if "remember me" is checked
@@ -139,9 +140,11 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     } catch (e) {
-      setState(() {
-        errorMessage = 'An error occurred. Please try again.';
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = 'An error occurred. Please try again.';
+        });
+      }
     }
   }
 

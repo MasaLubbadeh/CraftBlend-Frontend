@@ -7,7 +7,7 @@ import 'pages/User/login_page.dart';
 import 'pages/welcome.dart';
 import 'pages/Product/Pastry/pastryUser_page.dart';
 import 'pages/Product/Pastry/pastryOwner_page.dart';
-import 'pages/specialOrders/specialOrder_page.dart';
+import 'pages/Store/specialOrders/specialOrder_page.dart';
 import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';

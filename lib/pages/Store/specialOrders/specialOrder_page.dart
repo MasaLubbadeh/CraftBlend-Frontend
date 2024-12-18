@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../../configuration/config.dart';
+import '../../../configuration/config.dart';
 import 'specialOrderOptions.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../orders_page.dart';
 
 class SpecialOrdersPage extends StatefulWidget {
   const SpecialOrdersPage({super.key});
@@ -59,10 +62,13 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildReviewOrderRequestsCard(),
+                const SizedBox(height: 10),
+                _buildReviewSpecialRequestsCard(), // New Card for Review Requests
+
                 _buildSpecialOrdersSwitchCard(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 //if (specialOrdersEnabled)
-                _buildReviewRequestsCard(), // New Card for Review Requests
                 const SizedBox(height: 16),
                 if (specialOrdersEnabled) _buildOrderOptionsSelectionCard(),
                 const SizedBox(height: 24),
@@ -109,7 +115,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   }
 
   // New Card for Navigating to Review Requests
-  Widget _buildReviewRequestsCard() {
+  Widget _buildReviewSpecialRequestsCard() {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -135,6 +141,50 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
       context,
       MaterialPageRoute(builder: (context) => ReviewSpecialOrdersPage()),
     );
+  }
+
+  Widget _buildReviewOrderRequestsCard() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        leading: const Icon(Icons.receipt, color: myColor),
+        title: const Text(
+          'Review Orders',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: myColor,
+          ),
+        ),
+        onTap: () async {
+          // Get the token from secure storage or SharedPreferences
+          String? token =
+              await getToken(); // Replace with your token retrieval logic
+          if (token != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoreOrdersPage(
+                    // Pass the token to the orders page
+                    ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Authentication token not found!")),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+// Example function to retrieve the token
+  Future<String?> getToken() async {
+    // Use SharedPreferences or secure storage to retrieve the token
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 
 // Order Options Selection Card
