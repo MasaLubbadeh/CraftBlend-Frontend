@@ -139,9 +139,11 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     } catch (e) {
-      setState(() {
-        errorMessage = 'An error occurred. Please try again.';
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = 'An error occurred. Please try again.';
+        });
+      }
     }
   }
 
