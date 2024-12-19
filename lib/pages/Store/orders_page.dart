@@ -1,4 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:craft_blend_project/pages/Store/detailedOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -40,7 +41,7 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
         "Content-Type": "application/json",
       },
     );
-    print(response.body);
+    // print(response.body);
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
@@ -149,19 +150,78 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
+
+              // Extract `storeTotal` and `storeDeliveryCost` from the first item
+              final items = order['items'] as List<dynamic>;
+              final double storeTotal = items.isNotEmpty
+                  ? (items[0]['storeTotal'] ?? 0.0).toDouble()
+                  : 0.0;
+              final double storeDeliveryCost = items.isNotEmpty
+                  ? (items[0]['storeDeliveryCost'] ?? 0.0).toDouble()
+                  : 0.0;
+
               return Card(
-                margin: const EdgeInsets.all(10),
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 8,
                 child: ListTile(
-                  title: Text("Order ID: ${order['_id']}"),
-                  subtitle: Text(
-                    "Order #: ${order['orderNumber'] ?? 'N/A'}\n" // Use the extracted order number
-                    "Status: ${order['status']}\n"
-                    "Total: \$${order['totalPrice']}\n"
-                    "City: ${order['deliveryDetails']['city']}",
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  leading: CircleAvatar(
+                    backgroundColor: myColor.withOpacity(0.2),
+                    child: const Icon(
+                      Icons.receipt_long,
+                      color: myColor,
+                      size: 28,
+                    ),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  title: Text(
+                    "Order #: ${order['orderNumber'] ?? 'N/A'}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 5.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Status: ${order['status']}",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Store Total: \$${storeTotal.toStringAsFixed(2)}",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Delivery Cost: \$${storeDeliveryCost.toStringAsFixed(2)}",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "City: ${order['deliveryDetails']['city']}",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: myColor.withOpacity(0.7),
+                  ),
                   onTap: () {
                     // Navigate to detailed order view
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => OrderDetailsPage(order: order)),
+                    );
                   },
                 ),
               );

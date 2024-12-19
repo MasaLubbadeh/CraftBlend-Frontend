@@ -36,6 +36,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isEditingPhoneNumber = false; // Add this at the class level
   bool isScheduleSectionExpanded = true;
   bool isCityValid = true; // Flag to track city validation status
+  late double deliveryCost;
 
   @override
   void dispose() {
@@ -183,6 +184,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
 //This function calculates the total delivery cost across all stores for the selected city.
+  // Function to calculate total delivery cost across all stores
   double _calculateDeliveryCosts(String selectedCity) {
     double totalDeliveryCost = 0.0;
     final Set<String> processedStores = {}; // To track processed store IDs
@@ -200,10 +202,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Find the city's delivery cost for the store
       final cityData = storeCities.firstWhere(
         (city) => city['cityName'] == selectedCity,
-        orElse: () => {},
+        orElse: () => {}, // Return an empty map
       );
 
-      if (cityData != null) {
+      if (cityData.isNotEmpty) {
         final deliveryCost = (cityData['deliveryCost'] ?? 0).toDouble();
         totalDeliveryCost += deliveryCost;
       }
@@ -214,7 +216,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     return totalDeliveryCost;
   }
-//This function calculates the delivery cost for each store individually for the selected city.
 
   Map<String, double> _getDeliveryCostsByStore(String selectedCity) {
     Map<String, double> deliveryCostsByStore = {};
@@ -234,13 +235,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Find the city's delivery cost for the store
       final cityData = storeCities.firstWhere(
         (city) => city['cityName'] == selectedCity,
-        orElse: () => {},
+        orElse: () => {}, // Return an empty map
       );
 
-      if (cityData != null) {
-        final deliveryCost =
-            (cityData['deliveryCost'] ?? 0).toDouble(); // Safely cast to double
-        deliveryCostsByStore[storeName] = deliveryCost;
+      if (cityData.isNotEmpty) {
+        final deliveryCost = (cityData['deliveryCost'] ?? 0).toDouble();
+        deliveryCostsByStore[storeId] = deliveryCost; // Store by storeId
       }
 
       // Mark this store as processed
@@ -884,28 +884,91 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildSummarySection() {
-    double deliveryCost =
+    deliveryCost =
         selectedCity != null ? _calculateDeliveryCosts(selectedCity!) : 0.0;
+    print('deliveryCost');
+
+    print(deliveryCost);
+    print('selectedCity');
+    print(selectedCity);
+
     Map<String, double> deliveryCostsByStore =
         selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
 
+    print('deliveryCostsByStore');
+
+    print(deliveryCostsByStore);
+    Map<String, Map<String, double>> storeTotals = {};
+    Map<String, String> storeIdToName = {}; // Map to store ID-to-name mapping
+
+    for (var item in widget.cartItems) {
+      final storeId = item['storeId']['_id'];
+      final storeName = item['storeId']['storeName'];
+      final productTotal = item['totalPriceWithQuantity'];
+
+      // Populate storeId-to-name map
+      storeIdToName[storeId] = storeName;
+
+      if (!storeTotals.containsKey(storeId)) {
+        storeTotals[storeId] = {
+          "productsTotal": 0,
+          "deliveryCost": deliveryCostsByStore[storeId] ?? 0,
+          "grandTotal": 0,
+        };
+      }
+
+      storeTotals[storeId]!["productsTotal"] =
+          (productTotal ?? 0) + (storeTotals[storeId]!["productsTotal"] ?? 0);
+
+      storeTotals[storeId]!["grandTotal"] =
+          (storeTotals[storeId]!["productsTotal"] ?? 0) +
+              (storeTotals[storeId]!["deliveryCost"] ?? 0);
+    }
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSummaryRow('Sub Total', '${(widget.total).toStringAsFixed(2)}₪',
-            isLight: true),
-        const Divider(thickness: 1.5),
-        for (var entry in deliveryCostsByStore.entries)
-          _buildSummaryRow('${entry.key} Delivery Cost',
-              '${entry.value.toStringAsFixed(2)}₪',
-              isLight: true),
-        const Divider(thickness: 1.5),
-        _buildSummaryRow(
-            'Total Delivery Cost', '${deliveryCost.toStringAsFixed(2)}₪'),
-        const SizedBox(
-          height: 8,
+        const Text(
+          "Order Summary",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
+        const Divider(),
+        ...storeTotals.entries.map((entry) {
+          final storeId = entry.key;
+          final totals = entry.value;
+          final storeName = storeIdToName[storeId] ?? 'Unknown Store';
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                storeName,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0),
+                child: Column(
+                  children: [
+                    _buildSummaryRow('Products Total',
+                        '${totals["productsTotal"]!.toStringAsFixed(2)}₪',
+                        isLight: true),
+                    _buildSummaryRow('Delivery Cost',
+                        '${totals["deliveryCost"]!.toStringAsFixed(2)}₪',
+                        isLight: true),
+                    _buildSummaryRow('Grand Total',
+                        '${totals["grandTotal"]!.toStringAsFixed(2)}₪',
+                        isBold: true),
+                  ],
+                ),
+              ),
+              const Divider(),
+            ],
+          );
+        }),
         _buildSummaryRow(
-          'Total',
+          'Overall Total',
           '${(widget.total + deliveryCost).toStringAsFixed(2)}₪',
           isBold: true,
         ),
@@ -913,6 +976,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+// Helper widget to build rows in the summary
   Widget _buildSummaryRow(String title, String value,
       {bool isBold = false, bool isLight = false}) {
     return Padding(
@@ -923,8 +987,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: (title == "Overall Total") ? 18 : 15,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w400,
               color: isLight
                   ? Colors.black54
                   : Colors.black, // Use black for normal, black54 for light
@@ -933,8 +997,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: (title == "Overall Total") ? 18 : 16,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w400,
               color: isLight ? Colors.black54 : Colors.black, // Same logic here
             ),
           ),
@@ -1033,33 +1097,77 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _placeOrder() async {
-    final token = await _fetchToken(); // Get authentication token
+    final token = await _fetchToken(); // Fetch authentication token
     if (token == null) return;
 
-    final orderData = {
-      "items": widget.cartItems.map((item) {
-        return {
+    Map<String, double> deliveryCostsByStore =
+        selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
+
+    // Group items by store and calculate totals
+    Map<String, Map<String, dynamic>> groupedStores = {};
+
+    for (var item in widget.cartItems) {
+      final storeId = item['storeId']['_id'];
+      final storeName = item['storeId']['storeName'];
+      final productTotal = item['totalPriceWithQuantity'] ?? 0.0;
+      final deliveryCost = deliveryCostsByStore[storeId] ?? 0.0;
+
+      if (!groupedStores.containsKey(storeId)) {
+        groupedStores[storeId] = {
+          "storeName": storeName,
+          "items": [],
+          "productsTotal": 0.0,
+          "deliveryCost": deliveryCost,
+          "grandTotal": 0.0,
+        };
+      }
+
+      // Add the item to the store's list
+      groupedStores[storeId]!["items"].add(item);
+
+      // Accumulate the products' totals
+      groupedStores[storeId]!["productsTotal"] += productTotal;
+    }
+
+    // Calculate grand totals for each store
+    groupedStores.forEach((storeId, storeData) {
+      storeData["grandTotal"] =
+          storeData["productsTotal"] + storeData["deliveryCost"];
+    });
+
+    // Prepare the items for the backend
+    List<Map<String, dynamic>> items = [];
+    groupedStores.forEach((storeId, storeData) {
+      for (var item in storeData["items"]) {
+        items.add({
           "productId": item["productId"]["_id"],
-          "storeId": item["storeId"]["_id"],
+          "storeId": storeId,
           "quantity": item["quantity"],
           "pricePerUnitWithOptionsCost": item["pricePerUnitWithOptionsCost"],
           "totalPriceWithQuantity": item["totalPriceWithQuantity"],
           "selectedOptions": item["selectedOptions"],
           "deliveryType": item["productId"]["deliveryType"],
-        };
-      }).toList(),
-      "totalPrice": widget.total,
+          "storeTotal": storeData["productsTotal"],
+          "storeDeliveryCost": storeData["deliveryCost"],
+        });
+      }
+    });
+
+    Map<String, dynamic> orderData = {
+      "userId": "YOUR_USER_ID", // Replace with actual user ID
+      "items": items,
+      "totalPrice": widget.total + deliveryCost, // Overall total
       "deliveryDetails": {
         "city": selectedCity,
         "street": streetController.text,
         "contactNumber": contactNumber,
       },
+      "status": "Pending",
     };
 
     try {
-      // API call to place the order
       final response = await http.post(
-        Uri.parse('$placeOrder'),
+        Uri.parse(placeOrder), // Replace with your API URL
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -1068,19 +1176,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
 
       if (response.statusCode == 201) {
-        print('Order placed successfully!');
-
-        // Reduce product quantities (optional step)
+        print('Order placed successfully.');
         await _reduceProductQuantities();
-
-        // Optionally refresh the cart after placing the order
         await _refreshCart();
+        // _showThankYouModal(context);
       } else {
-        throw Exception('Failed to place order');
+        print('Failed to place order: ${response.body}');
       }
     } catch (e) {
       print('Error placing order: $e');
-      throw e; // Re-throw the error to be handled in the calling function
     }
   }
 
