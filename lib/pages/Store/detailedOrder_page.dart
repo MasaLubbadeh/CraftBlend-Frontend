@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -20,44 +22,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   void initState() {
     super.initState();
     order = widget.order;
+    print("Received order id: ${order['orderId']}"); // Debug print
   }
 
-  Future<void> updateOrderStatus(String orderId, String newStatus) async {
-    try {
-      setState(() {
-        isUpdating = true;
-      });
-
-      final response = await http.put(
-        Uri.parse('/orders/$orderId/updateStatus'),
-        headers: {
-          "Authorization": "Bearer yourToken",
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({"status": newStatus}),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          order['status'] = newStatus;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Order status updated to $newStatus")),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update order status.")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred.")),
-      );
-    } finally {
-      setState(() {
-        isUpdating = false;
-      });
-    }
+  Future<String?> _fetchToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 
   @override
@@ -125,24 +95,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     for (var item in order['items'] ?? []) {
       final storeId = item['storeId'];
 
-      // Handle case where storeId is just a String
-      final storeName = storeId is Map
-          ? storeId['storeName'] ?? 'Unknown Store'
-          : 'Unknown Store';
-
       if (storeId == null) continue;
 
       if (!storeTotals.containsKey(storeId)) {
         storeTotals[storeId] = {
-          'storeName': storeName,
           'storeTotal': 0.0,
           'storeDeliveryCost': 0.0,
         };
       }
 
-      storeTotals[storeId]!['storeTotal'] += (item['storeTotal'] ?? 0.0);
-      storeTotals[storeId]!['storeDeliveryCost'] +=
-          (item['storeDeliveryCost'] ?? 0.0);
+      storeTotals[storeId] = {
+        'storeTotal': item['storeTotal'] ?? 0.0,
+        'storeDeliveryCost': item['storeDeliveryCost'] ?? 0.0,
+      };
     }
 
     return Card(
@@ -170,8 +135,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               "Status: ${order['status']}",
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 3),
-            Text("Total Price: \$${order['totalPrice']}"),
+            // Text("Total Price: \$${order['totalPrice']}"),
             const SizedBox(height: 5),
             const Divider(),
             const SizedBox(height: 5),
@@ -191,18 +155,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 "Contact Number: ${order['deliveryDetails']['contactNumber']}"),
             const SizedBox(height: 10),
             const Text(
-              "Store Totals:",
+              "Financial Overview:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 8),
+            //const SizedBox(height: 5),
             ...storeTotals.entries.map((entry) {
-              final storeName = entry.value['storeName'];
               final storeTotal = entry.value['storeTotal'] ?? 0.0;
               final storeDeliveryCost = entry.value['storeDeliveryCost'] ?? 0.0;
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Text(
-                  "$storeName: Total \$${storeTotal.toStringAsFixed(2)}, Delivery Cost \$${storeDeliveryCost.toStringAsFixed(2)}",
+                  "Total: \$${storeTotal.toStringAsFixed(2)} \n Delivery Cost: \$${storeDeliveryCost.toStringAsFixed(2)}",
                   style: const TextStyle(fontSize: 14),
                 ),
               );
@@ -215,8 +178,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   Widget _buildProductCard(dynamic item) {
     final product = item['productId'];
-    final productName = product?['name'] ?? 'No Name';
-    final productImage = product?['image'] ?? '';
+
+    // Check for valid product structure
+    final productName = (product is Map && product.containsKey('name'))
+        ? product['name']
+        : 'No Name';
+    final productImage = (product is Map && product.containsKey('image'))
+        ? product['image']
+        : '';
 
     final unitPrice = item['pricePerUnitWithOptionsCost'] ?? 0;
     final itemTotalPrice = item['totalPriceWithQuantity'] ?? 0;
@@ -312,21 +281,36 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildStatusButton() {
+    // Determine the button label and action based on the order's current status
+    String buttonLabel;
+    String nextStatus;
+
+    if (order['status'] == "Pending") {
+      buttonLabel = "Mark as Shipped";
+      nextStatus = "Shipped";
+    } else if (order['status'] == "Shipped") {
+      buttonLabel = "Mark as Delivered";
+      nextStatus = "Delivered";
+    } else {
+      // If the status is Delivered, no button is needed
+      return const SizedBox.shrink();
+    }
+
     return Container(
       alignment: Alignment.center,
       child: ElevatedButton.icon(
         onPressed: isUpdating
             ? null
-            : () => _showConfirmationDialog(order['orderId'], "Shipped"),
+            : () => _showConfirmationDialog(order['orderId'], nextStatus),
         icon: const Icon(
           Icons.local_shipping,
           color: Colors.white,
         ),
         label: isUpdating
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text(
-                "Mark as Shipped",
-                style: TextStyle(color: Colors.white, fontSize: 16),
+            : Text(
+                buttonLabel,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
         style: ElevatedButton.styleFrom(
           backgroundColor: myColor,
@@ -339,19 +323,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
-  /// Show confirmation dialog
   void _showConfirmationDialog(String orderId, String newStatus) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            "Confirm Shipment",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            "Confirm $newStatus",
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: const Text(
-            "Are you sure you want to mark this order as 'Shipped'?",
-            style: TextStyle(fontSize: 16),
+          content: Text(
+            "Are you sure you want to mark this order as '$newStatus'?",
+            style: const TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
@@ -375,5 +358,56 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         );
       },
     );
+  }
+
+  Future<void> updateOrderStatus(String orderId, String newStatus) async {
+    try {
+      setState(() {
+        isUpdating = true;
+      });
+
+      final token = await _fetchToken();
+      if (token == null) return;
+
+      final url = '$updateOrderStatusUrl/$orderId/updateStatus';
+      print('Final URL: $url');
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"status": newStatus}),
+      );
+
+      if (response.statusCode == 200) {
+        // Update the order status in the UI
+        final updatedOrder = json.decode(response.body)['order'];
+        setState(() {
+          order = updatedOrder; // Refresh the current order details
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Order status updated to $newStatus")),
+        );
+
+        // Notify the previous page to refresh its data
+        Navigator.pop(context, true); // Signal the previous page to refresh
+      } else {
+        final responseData = json.decode(response.body);
+        throw Exception(
+            responseData['message'] ?? 'Failed to update order status');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() {
+        isUpdating = false;
+      });
+    }
   }
 }

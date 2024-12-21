@@ -150,7 +150,8 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-
+              print('order  id:');
+              print(order['orderId']);
               // Extract `storeTotal` and `storeDeliveryCost` from the first item
               final items = order['items'] as List<dynamic>;
               final double storeTotal = items.isNotEmpty
@@ -216,12 +217,23 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                     color: myColor.withOpacity(0.7),
                   ),
                   onTap: () {
+                    print("Navigating with order: ${order.toString()}");
+
                     // Navigate to detailed order view
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => OrderDetailsPage(order: order)),
-                    );
+                        builder: (context) => OrderDetailsPage(order: order),
+                      ),
+                    ).then((result) {
+                      if (result == true) {
+                        // Refresh the order list
+                        setState(() {
+                          _receivedOrders = fetchOrders('/getReceivedOrders');
+                          _specialOrders = fetchOrders('/getSpecialOrders');
+                        });
+                      }
+                    });
                   },
                 ),
               );
