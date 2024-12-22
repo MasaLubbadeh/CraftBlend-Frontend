@@ -12,7 +12,16 @@ const String getPersonalInfo = '${url}getPersonalInfo';
 const String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
 const String addCreditCard = '${url}addCreditCard';
 const String getCreditCardData = '${url}getCreditCardData'; //check-email
-const String checkEmail = '${url}check-email';
+const String checkEmail = '${url}check-email'; //addFavoriteStore
+
+const String addFavoriteStore = '${url}favoriteStores'; //addFavoriteStore
+const String removeFavoriteStore = '${url}favoriteStores'; //addFavoriteStore
+const String checkIfFavoriteStore =
+    '${url}favoriteStores/checkIfFav'; //addFavoriteStore
+
+const String addToWishlist = '${url}wishlist'; //addFavoriteStore
+const String removeFromWishlist = '${url}wishlist';
+const String checkIfInWishlist = '${url}wishlist/checkIfExist';
 
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
@@ -61,6 +70,7 @@ const String incrementCityStoreCount = '${url}city/';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
+const myColor2 = myColor;
 
 const Color primaryColor = Color(0xffA47551); // A warm brown color
 const Color accentColor = Color(0xffD9C4B1); // A lighter beige accent

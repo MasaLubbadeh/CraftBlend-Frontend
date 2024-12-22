@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../../../configuration/config.dart';
 import '../productDetails_page.dart';
 import '../../../components/badge.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PastryPage extends StatefulWidget {
   final String storeId;
@@ -27,7 +28,14 @@ class _PastryPageState extends State<PastryPage> {
   @override
   void initState() {
     super.initState();
+    _checkIfFavorite();
+
     _fetchPastries();
+  }
+
+  Future<String?> _fetchToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 
   Future<void> _fetchPastries() async {
@@ -73,6 +81,119 @@ class _PastryPageState extends State<PastryPage> {
             .toList();
       });
     }
+  }
+
+  Future<void> _checkIfFavorite() async {
+    try {
+      final token = await _fetchToken();
+      if (token == null) {
+        throw Exception("Token is missing.");
+      }
+
+      final response = await http.get(
+        Uri.parse('$checkIfFavoriteStore/${widget.storeId}'),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        setState(() {
+          isFavorite = jsonResponse['isFavorite'] ?? false;
+        });
+      } else {
+        throw Exception('Failed to fetch favorite status.');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      final token = await _fetchToken();
+      if (token == null) {
+        throw Exception("Token is missing.");
+      }
+
+      final Uri url = Uri.parse(isFavorite
+          ? '$removeFavoriteStore/${widget.storeId}'
+          : '$addFavoriteStore/${widget.storeId}');
+
+      final response = await (isFavorite
+          ? http.delete(
+              url,
+              headers: {
+                "Authorization": "Bearer $token",
+                "Content-Type": "application/json",
+              },
+            )
+          : http.put(
+              url,
+              headers: {
+                "Authorization": "Bearer $token",
+                "Content-Type": "application/json",
+              },
+            ));
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['success'] == true) {
+          setState(() {
+            isFavorite = !isFavorite;
+          });
+
+          final message = isFavorite
+              ? '${widget.storeName} added to favorites!'
+              : '${widget.storeName} removed from favorites!';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Action failed.');
+        }
+      } else {
+        throw Exception('Server returned status: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _confirmToggleFavorite() {
+    if (!isFavorite) {
+      _toggleFavorite(); // Directly add to favorites without confirmation.
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove from Favorites'),
+        content: const Text(
+            'Are you sure you want to remove this store from your favorites?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _toggleFavorite();
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -291,17 +412,8 @@ class _PastryPageState extends State<PastryPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            isFavorite = !isFavorite;
-          });
-          // Add to favorites logic
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.storeName} added to favorites!'),
-            ),
-          );
-        },
+        onPressed: _confirmToggleFavorite, // Toggles favorite status
+
         backgroundColor: myColor, //const Color.fromARGB(171, 243, 229, 245),
         foregroundColor: isFavorite
             ? const Color.fromARGB(171, 243, 229, 245)

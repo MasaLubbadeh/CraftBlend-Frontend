@@ -19,10 +19,12 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   int _quantity = 1;
   final Map<String, Map<String, dynamic>?> _selectedOptions = {};
+  bool isInWishlist = false;
 
   @override
   void initState() {
     super.initState();
+    _checkIfInWishlist();
     // Initialize selected options with null for optional options or first value for required options
     widget.product['availableOptions']?.forEach((key, values) {
       if (values.isNotEmpty) {
@@ -31,6 +33,121 @@ class _DetailPageState extends State<DetailPage> {
         _selectedOptions[key] = isOptional ? null : values.first;
       }
     });
+  }
+
+  Future<String?> _fetchToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<void> _checkIfInWishlist() async {
+    try {
+      final token = await _fetchToken();
+      if (token == null) {
+        throw Exception("Token is missing.");
+      }
+
+      final response = await http.get(
+        Uri.parse('$checkIfInWishlist/${widget.product['_id']}'),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        setState(() {
+          isInWishlist = jsonResponse['isInWishlist'] ?? false;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _toggleWishlist() async {
+    try {
+      final token = await _fetchToken();
+      if (token == null) {
+        throw Exception("Token is missing.");
+      }
+
+      final Uri url = Uri.parse(isInWishlist
+          ? '$removeFromWishlist/${widget.product['_id']}'
+          : '$addToWishlist/${widget.product['_id']}');
+
+      final response = await (isInWishlist
+          ? http.delete(
+              url,
+              headers: {
+                "Authorization": "Bearer $token",
+                "Content-Type": "application/json",
+              },
+            )
+          : http.post(
+              url,
+              headers: {
+                "Authorization": "Bearer $token",
+                "Content-Type": "application/json",
+              },
+            ));
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['success'] == true) {
+          setState(() {
+            isInWishlist = !isInWishlist;
+          });
+
+          final message = isInWishlist
+              ? '${widget.product['name']} added to wishlist!'
+              : '${widget.product['name']} removed from wishlist!';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        } else {
+          throw Exception(jsonResponse['message'] ?? 'Action failed.');
+        }
+      } else {
+        throw Exception('Server returned status: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _confirmToggleWishlist() {
+    if (!isInWishlist) {
+      _toggleWishlist(); // Directly add to wishlist without confirmation.
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove from Wishlist'),
+        content: const Text(
+            'Are you sure you want to remove this product from your wishlist?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _toggleWishlist();
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -57,18 +174,6 @@ class _DetailPageState extends State<DetailPage> {
       ),
       body: Stack(
         children: [
-          Opacity(
-            opacity: 0.1,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image:
-                      AssetImage('assets/images/pastriesBackgroundBorder.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -90,11 +195,9 @@ class _DetailPageState extends State<DetailPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-
                   _buildProductSpecialNote(),
                   const SizedBox(height: 16),
                   _buildProductDescription(),
-                  //const Spacer(),
                   const SizedBox(height: 20),
                   Card(
                     color: myColor,
@@ -114,25 +217,42 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 9.0, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: myColor,
+                      size: 26,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: _buildAddToCartButton(),
-                      ),
-                    ),
+                    onPressed: _confirmToggleWishlist,
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.7,
+                    child: _buildAddToCartButton(),
                   ),
                 ],
               ),
@@ -460,6 +580,9 @@ class _DetailPageState extends State<DetailPage> {
         textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         backgroundColor: myColor,
         foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       child: const Text('Add to Cart'),
     );

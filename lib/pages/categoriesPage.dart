@@ -5,7 +5,9 @@ import '../configuration/config.dart';
 import 'Product/Pastry/pastryUser_page.dart';
 
 class CategoriesPage extends StatefulWidget {
-  const CategoriesPage({super.key});
+  final String? selectedCategoryId;
+
+  const CategoriesPage({super.key, required this.selectedCategoryId});
 
   @override
   _CategoriesPageState createState() => _CategoriesPageState();
@@ -24,6 +26,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
   void initState() {
     super.initState();
     _fetchCategories();
+    print(widget.selectedCategoryId);
+    if (widget.selectedCategoryId != null) {
+      selectedCategoryId = widget.selectedCategoryId;
+      _fetchStores(selectedCategoryId!);
+    }
 
     // Save scroll offset whenever it changes
     _categoryScrollController.addListener(() {

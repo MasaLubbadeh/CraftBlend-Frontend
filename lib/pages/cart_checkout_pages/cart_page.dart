@@ -1,4 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:craft_blend_project/pages/Home_page.dart';
 import 'package:craft_blend_project/pages/categoriesPage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -174,7 +175,7 @@ class _CartPageState extends State<CartPage>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CategoriesPage()),
+                  MaterialPageRoute(builder: (context) => HomePage()),
                 );
               },
               tooltip: 'Manage Orders',
