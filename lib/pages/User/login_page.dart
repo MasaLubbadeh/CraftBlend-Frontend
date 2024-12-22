@@ -87,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void loginUserWithCredentials(String email, String password) async {
+/*  void loginUserWithCredentials(String email, String password) async {
     var reqBody = {"email": email, "password": password};
     try {
       var response = await http.post(
@@ -117,6 +117,74 @@ class _LoginPageState extends State<LoginPage> {
         prefs.setString('firstName', firstName);
         prefs.setString('lastName', lastName);
         prefs.setString('email', email);
+
+        // Save email and password only if "remember me" is checked
+        if (rememberUser) {
+          prefs.setString('email', email);
+          prefs.setString('password', password);
+        } else {
+          prefs.remove('email');
+          prefs.remove('password');
+        }
+
+        // Navigate to MainScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      } else {
+        setState(() {
+          errorMessage =
+              jsonResponse['message'] ?? 'Something went wrong with login';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = 'An error occurred. Please try again.';
+        });
+      }
+    }
+  }
+*/
+
+  void loginUserWithCredentials(String email, String password) async {
+    var reqBody = {"email": email, "password": password};
+    try {
+      var response = await http.post(
+        Uri.parse(login),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(reqBody),
+      );
+
+      var jsonResponse = jsonDecode(response.body);
+      print('LOGIN jsonResponse:');
+      print(jsonResponse);
+
+      if (jsonResponse['status']) {
+        // Extract token and user details
+        var myToken = jsonResponse['token'];
+        var userType = jsonResponse['userType'];
+
+        // Extract data object, fallback to defaults if fields are missing
+        var data = jsonResponse['data'] ?? {};
+        print('data object:$data');
+        var firstName = data['firstName'] ?? 'User';
+        var lastName = data['lastName'] ?? '';
+        var email = data['email'] ?? '';
+        var storeName = data['storeName'] ?? 'test';
+        // Save data in SharedPreferences
+        prefs.setString('token', myToken);
+        prefs.setBool('rememberUser', rememberUser);
+        prefs.setString('userType', userType);
+        //prefs.setString('firstName', firstName);
+        // prefs.setString('lastName', lastName);
+        prefs.setString('email', email);
+        prefs.setString('storeName', storeName);
+        print('store Name:$storeName');
+        print('first Name:$firstName');
+        print('last Name:$lastName');
+        print('email:$email');
 
         // Save email and password only if "remember me" is checked
         if (rememberUser) {
