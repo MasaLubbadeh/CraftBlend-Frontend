@@ -1,77 +1,67 @@
-import 'package:craft_blend_project/pages/googleMapsPage.dart';
 import 'package:flutter/material.dart';
-import '../pages/googleMapsPage.dart';
-import '../pages/search_page.dart';
+import '../configuration/config.dart';
 
 class AddressWidget extends StatelessWidget {
-  final String address;
+  final String firstLineText; // Text for the first line
+  final String? secondLineText; // Optional text for the second line
+  final Color backgroundColor; // Background color for the widget
+  final Color textColor; // Text color for both lines
+  final IconData icon; // Icon for the widget
+  final VoidCallback? onTap; // Optional tap callback
 
-  const AddressWidget({Key? key, required this.address}) : super(key: key);
+  const AddressWidget({
+    Key? key,
+    required this.firstLineText,
+    this.secondLineText,
+    this.backgroundColor = Colors.white70, // Default background color
+    this.textColor = myColor, // Default text color
+    this.icon = Icons.location_on, // Default icon
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => MapPage()),
-            );
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              const Icon(Icons.location_on, color: Colors.white70),
-              const SizedBox(width: 5),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    address.split(",")[0], // City Center
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color.fromARGB(113, 238, 238, 238)),
-                  ),
-                  Text(
-                    address.split(",")[1], // Al-Sharawiya
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color.fromARGB(113, 238, 238, 238),
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                alignment: Alignment.centerRight,
-                icon: const Icon(Icons.search, color: Colors.grey),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (_, __, ___) => const SearchPage(),
-                      transitionsBuilder: (_, animation, __, child) {
-                        const begin = Offset(1.0, 0.0);
-                        const end = Offset.zero;
-                        const curve = Curves.easeInOut;
-
-                        var tween = Tween(begin: begin, end: end)
-                            .chain(CurveTween(curve: curve));
-                        var offsetAnimation = animation.drive(tween);
-
-                        return SlideTransition(
-                            position: offsetAnimation, child: child);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: onTap, // Execute the callback when tapped
+      child: Container(
+        width: MediaQuery.of(context).size.width * .52,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: backgroundColor, // Customizable background color
+          borderRadius: BorderRadius.circular(30), // Oval shape
         ),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: textColor), // Customizable icon
+
+            const SizedBox(width: 5),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  firstLineText, // First line text
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: textColor, // Customizable text color
+                  ),
+                ),
+                if (secondLineText != null) // Conditionally render second line
+                  Text(
+                    secondLineText!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor, // Customizable text color
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 5),
+            Icon(Icons.arrow_drop_down, color: textColor), // Dropdown arrow
+          ],
+        ),
+      ),
     );
   }
 }

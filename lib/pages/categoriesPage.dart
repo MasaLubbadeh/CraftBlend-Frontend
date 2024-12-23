@@ -101,7 +101,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        //automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -114,6 +114,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white70,
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [

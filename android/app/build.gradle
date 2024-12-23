@@ -15,8 +15,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.firebase:firebase-storage'
     implementation 'com.google.android.gms:play-services-base:18.0.1'
-    implementation 'com.google.android.gms:play-services-maps:18.0.2'
-    
+    implementation 'com.google.android.gms:play-services-maps:18.0.2' 
     }
 
 
@@ -43,6 +42,7 @@ android {
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
+        resValue "string", "GOOGLE_MAPS_API_KEY", dotenv.getProperty("GOOGLE_MAPS_API_KEY")
     }
 
     buildTypes {
@@ -58,3 +58,7 @@ flutter {
     source = "../.."
 }
 apply plugin: 'com.google.gms.google-services'
+def dotenv = new Properties()
+file('.env').withInputStream {
+    dotenv.load(it)
+}
