@@ -2,6 +2,7 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:flutter/material.dart';
 import '../pages/Store/storeProfile.dart';
+import '../pages/feedPage.dart';
 import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
@@ -21,9 +22,11 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
   // List of pages corresponding to the bottom navigation items
   final List<Widget> _ownerPages = [
     const PastryOwnerPage(), // Manage Store
-    const SpecialOrdersPage(),
+    // const SpecialOrdersPage(),
     // const StoreProfileScreen(), // Special Orders
+    FeedPage(),
     StoreProfilePage(),
+
     AllChats(),
     //add more
   ];
@@ -46,7 +49,7 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.description),
-            label: 'Special Orders',
+            label: 'Feed',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

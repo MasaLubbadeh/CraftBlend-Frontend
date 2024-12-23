@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/post.dart';
 import '../configuration/config.dart';
-import 'Posts/createPost.dart';
+import 'Posts/createStorePost.dart';
+import 'Posts/createUserPost.dart';
 
 class FeedPage extends StatefulWidget {
   @override
@@ -245,7 +246,7 @@ class _FeedPageState extends State<FeedPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreatePostPage()),
+                MaterialPageRoute(builder: (context) => CreateStorePostPage()),
               );
             },
           ),
@@ -272,7 +273,7 @@ class _FeedPageState extends State<FeedPage> {
 
                       return PostCard(
                         profileImageUrl: 'https://via.placeholder.com/100',
-                        username: '${post['firstName']} ${post['lastName']}',
+                        username: '${post['fullName']}',
                         content: post['content'],
                         likes: post['likes'] ??
                             0, // Fetch likes from the post, default to 0 if null

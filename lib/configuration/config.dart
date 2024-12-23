@@ -45,7 +45,8 @@ const String fetchInstantCartItems = '${url}cart/fetchInstantItems';
 const String fetchScheduledCartItems = '${url}cart/fetchScheduledItems';
 
 const String getFirstLast = '${url}getFullName';
-const String createPost = '${url}posts';
+const String createUserPost = '${url}posts/userCreate';
+const String createStorePost = '${url}posts/storeCreate';
 const String fetchAllPosts = '${url}fetchAllPosts';
 const String likes = '${url}';
 const String upvotes = '${url}';

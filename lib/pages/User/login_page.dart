@@ -177,8 +177,8 @@ class _LoginPageState extends State<LoginPage> {
         prefs.setString('token', myToken);
         prefs.setBool('rememberUser', rememberUser);
         prefs.setString('userType', userType);
-        //prefs.setString('firstName', firstName);
-        // prefs.setString('lastName', lastName);
+        prefs.setString('firstName', firstName);
+        prefs.setString('lastName', lastName);
         prefs.setString('email', email);
         prefs.setString('storeName', storeName);
         print('store Name:$storeName');

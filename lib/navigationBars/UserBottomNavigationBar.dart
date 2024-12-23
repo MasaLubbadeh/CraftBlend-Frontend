@@ -1,5 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
-import 'package:craft_blend_project/pages/Posts/createPost.dart';
+import 'package:craft_blend_project/pages/Posts/createUserPost.dart';
 import 'package:craft_blend_project/pages/feedPage.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
