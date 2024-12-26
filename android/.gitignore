@@ -1,4 +1,4 @@
-.env
+/assets/.env
 gradle-wrapper.jar
 /.gradle
 /captures/

@@ -20,6 +20,7 @@ class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
   List<Marker> _markers = []; // List to hold markers
   List<Map<String, dynamic>> cities = []; // Cities data
+  String selectedCity = "Choose city"; // Default value for AddressWidget
 
   final CameraPosition _initialCameraPosition = const CameraPosition(
     target: LatLng(31.9730, 35.2164), // Approximate center of Palestine
@@ -30,6 +31,11 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     super.initState();
     _fetchCities();
+
+    // Automatically show location options when the page is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showLocationOptions();
+    });
   }
 
   Future<void> _fetchCities() async {
@@ -54,14 +60,10 @@ class _MapPageState extends State<MapPage> {
           _createMarkers();
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load cities: ${response.body}')),
-        );
+        _showSnackBar('Failed to load cities: ${response.body}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching cities: $e')),
-      );
+      _showSnackBar('Error fetching cities: $e');
     }
   }
 
@@ -79,33 +81,36 @@ class _MapPageState extends State<MapPage> {
           ),
           icon: customIcon,
           onTap: () async {
-            // Show loading dialog
-            showDialog(
-              context: context,
-              barrierDismissible:
-                  false, // Prevent dismissing by tapping outside
-              builder: (BuildContext context) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            );
-
-            // Simulate a short delay (e.g., 1 second) to show loading
-            await Future.delayed(const Duration(seconds: 1));
-
-            // Save selected location
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            prefs.setString('selectedLocation', city['name']);
-
-            // Dismiss the loading dialog
-            Navigator.pop(context); // Close the loading dialog
-            Navigator.pop(context); // Navigate back to the main page
+            _onCityTap(city);
           },
         ),
       );
     }
     setState(() {});
+  }
+
+  Future<void> _onCityTap(Map<String, dynamic> city) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    // Save selected location
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedLocation', city['name']);
+    await prefs.setString('selectedLocationID', city['id']);
+
+    // Close the loading dialog
+    Navigator.pop(context); // Close loading dialog
+
+    // Navigate to the User Navigation Bar Page
+    Navigator.pushReplacementNamed(context, '/userNavBar');
   }
 
   Future<BitmapDescriptor> _createCustomCircularMarker(String assetPath) async {
@@ -119,8 +124,8 @@ class _MapPageState extends State<MapPage> {
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(pictureRecorder);
 
-    final double size = 120.0; // Total size of the circular marker
-    final double imageSize = 100.0; // Size of the inner image
+    final double size = 120.0;
+    final double imageSize = 100.0;
 
     final Paint backgroundPaint = Paint()..color = myColor;
     canvas.drawCircle(Offset(size / 2, size / 2), size / 2, backgroundPaint);
@@ -154,24 +159,95 @@ class _MapPageState extends State<MapPage> {
     return BitmapDescriptor.fromBytes(markerBytes);
   }
 
-  void _showUnavailableLocationMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('We do not operate in this location yet.')),
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showLocationOptions() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Display the Image
+              /* Image.asset(
+                'assets/images/location_icon.png', // Replace with your image path
+                height: 100,
+              ),
+              const SizedBox(height: 20),
+*/
+              // Title
+              const Text(
+                "Choose your location",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+
+              // Share Location Option
+              ListTile(
+                leading: const Icon(Icons.my_location, color: myColor),
+                title: const Text("Share location"),
+                subtitle: const Text("Allow access to your current location"),
+                onTap: () async {
+                  bool permissionGranted = await _requestLocationPermission();
+                  if (permissionGranted) {
+                    // Fetch and handle location logic
+                    _showSnackBar("Fetching current location...");
+                  } else {
+                    _showSnackBar(
+                        "Location permission is required to proceed.");
+                  }
+                },
+              ),
+              const Divider(),
+
+              // Choose Location Manually Option
+              ListTile(
+                leading: const Icon(Icons.location_city, color: myColor),
+                title: const Text("Choose location manually"),
+                subtitle: const Text("Select your location from the map"),
+                onTap: () {
+                  Navigator.pop(context); // Close the modal
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  Future<bool> _requestLocationPermission() async {
+    // Add location permission request logic here
+    return true; // Placeholder for permission granted
   }
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.08;
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: true, // Show back button
+        toolbarHeight: appBarHeight,
+        automaticallyImplyLeading: false,
         centerTitle: true,
         backgroundColor: myColor,
         title: AddressWidget(
-          firstLineText: 'Choose Location',
-          onTap: () {
-            print("AddressWidget tapped in MapPage");
-          },
+          firstLineText: 'Palestine,',
+          secondLineText: selectedCity,
+          onTap: _showLocationOptions, // Pass the method to handle tap
         ),
       ),
       body: GoogleMap(
@@ -183,10 +259,9 @@ class _MapPageState extends State<MapPage> {
         markers: Set.from(_markers),
         myLocationButtonEnabled: true,
         myLocationEnabled: true,
-        minMaxZoomPreference:
-            const MinMaxZoomPreference(8, 16), // Restrict zoom levels
+        minMaxZoomPreference: const MinMaxZoomPreference(8, 16),
         onTap: (LatLng position) {
-          _showUnavailableLocationMessage();
+          _showSnackBar('We do not operate in this location yet.');
         },
       ),
     );

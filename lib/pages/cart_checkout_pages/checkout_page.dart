@@ -47,10 +47,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   void initState() {
     super.initState();
+    _fetchStoreDeliveryCities();
     _fetchCities();
     _fetchContactNumber();
     _fetchCreditCards();
-    _fetchStoreDeliveryCities();
+    _loadSavedCity();
+  }
+
+  Future<void> _loadSavedCity() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCity = prefs.getString('selectedLocation');
+    print('savedCity');
+
+    print(savedCity);
+    if (savedCity != null) {
+      setState(() {
+        selectedCity = savedCity;
+      });
+      // Validate the saved city after all cities are fetched
+      //  WidgetsBinding.instance.addPostFrameCallback((_) {
+      await _fetchStoreDeliveryCities();
+      _validateSelectedCity(savedCity);
+      // });
+    }
   }
 
   Future<void> _fetchStoreDeliveryCities() async {
@@ -58,44 +77,61 @@ class _CheckoutPageState extends State<CheckoutPage> {
         .map((item) => item['storeId']['_id'])
         .toSet(); // Get unique store IDs
 
+    // Create a list of futures for fetching delivery cities
+    List<Future<void>> fetchTasks = [];
+
     for (var storeId in storeIds) {
-      final response = await http.get(
-        Uri.parse('$getStoreDeliveryCitiesByID/$storeId'),
-      );
+      fetchTasks.add(http
+          .get(Uri.parse('$getStoreDeliveryCitiesByID/$storeId'))
+          .then((response) {
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Extract city names
-        final cities = data['deliveryCities']
-            .map<Map<String, dynamic>>((city) => {
-                  'cityName': city['cityName'],
-                  'deliveryCost': city['deliveryCost'],
-                })
-            .toList();
+          // Extract city names
+          final cities = data['deliveryCities']
+              .map<Map<String, dynamic>>((city) => {
+                    'cityName': city['cityName'],
+                    'deliveryCost': city['deliveryCost'],
+                  })
+              .toList();
 
-        storeDeliveryCities[storeId] = cities;
-
-        print('storeDeliveryCities[$storeId]: ${storeDeliveryCities[storeId]}');
-      } else {
-        storeDeliveryCities[storeId] =
-            []; // Default to empty if an error occurs
-      }
+          storeDeliveryCities[storeId] = cities;
+        } else {
+          storeDeliveryCities[storeId] =
+              []; // Default to empty if an error occurs
+        }
+      }));
     }
+
+    // Wait for all fetch tasks to complete
+    await Future.wait(fetchTasks);
+
+    // Now validate the selected city after all data is fetched
+    /*if (selectedCity != null) {
+      _validateSelectedCity(selectedCity!);
+    }*/
   }
 
   void _validateSelectedCity(String selectedCity) {
     Set<String> failingStores = {}; // Track stores that don't deliver
 
     for (var item in widget.cartItems) {
+      print('Processing item: $item'); // Print the entire cart item
+
       final storeId = item['storeId']['_id']; // Get the store ID
+      print('Store ID: $storeId'); // Print the store ID
+
       final storeCities =
           storeDeliveryCities[storeId] ?? []; // Get cities for the store
+      print(
+          'Delivery cities for store $storeId: $storeCities'); // Print cities for the store
 
       // Check if the selected city exists in the delivery cities for the store
       final deliversToCity =
           storeCities.any((city) => city['cityName'] == selectedCity);
-
       if (!deliversToCity) {
+        print("failingStores.add(item['storeId']['storeName'])");
+        print(item['storeId']['storeName']);
         failingStores.add(item['storeId']['storeName']);
       }
     }
@@ -546,22 +582,30 @@ class _CheckoutPageState extends State<CheckoutPage> {
         const Text(
           'Address',
           style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
         ),
-        Divider(),
+        const Divider(),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          value: selectedCity,
+          value: selectedCity, // Preselected value from prefs if available
           decoration: const InputDecoration(
             labelText: 'City',
             border: OutlineInputBorder(),
           ),
-          items: cities
-              .map((city) => DropdownMenuItem(value: city, child: Text(city)))
-              .toList(),
+          items: cities.map((city) {
+            return DropdownMenuItem(
+              value: city,
+              child: Text(city),
+            );
+          }).toList(),
           onChanged: (value) {
-            setState(() => selectedCity = value);
             if (value != null) {
+              setState(() {
+                selectedCity = value;
+              });
               _validateSelectedCity(value); // Validate the selected city
             }
           },
@@ -572,9 +616,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
             child: Text(
               'One or more stores in your cart do not deliver to the selected city.',
               style: TextStyle(
-                  color: Colors.red[300],
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
+                color: Colors.red[300],
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.justify,
             ),
           ),
@@ -586,15 +631,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
             border: OutlineInputBorder(),
           ),
         ),
-        const SizedBox(
-          height: 10,
-        ),
-        Container(
-          child: const Text(
-            '* Delivery may not be available in some cities',
-            style: TextStyle(fontSize: 14, color: Colors.black54),
-            textAlign: TextAlign.center, // Optional styling
-          ),
+        const SizedBox(height: 10),
+        const Text(
+          '* Delivery may not be available in some cities',
+          style: TextStyle(fontSize: 14, color: Colors.black54),
+          textAlign: TextAlign.center,
         ),
       ],
     );

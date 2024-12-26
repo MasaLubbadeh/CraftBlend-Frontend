@@ -42,6 +42,7 @@ class _PastryPageState extends State<PastryPage> {
     try {
       final response = await http
           .get(Uri.parse('$getStoreProductsForUser/${widget.storeId}'));
+      print(response.body);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
@@ -196,6 +197,16 @@ class _PastryPageState extends State<PastryPage> {
     );
   }
 
+  String formatTimeRequired(int? timeRequired) {
+    if (timeRequired == null) return "No time specified";
+    if (timeRequired < 24) {
+      return "$timeRequired hours";
+    } else {
+      final days = (timeRequired / 24).ceil();
+      return "$days day${days > 1 ? 's' : ''}";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -264,7 +275,7 @@ class _PastryPageState extends State<PastryPage> {
                 : filteredPastries.isEmpty
                     ? const Center(
                         child: Text(
-                          'No pastries available.',
+                          'No products available.',
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       )
@@ -302,7 +313,7 @@ class _PastryPageState extends State<PastryPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      height: 120,
+                                      height: 110,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(8),
                                         image: DecorationImage(
@@ -336,9 +347,9 @@ class _PastryPageState extends State<PastryPage> {
                                         ),
                                         const SizedBox(
                                             width:
-                                                8), // Add spacing between title and badge
+                                                5), // Add spacing between title and badge
                                         // Badge for Out of Stock or Special Note
-                                        if ((pastry['inStock'] == false) &&
+                                        /*if ((pastry['inStock'] == false) &&
                                             (pastry['isUponOrder'] ==
                                                 false)) // Out of Stock
                                           const badge(
@@ -352,6 +363,7 @@ class _PastryPageState extends State<PastryPage> {
                                             color: Colors
                                                 .blueAccent, // Adjust color as needed
                                           ),
+                                          */
                                       ],
                                     ),
                                     const SizedBox(height: 4),
@@ -369,15 +381,37 @@ class _PastryPageState extends State<PastryPage> {
                                       children: [
                                         Row(
                                           children: [
-                                            if (pastry['isUponOrder'] ==
-                                                true) // Upon Order badge
-                                              const badge(
-                                                text: 'Upon Order',
-                                                color: Colors.orangeAccent,
+                                            // Display badges for Upon Order and Time Required
+                                            if (pastry['isUponOrder'] == true)
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const badge(
+                                                    text: 'Upon Order',
+                                                    color: Colors.orangeAccent,
+                                                  ),
+                                                  SizedBox(
+                                                    height: 2,
+                                                  ),
+                                                  if (pastry['timeRequired'] !=
+                                                      null) // Time Required Badge
+                                                    badge(
+                                                      text: formatTimeRequired(
+                                                          pastry[
+                                                              'timeRequired']),
+                                                      color: myColor
+                                                          .withOpacity(.6),
+                                                      icon: Icons
+                                                          .timer, // Add a time icon
+                                                    ),
+                                                ],
                                               ),
+
+                                            // Display Out of Stock Badge
                                             if ((pastry['inStock'] == false) &&
                                                 (pastry['isUponOrder'] ==
-                                                    false)) // Out of Stock badge
+                                                    false))
                                               const badge(
                                                 text: 'Out of Stock',
                                                 color: Colors.redAccent,

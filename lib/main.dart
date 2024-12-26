@@ -1,3 +1,5 @@
+import 'package:craft_blend_project/pages/Home_page.dart';
+
 import "configuration/config.dart";
 import 'pages/User/profile.dart';
 import 'pages/signUp/UserSignUp/profilePageState.dart';
@@ -38,6 +40,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Craft Blend',
+        initialRoute: '/welcome',
+        routes: {
+          '/welcome': (context) => const WelcomePage(),
+          '/login': (context) => const LoginPage(),
+          '/home': (context) => const HomePage(),
+          '/map': (context) => const MapPage(),
+          '/userNavBar': (context) =>
+              const UserBottomNavigationBar(), // Add this
+        },
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,

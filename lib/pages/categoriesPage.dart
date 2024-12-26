@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../configuration/config.dart';
 import 'Product/Pastry/pastryUser_page.dart';
 
@@ -19,14 +20,16 @@ class _CategoriesPageState extends State<CategoriesPage> {
   bool isLoadingStores = false;
   bool isLoadingCategories = true;
   String? selectedCategoryId;
+  String? selectedCity; // To store the selected city name
   final ScrollController _categoryScrollController = ScrollController();
   double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _loadSelectedCity(); // Load selected city from SharedPreferences
     _fetchCategories();
-    print(widget.selectedCategoryId);
+
     if (widget.selectedCategoryId != null) {
       selectedCategoryId = widget.selectedCategoryId;
       _fetchStores(selectedCategoryId!);
@@ -35,6 +38,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
     // Save scroll offset whenever it changes
     _categoryScrollController.addListener(() {
       _scrollOffset = _categoryScrollController.offset;
+    });
+  }
+
+  Future<void> _loadSelectedCity() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedCity = prefs.getString('selectedLocationID'); // Get saved city
     });
   }
 
@@ -76,12 +86,26 @@ class _CategoriesPageState extends State<CategoriesPage> {
         isLoadingStores = true;
       });
 
+      // Fetch all stores for the selected category
       final response =
           await http.get(Uri.parse('$getStoresByCategory/$categoryId/stores'));
+
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
+
         setState(() {
-          stores = List<Map<String, dynamic>>.from(jsonResponse);
+          var fetchedStores = List<Map<String, dynamic>>.from(jsonResponse);
+
+          // Filter by city ID if a city is selected
+
+          if (selectedCity != null) {
+            fetchedStores = fetchedStores
+                .where((store) =>
+                    store['city'] == selectedCity) // Compare city IDs
+                .toList();
+          }
+
+          stores = fetchedStores;
           isLoadingStores = false;
         });
       } else {
@@ -101,7 +125,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        //automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -130,7 +153,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
             )
           else
             Card(
-              borderOnForeground: true,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
@@ -223,13 +245,17 @@ class _CategoriesPageState extends State<CategoriesPage> {
             child: isLoadingStores
                 ? const Center(child: CircularProgressIndicator())
                 : stores.isEmpty
-                    ? Center(
-                        child: Text(
-                          selectedCategoryId == null
-                              ? 'Select a category to view stores.'
-                              : 'No stores available for this category.',
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Center(
+                          child: Text(
+                            selectedCategoryId == null
+                                ? 'Select a category to view stores.'
+                                : 'Sorry, No stores available for this  category in this location.',
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       )
                     : GridView.builder(

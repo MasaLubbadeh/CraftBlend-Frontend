@@ -39,6 +39,15 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _fetchCategories();
     _loadSelectedCity();
+    _checkLocation();
+  }
+
+  Future<void> _checkLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? location = prefs.getString('selectedLocation');
+    if (location == null || location.isEmpty) {
+      Navigator.pushReplacementNamed(context, '/map');
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -67,15 +76,87 @@ class _HomePageState extends State<HomePage> {
 
     if (status.isGranted) {
       return true;
-    } else if (status.isDenied) {
-      // User denied permission, show a rationale (if needed)
-      return false;
-    } else if (status.isPermanentlyDenied) {
-      // Open app settings if permission is permanently denied
-      await openAppSettings();
+    } else if (status.isDenied || status.isPermanentlyDenied) {
+      _showLocationPermissionDialog();
       return false;
     }
     return false;
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Dialog Image
+                Image.asset(
+                  'assets/images/location_icon.png', // Replace with your image path
+                  height: 100,
+                ),
+                const SizedBox(height: 20),
+
+                // Title
+                const Text(
+                  'Allow location permission',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: myColor),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+
+                // Message
+                const Text(
+                  'Please enable your location permission to use the current location.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+
+                // Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Go to Settings Button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: myColor, // Use your theme color
+                      ),
+                      onPressed: () async {
+                        await openAppSettings();
+                        Navigator.pop(context); // Close dialog
+                      },
+                      child: const Text(
+                        'Go to settings',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                    // Cancel Button
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                      },
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showLocationOptions() {
