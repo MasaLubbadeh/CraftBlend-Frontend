@@ -1,9 +1,16 @@
+import 'dart:convert';
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
-import '../../components/button.dart';
+import 'storeProfile_page.dart'; // Import the intl package for date formatting
 
 class StoreProfilePage extends StatefulWidget {
+  final String userID;
+
+  StoreProfilePage({required this.userID});
+
   @override
   _StoreProfilePageState createState() => _StoreProfilePageState();
 }
@@ -11,39 +18,63 @@ class StoreProfilePage extends StatefulWidget {
 class _StoreProfilePageState extends State<StoreProfilePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _storeName = "NO NAME"; // Default value
 
-  // Static profile data
-  final Map<String, dynamic> profileData = {
-    'bio': 'Crafting unique handmade items with love.',
-    'profilePicture': 'assets/default_profile.jpg',
-    'posts': 12,
-    'upvotes': 134,
-    'feedbacks': 5,
-    'postImages': [
-      'https://via.placeholder.com/150',
-      'https://via.placeholder.com/150',
-      'https://via.placeholder.com/150',
-      'https://via.placeholder.com/150',
-    ],
-    'feedbacksList': [
-      {'title': 'Great Product!', 'content': 'I loved the craftsmanship.'},
-      {'title': 'Amazing Quality', 'content': 'Exceeded my expectations!'},
-    ],
-  };
+  // Initialize variables with default values
+  String _storeName = "Loading...";
+  String _bio = "Loading...";
+  String _profilePicture = 'https://via.placeholder.com/100';
+  int _posts = 0;
+  int _upvotes = 0;
+  int _feedbacks = 0;
+  List<String> _postImages = [];
+  List<Map<String, String>> _feedbacksList = [];
+  bool _isLoading = true; // To show loading indicator
+  String _dateCreated = ""; // Add a new variable for the formatted date
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadStoreName(); // Load the store name when the page initializes
+
+    _fetchProfileData(); // Fetch profile data when the page initializes
   }
 
-  Future<void> _loadStoreName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _storeName = prefs.getString('storeName') ?? "NoName"; // Default fallback
-    });
+  Future<void> _fetchProfileData() async {
+    final String userID = widget.userID;
+    final response = await http.get(
+      Uri.parse('$fetchProfileInfo/$userID'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      // Format the dateCreated value
+      if (data['dateCreated'] != null) {
+        DateTime dateTime = DateTime.parse(data['dateCreated']);
+        _dateCreated = DateFormat('dd MMM yyyy')
+            .format(dateTime); // Format the date to "23 Dec 2024"
+      }
+
+      setState(() {
+        _storeName = data['storeName'] ?? "No Name";
+        _bio = data['bio'] ?? "No Bio";
+        _profilePicture =
+            data['profilePicture'] ?? 'https://via.placeholder.com/100';
+        _posts = data['posts'] ?? 0;
+        _upvotes = data['upvotes'] ?? 0;
+        _feedbacks = data['feedbacks'] ?? 0;
+        _postImages = List<String>.from(data['postImages'] ?? []);
+        _feedbacksList =
+            List<Map<String, String>>.from(data['feedbacksList'] ?? []);
+        _isLoading = false; // Stop loading when data is fetched
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load profile data")),
+      );
+    }
   }
 
   @override
@@ -54,12 +85,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
 
   @override
   Widget build(BuildContext context) {
-    final String bio = profileData['bio'];
-    final String profilePicture = profileData['profilePicture'];
-    final int posts = profileData['posts'];
-    final int upvotes = profileData['upvotes'];
-    final int feedbacks = profileData['feedbacks'];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -68,119 +93,130 @@ class _StoreProfilePageState extends State<StoreProfilePage>
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage(profilePicture),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _storeName, // Use the dynamic _storeName here
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: _isLoading
+          ? const Center(
+              child:
+                  CircularProgressIndicator()) // Show loading indicator while fetching data
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildStatColumn("Posts", posts.toString()),
-                  _buildStatColumn("Upvotes", upvotes.toString()),
-                  _buildStatColumn("Feedbacks", feedbacks.toString()),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                bio,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: 150,
-              child: CustomButton(
-                onPressed: () {
-                  // Define the action for the button
-                },
-                label: 'Edit Profile',
-                icon: Icons.edit,
-                color: Colors.blue,
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(icon: Icon(Icons.grid_on), text: 'Posts'),
-                Tab(icon: Icon(Icons.feedback), text: 'Feedbacks'),
-              ],
-            ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: profileData['postImages'].length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 4,
-                      crossAxisSpacing: 4,
-                      childAspectRatio: 1,
+                  const SizedBox(height: 10),
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: _profilePicture.startsWith('http')
+                        ? NetworkImage(_profilePicture) as ImageProvider
+                        : AssetImage(_profilePicture),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _storeName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
-                    itemBuilder: (context, index) {
-                      final String imageUrl = profileData['postImages'][index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: NetworkImage(imageUrl),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
                   ),
-                  ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: profileData['feedbacksList'].length,
-                    itemBuilder: (context, index) {
-                      final feedback = profileData['feedbacksList'][index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12.0),
-                        child: ListTile(
-                          leading: const Icon(Icons.feedback),
-                          title: Text(feedback['title']),
-                          subtitle: Text(feedback['content']),
+                  const SizedBox(height: 5),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatColumn("Posts", _posts.toString()),
+                        _buildStatColumn("Upvotes", _upvotes.toString()),
+                        _buildStatColumn("Feedbacks", _feedbacks.toString()),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      _bio,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Date Created: $_dateCreated',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  SizedBox(
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => StoreProfileScreen()),
+                        );
+                      },
+                      child: const Text('Edit Profile'),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(icon: Icon(Icons.grid_on)),
+                      Tab(icon: Icon(Icons.feedback)),
+                    ],
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.1,
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        GridView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _postImages.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 2, // Reduced spacing
+                            crossAxisSpacing: 2, // Reduced spacing
+                            childAspectRatio: 0.9, // Smaller aspect ratio
+                          ),
+                          itemBuilder: (context, index) {
+                            final String imageUrl = _postImages[index];
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: DecorationImage(
+                                  image: NetworkImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                        ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _feedbacksList.length,
+                          itemBuilder: (context, index) {
+                            final feedback = _feedbacksList[index];
+                            return Card(
+                              margin: const EdgeInsets.only(
+                                  bottom: 8.0), // Reduced margin
+                              child: ListTile(
+                                leading: const Icon(Icons.feedback),
+                                title: Text(feedback['title'] ?? 'No title'),
+                                subtitle:
+                                    Text(feedback['content'] ?? 'No content'),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -192,13 +228,13 @@ class _StoreProfilePageState extends State<StoreProfilePage>
           count,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 14, // Reduced font size
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: 12), // Reduced font size
         ),
       ],
     );

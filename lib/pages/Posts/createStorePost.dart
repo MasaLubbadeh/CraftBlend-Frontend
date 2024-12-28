@@ -117,7 +117,15 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? storeName = prefs.getString('storeName');
-
+      String? token = prefs.getString('token');
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
       Map<String, dynamic> postData = {
         "fullName": storeName,
         "content": description,
@@ -129,6 +137,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
         Uri.parse(createStorePost), // Use store-specific endpoint
         headers: {
           "Content-Type": "application/json",
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(postData),
       );

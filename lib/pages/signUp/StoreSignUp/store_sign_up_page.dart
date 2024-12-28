@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:http/http.dart' as http;
 
+import '../../../services/authentication/auth_service.dart';
+
 class StoreSignUpPage extends StatefulWidget {
   final StoreSignUpData signUpData;
 
@@ -362,7 +364,17 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print("this is before calling function");
+        final auth = AuthService();
+        print(signUpData.contactEmail);
+        print(signUpData.password);
+        print(signUpData.storeName);
+
+        auth.signUpStoreWithEmailPassword(signUpData.contactEmail!,
+            signUpData.password!, signUpData.storeName!);
+        print("this is after calling function");
         final jsonResponse = jsonDecode(response.body);
+        print("this is the json response:");
         print(jsonResponse);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration successful!')),
