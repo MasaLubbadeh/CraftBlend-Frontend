@@ -7,6 +7,7 @@ import '../components/post.dart';
 import '../configuration/config.dart';
 import 'Posts/createStorePost.dart';
 import 'Posts/createUserPost.dart';
+import 'Store/storeProfile.dart';
 
 class FeedPage extends StatefulWidget {
   @override
@@ -25,12 +26,21 @@ class _FeedPageState extends State<FeedPage> {
     fetchPosts();
   }
 
+  bool isStore(String type) {
+    if (type == 'S') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<void> fetchPosts() async {
     try {
       final response = await http.get(Uri.parse(fetchAllPosts));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-
+        print("these are the fetched posts:");
+        print(data);
         // Sort posts by upvotes in ascending order before updating state
         data.sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
         posts.sort(
@@ -38,10 +48,13 @@ class _FeedPageState extends State<FeedPage> {
 
         setState(() {
           posts = data.map((post) {
+            final storeId = post['store_id']; // Check this field exists
+
             return {
               ...post,
               'isLiked': false,
               'isUpvoted': false,
+              'storeId': storeId,
             };
           }).toList();
           isLoading = false;
@@ -224,22 +237,16 @@ class _FeedPageState extends State<FeedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(
-              'CraftBlend',
-              style: TextStyle(
-                fontFamily: 'Pacifico', // Use a cursive font
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        title: const Text(
+          'CraftBlend',
+          style: TextStyle(
+            fontFamily: 'Pacifico',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: const Color.fromARGB(40, 40, 40, 40),
+        backgroundColor: Colors.black87,
         elevation: 4,
-        leading: SizedBox(width: 0),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -250,18 +257,10 @@ class _FeedPageState extends State<FeedPage> {
               );
             },
           ),
-          const SizedBox(width: 10),
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {
-              // Navigate to ChatPage when available
-            },
-          ),
-          const SizedBox(width: 10),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: fetchPosts, // Trigger the fetchPosts function on pull-down
+        onRefresh: fetchPosts,
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : posts.isEmpty
@@ -275,37 +274,41 @@ class _FeedPageState extends State<FeedPage> {
                         profileImageUrl: 'https://via.placeholder.com/100',
                         username: '${post['fullName']}',
                         content: post['content'],
-                        likes: post['likes'] ??
-                            0, // Fetch likes from the post, default to 0 if null
-                        initialUpvotes: post['upvotes'] ??
-                            0, // Fetch upvotes, default to 0 if null
-                        initialDownvotes:
-                            post['downvotes'] ?? 0, // Pass initial downvotes
-
-                        commentsCount: post['comments']?.length ??
-                            0, // Count comments, default to 0 if null
+                        likes: post['likes'] ?? 0,
+                        initialUpvotes: post['upvotes'] ?? 0,
+                        initialDownvotes: post['downvotes'] ?? 0,
+                        commentsCount: post['comments']?.length ?? 0,
                         isLiked: post['isLiked'],
                         isUpvoted: post['isUpvoted'],
-                        isDownvoted:
-                            post['isDownvoted'] ?? false, // Add downvoted state
-
+                        isDownvoted: post['isDownvoted'] ?? false,
                         onLike: () {
-                          handleLike(post['_id']); // Pass the post ID
+                          handleLike(post['_id']);
                         },
                         onUpvote: (newUpvotes) {
-                          handleUpvote(post['_id']); // Pass the post ID
+                          handleUpvote(post['_id']);
                         },
                         onDownvote: (newDownvotes) {
-                          handleDownvote(post['_id']); // Pass downvote logic
+                          handleDownvote(post['_id']);
                         },
                         onComment: () {
-                          handleComment(post['_id']); // Pass the post ID
+                          handleComment(post['_id']);
                         },
                         photoUrls:
                             post['images'] != null && post['images'].isNotEmpty
-                                ? List<String>.from(
-                                    post['images']) // Convert to List<String>
+                                ? List<String>.from(post['images'])
                                 : [],
+                        creatorId: post['storeId'] ?? '',
+                        onUsernameTap: () {
+                          print("this is the id of the store:");
+                          print(post['storeId'].toString());
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => StoreProfilePage(
+                                  userID: post['storeId'].toString()),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

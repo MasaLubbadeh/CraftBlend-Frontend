@@ -16,6 +16,8 @@ class PostCard extends StatefulWidget {
   final Function(int) onDownvote;
   final VoidCallback onComment;
   final List<String>? photoUrls;
+  final String creatorId; // Add isStore flag to check if it's a store
+  final VoidCallback onUsernameTap; // Add the onUsernameTap callback
 
   const PostCard({
     Key? key,
@@ -34,6 +36,8 @@ class PostCard extends StatefulWidget {
     required this.onDownvote,
     required this.onComment,
     this.photoUrls,
+    required this.creatorId,
+    required this.onUsernameTap, // Pass the callback to the constructor
   }) : super(key: key);
 
   @override
@@ -108,10 +112,13 @@ class _PostCardState extends State<PostCard> {
             leading: CircleAvatar(
               backgroundImage: NetworkImage(widget.profileImageUrl),
             ),
-            title: Text(
-              widget.username,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+            title: GestureDetector(
+              onTap: widget.onUsernameTap, // Trigger the callback on tap
+              child: Text(
+                widget.username,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
