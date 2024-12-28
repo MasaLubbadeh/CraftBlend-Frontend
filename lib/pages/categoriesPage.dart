@@ -96,14 +96,19 @@ class _CategoriesPageState extends State<CategoriesPage> {
         setState(() {
           var fetchedStores = List<Map<String, dynamic>>.from(jsonResponse);
 
-          // Filter by city ID if a city is selected
-
+          // Filter stores by deliveryCities or existing in the selected city
           if (selectedCity != null) {
             fetchedStores = fetchedStores
                 .where((store) =>
-                    store['city'] == selectedCity) // Compare city IDs
+                    // Check if the store delivers to the selected city
+                    (store['deliveryCities'] as List<dynamic>?)!.any(
+                      (deliveryCity) => deliveryCity['city'] == selectedCity,
+                    ) ||
+                    // OR check if the store exists in the selected city
+                    store['city'] == selectedCity)
                 .toList();
           }
+          print('Filtered Stores: $fetchedStores');
 
           stores = fetchedStores;
           isLoadingStores = false;
@@ -112,9 +117,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
         throw Exception('Failed to load stores');
       }
     } catch (e) {
-      setState(() {
-        isLoadingStores = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingStores = false;
+        });
+      }
       print('Error fetching stores: $e');
     }
   }

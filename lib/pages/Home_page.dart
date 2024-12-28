@@ -64,9 +64,11 @@ class _HomePageState extends State<HomePage> {
         throw Exception('Failed to load categories');
       }
     } catch (e) {
-      setState(() {
-        isLoadingCategories = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingCategories = false;
+        });
+      }
       print('Error fetching categories: $e');
     }
   }
@@ -254,40 +256,58 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(171, 230, 215, 232),
       appBar: AppBar(
-        toolbarHeight: appBarHeight,
-        automaticallyImplyLeading: false,
-        backgroundColor: myColor,
-        elevation: 0,
-        title: AddressWidget(
-          firstLineText: 'Palestine,',
-          secondLineText: selectedCity,
-          onTap: _showLocationOptions, // Pass the method to handle tap
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.menu,
-            color: Colors.white70,
-          ), // Menu icon
-          onPressed: () {
-            // Handle menu actions
-          },
-        ),
-        actions: [
-          IconButton(
+          toolbarHeight: appBarHeight,
+          automaticallyImplyLeading: false,
+          backgroundColor: myColor,
+          elevation: 0,
+          title: AddressWidget(
+            firstLineText: 'Palestine,',
+            secondLineText: selectedCity,
+            onTap: _showLocationOptions, // Pass the method to handle tap
+          ),
+          centerTitle: true,
+          leading: IconButton(
             icon: const Icon(
-              Icons.search,
+              Icons.menu,
               color: Colors.white70,
-            ), // Search icon
+            ), // Menu icon
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SearchPage()),
-              );
+              // Handle menu actions
             },
           ),
-        ],
-      ),
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.search,
+                color: Colors.white70,
+              ), // Search icon
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        SearchPage(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      const begin =
+                          Offset(1.0, 0.0); // Swipe starts from the right
+                      const end = Offset.zero; // Ends at the current position
+                      const curve = Curves.easeInOut;
+
+                      var tween = Tween(begin: begin, end: end)
+                          .chain(CurveTween(curve: curve));
+                      var offsetAnimation = animation.drive(tween);
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ]),
       body: Column(
         children: [
           // Carousel Slider

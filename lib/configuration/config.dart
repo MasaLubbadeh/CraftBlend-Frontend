@@ -28,6 +28,7 @@ const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
 const String reduceProductQuantity = '${url}product/reduce-quantity';
+const String getMostSearched = '${url}product/getMostSearched';
 
 const String addNewCategory = '${url}category/add';
 const String deleteCategory = '${url}category/delete';
@@ -45,6 +46,7 @@ const String getStoreDeliveryCities = '${url}store/getDelivery-cities';
 const String getStoreDeliveryCitiesByID = '${url}store/getDelivery-citiesByID';
 
 const String updateDeliveryCitiesUrl = '${url}store/UpdateDelivery-cities';
+const String getAllStores = '${url}store/getAllStores';
 
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
