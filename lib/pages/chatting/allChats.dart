@@ -51,13 +51,35 @@ class AllChats extends StatelessWidget {
       // Get user details from Firestore
       final userDoc = await _firestore.collection("Users").doc(email).get();
 
-      if (userDoc.exists) {
+      /*if (userDoc.exists) {
         final user = userDoc.data()!;
         final String firstName = user['firstName'] ?? 'Unknown';
         final String lastName = user['lastName'] ?? 'User';
         return '$firstName $lastName';
       } else {
         print('User not found in Firestore');
+      }*/
+      if (userDoc.exists) {
+        final user = userDoc.data()!;
+
+        // Check if the document has firstName and lastName fields
+        if (user.containsKey('firstName') && user.containsKey('lastName')) {
+          final String firstName = user['firstName'] ?? 'Unknown';
+          final String lastName = user['lastName'] ?? 'User';
+          return '$firstName $lastName';
+        }
+        // Otherwise, check for storeName
+        else if (user.containsKey('storeName')) {
+          final String storeName = user['storeName'] ?? 'Unknown Store';
+          return storeName;
+        }
+        // Fallback for any unexpected case
+        else {
+          return 'Unknown User';
+        }
+      } else {
+        print('User not found in Firestore');
+        return 'Unknown User';
       }
     } catch (error) {
       print('Error fetching user data from Firestore: $error');
@@ -114,17 +136,14 @@ class AllChats extends StatelessWidget {
       Map<String, dynamic> userData, BuildContext context) {
     final currentUser = _authService.getCurrentUser();
     if (currentUser == null || userData["email"] == currentUser.email) {
-      return const SizedBox(); // Skip displaying current user
+      return const SizedBox(); // Skip displaying the current user
     }
 
     return GestureDetector(
       onTap: () async {
-        // Fetch the full name of the user
-        print("Fetching full name on tap");
         final fullName = await _fetchFullName(userData["email"]);
-        print("first name:");
-        print(userData["firstName"]);
-        // Navigate to the ChatPage with the necessary data
+        print("Full name: $fullName");
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -132,7 +151,7 @@ class AllChats extends StatelessWidget {
               recieverEmail: userData["email"],
               receiverID: userData["uid"],
               firstName: userData["firstName"] ?? "Unknown",
-              lastName: userData["lastName"] ?? "user",
+              lastName: userData["lastName"] ?? "User",
             ),
           ),
         );
@@ -157,7 +176,10 @@ class AllChats extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "${userData["firstName"] ?? "Unknown"} ${userData["lastName"] ?? "User"}",
+                    userData.containsKey("firstName") &&
+                            userData.containsKey("lastName")
+                        ? "${userData["firstName"] ?? "Unknown"} ${userData["lastName"] ?? "User"}"
+                        : userData["storeName"] ?? "Unknown Store",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

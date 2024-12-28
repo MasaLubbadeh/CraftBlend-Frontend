@@ -114,6 +114,41 @@ class AuthService {
     }
   }
 
+// Sign up store with email and password
+  Future<UserCredential> signUpStoreWithEmailPassword(
+      String email, String password, String storeName) async {
+    try {
+      print("im inside firebase store signup");
+      // Create user with email and password
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      // Save user info in a separate document in Firestore
+      _firestore.collection("Users").doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'email': email,
+        'storeName': storeName, // Save first name
+      }).then((value) {
+        print("User info saved successfully!");
+      }).catchError((error) {
+        print("Failed to save user info: $error");
+      });
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException code: ${e.code}');
+      print('FirebaseAuthException message: ${e.message}');
+      switch (e.code) {
+        case 'user-not-found':
+          throw 'No user found for that email.';
+        case 'wrong-password':
+          throw 'Wrong password provided.';
+        default:
+          throw 'An unexpected error occurred: ${e.message}';
+      }
+    }
+  }
+
   // Re-authenticate the user
   Future<void> reauthenticate(String password) async {
     User? user = _auth.currentUser;
