@@ -35,15 +35,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     final items = order['items'] ?? [];
-    print('this.order');
+    print('items');
 
-    //  print(this.order);
+    print(items);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
         toolbarHeight: appBarHeight,
         title: Text(
-          "Order Details: #${order['orderNumber']}",
+          "Order Details: #${order['userOrderNumber']}",
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     Map<String, Map<String, dynamic>> storeTotals = {};
 
     for (var item in order['items'] ?? []) {
-      final storeId = item['storeId'];
+      final storeId = item['storeId']?.toString(); // Ensure storeId is a String
 
       if (storeId == null) continue;
 
@@ -104,10 +104,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         };
       }
 
-      storeTotals[storeId] = {
-        'storeTotal': item['storeTotal'] ?? 0.0,
-        'storeDeliveryCost': item['storeDeliveryCost'] ?? 0.0,
-      };
+      storeTotals[storeId]!['storeTotal'] =
+          storeTotals[storeId]!['storeTotal'] ??
+              0.0 + (item['storeTotal'] ?? 0.0);
+      storeTotals[storeId]!['storeDeliveryCost'] =
+          (item['storeDeliveryCost'] ?? 0.0);
     }
 
     return Card(
@@ -123,50 +124,101 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 const Icon(Icons.shopping_basket, color: myColor),
                 const SizedBox(width: 10),
                 Text(
-                  "Order #: ${order['orderNumber']}",
+                  "Order #: ${order['userOrderNumber'] ?? 'N/A'}",
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ],
             ),
             const Divider(),
-            const SizedBox(height: 3),
+            const SizedBox(height: 8),
             Text(
-              "Status: ${order['status']}",
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              "Status: ${order['status'] ?? 'Unknown'}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            // Text("Total Price: \$${order['totalPrice']}"),
-            const SizedBox(height: 5),
-            const Divider(),
-            const SizedBox(height: 5),
+            const SizedBox(height: 10),
             const Text(
-              "Delivery Information:",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              "Delivery Details:",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text("City: ${order['deliveryDetails']['city']}"),
-            const SizedBox(height: 3),
             Text("Street: ${order['deliveryDetails']['street']}"),
-            const SizedBox(height: 3),
+            Text("Contact: ${order['deliveryDetails']['contactNumber']}"),
+            const SizedBox(height: 10),
             Text(
-                "Contact Number: ${order['deliveryDetails']['contactNumber']}"),
+              "Total Price: \$${order['totalPrice']?.toStringAsFixed(2) ?? '0.00'}",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 10),
             const Text(
-              "Financial Overview:",
+              "Store Totals:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            //const SizedBox(height: 5),
             ...storeTotals.entries.map((entry) {
-              final storeTotal = entry.value['storeTotal'] ?? 0.0;
-              final storeDeliveryCost = entry.value['storeDeliveryCost'] ?? 0.0;
+              // Parse `entry.key` directly if it is a string
+              Map<String, dynamic> storeKey;
+              if (entry.key is String) {
+                try {
+                  storeKey = jsonDecode(entry.key) as Map<String, dynamic>;
+                } catch (e) {
+                  // Handle invalid format gracefully
+                  print("Error decoding key: $e");
+                  return SizedBox(); // Return an empty widget if parsing fails
+                }
+              } else {
+                storeKey = entry.key as Map<String, dynamic>;
+              }
+
+              final storeId = storeKey['_id'] ?? 'Unknown ID';
+              final storeName = storeKey['storeName'] ?? 'Unknown Store';
+              final storeLogo = storeKey['logo'] ?? '';
+
+              final totals = entry.value;
+              final storeTotal = totals['storeTotal'] ?? 0.0;
+              final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
+
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  "Total: \$${storeTotal.toStringAsFixed(2)} \n Delivery Cost: \$${storeDeliveryCost.toStringAsFixed(2)}",
-                  style: const TextStyle(fontSize: 14),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Store Logo
+                    if (storeLogo.isNotEmpty)
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(storeLogo),
+                        radius: 20,
+                      )
+                    else
+                      const CircleAvatar(
+                        child: Icon(Icons.store, color: myColor),
+                        radius: 20,
+                      ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            storeName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            "Total: \$${storeTotal.toStringAsFixed(2)}",
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            "Delivery Cost: \$${deliveryCost.toStringAsFixed(2)}",
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               );
             }).toList(),

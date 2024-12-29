@@ -1,6 +1,7 @@
 import 'package:craft_blend_project/components/addressWidget.dart';
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/googleMapsPage.dart';
+import 'package:craft_blend_project/pages/wishlist_page.dart';
 import 'package:flutter/material.dart' hide CarouselController;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:carousel_slider/carousel_controller.dart';
@@ -256,58 +257,74 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(171, 230, 215, 232),
       appBar: AppBar(
-          toolbarHeight: appBarHeight,
-          automaticallyImplyLeading: false,
-          backgroundColor: myColor,
-          elevation: 0,
-          title: AddressWidget(
-            firstLineText: 'Palestine,',
-            secondLineText: selectedCity,
-            onTap: _showLocationOptions, // Pass the method to handle tap
-          ),
-          centerTitle: true,
-          leading: IconButton(
+        toolbarHeight: appBarHeight,
+        automaticallyImplyLeading: false,
+        backgroundColor: myColor,
+        elevation: 0,
+        title: AddressWidget(
+          firstLineText: 'Palestine,',
+          secondLineText: selectedCity,
+          onTap: _showLocationOptions, // Pass the method to handle tap
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.menu,
+            color: Colors.white70,
+          ), // Menu icon
+          onPressed: () {
+            // Handle menu actions
+          },
+        ),
+        actions: [
+          // Heart Icon for Wishlist
+          IconButton(
             icon: const Icon(
-              Icons.menu,
+              Icons.favorite_border, // Outlined heart icon
               color: Colors.white70,
-            ), // Menu icon
+            ),
             onPressed: () {
-              // Handle menu actions
+              // Navigate to the Wishlist page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WishlistPage()),
+              );
             },
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.search,
-                color: Colors.white70,
-              ), // Search icon
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        SearchPage(),
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
-                      const begin =
-                          Offset(1.0, 0.0); // Swipe starts from the right
-                      const end = Offset.zero; // Ends at the current position
-                      const curve = Curves.easeInOut;
+          // Search Icon
+          IconButton(
+            icon: const Icon(
+              Icons.search,
+              color: Colors.white70,
+            ), // Search icon
+            onPressed: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const SearchPage(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    const begin =
+                        Offset(1.0, 0.0); // Swipe starts from the right
+                    const end = Offset.zero; // Ends at the current position
+                    const curve = Curves.easeInOut;
 
-                      var tween = Tween(begin: begin, end: end)
-                          .chain(CurveTween(curve: curve));
-                      var offsetAnimation = animation.drive(tween);
+                    var tween = Tween(begin: begin, end: end)
+                        .chain(CurveTween(curve: curve));
+                    var offsetAnimation = animation.drive(tween);
 
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ]),
+                    return SlideTransition(
+                      position: offsetAnimation,
+                      child: child,
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Carousel Slider
