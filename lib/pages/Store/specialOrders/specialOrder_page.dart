@@ -5,7 +5,7 @@ import '../../../configuration/config.dart';
 import 'specialOrderOptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../orders_page.dart';
+import '../storeOrders_page.dart';
 
 class SpecialOrdersPage extends StatefulWidget {
   const SpecialOrdersPage({super.key});

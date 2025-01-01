@@ -208,13 +208,18 @@ class _PastryPageState extends State<PastryPage> {
   }
 
   String formatTimeRequired(int? timeRequired) {
-    if (timeRequired == null) return "No time specified";
-    if (timeRequired < 24) {
-      return "$timeRequired hours";
-    } else {
-      final days = (timeRequired / 24).ceil();
-      return "$days day${days > 1 ? 's' : ''}";
+    if (timeRequired == null || timeRequired <= 0) return "No time specified";
+
+    // Convert to days and round
+    final days = (timeRequired / 1440).round();
+
+    // If less than a day, show hours
+    if (days == 0) {
+      final hours = (timeRequired / 60).round(); // Convert to hours
+      return "$hours hour${hours > 1 ? 's' : ''}";
     }
+
+    return "$days day${days > 1 ? 's' : ''}";
   }
 
   Widget _buildSortDropdown() {
@@ -435,14 +440,25 @@ class _PastryPageState extends State<PastryPage> {
                                           ),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text(
-                                          pastry['name'] ?? 'No Name',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            // Product Title
+                                            Expanded(
+                                              child: Text(
+                                                pastry['name'] ?? 'No Name',
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow
+                                                    .ellipsis, // Prevent overflow
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                          ],
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
@@ -452,6 +468,81 @@ class _PastryPageState extends State<PastryPage> {
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
+                                        const Spacer(),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                // Display badges for Upon Order and Time Required
+                                                if (pastry['isUponOrder'] ==
+                                                    true)
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const badge(
+                                                        text: 'Upon Order',
+                                                        color:
+                                                            Colors.orangeAccent,
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 2,
+                                                      ),
+                                                      if (pastry[
+                                                              'timeRequired'] !=
+                                                          null) // Time Required Badge
+                                                        badge(
+                                                          text: formatTimeRequired(
+                                                              pastry[
+                                                                  'timeRequired']),
+                                                          color: myColor
+                                                              .withOpacity(.6),
+                                                          icon: Icons
+                                                              .timer, // Add a time icon
+                                                        ),
+                                                    ],
+                                                  ),
+
+                                                // Display Out of Stock Badge
+                                                if ((pastry['inStock'] ==
+                                                        false) &&
+                                                    (pastry['isUponOrder'] ==
+                                                        false))
+                                                  const badge(
+                                                    text: 'Out of Stock',
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                if ((pastry['inStock'] ==
+                                                        true) &&
+                                                    (pastry['isUponOrder'] ==
+                                                        false))
+                                                  const badge(
+                                                    text: 'Available',
+                                                    color: Colors.green,
+                                                  ),
+                                              ],
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.arrow_forward,
+                                                color: myColor,
+                                              ),
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DetailPage(
+                                                            product: pastry),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -460,11 +551,12 @@ class _PastryPageState extends State<PastryPage> {
                             },
                           ),
               ),
+              if (_isSorting) _buildSortDropdown(),
             ],
           ),
-          if (_isSorting) _buildSortDropdown(), // Sorting dropdown
         ],
       ),
+      // // Sorting dropdown
       floatingActionButton: FloatingActionButton(
         onPressed: _confirmToggleFavorite, // Toggles favorite status
         backgroundColor: myColor,

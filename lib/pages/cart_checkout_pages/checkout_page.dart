@@ -37,6 +37,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isScheduleSectionExpanded = true;
   bool isCityValid = true; // Flag to track city validation status
   late double deliveryCost;
+  String _deliveryPreference = "Deliver All Together"; // Default preference
 
   @override
   void dispose() {
@@ -342,6 +343,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             const SizedBox(
               height: 12,
             ),
+            _buildDeliveryPreferenceSection(),
             _buildSummarySection(),
             const SizedBox(
               height: 10,
@@ -361,6 +363,94 @@ class _CheckoutPageState extends State<CheckoutPage> {
             if (widget.type == 'scheduled') _builScheduledOrderDeliveryNote(),
           ],
         ),
+      ),
+    );
+  }
+
+  bool _shouldShowDeliveryPreference() {
+    // Check if the checkout type is "scheduled"
+    if (widget.type != 'scheduled') return false;
+
+    // Ensure there is more than one item
+    if (widget.cartItems.length <= 1) return false;
+
+    // Check if at least one item is "upon order"
+    bool hasUponOrder = widget.cartItems.any((item) {
+      return item['productId']['isUponOrder'] ?? false;
+    });
+
+    return hasUponOrder;
+  }
+
+  Widget _buildDeliveryPreferenceSection() {
+    if (!_shouldShowDeliveryPreference()) {
+      return const SizedBox
+          .shrink(); // Return an empty widget if not applicable
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Delivery Preference',
+          style: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
+        ),
+        Divider(),
+        const SizedBox(height: 10),
+
+        // Deliver Together Option
+        _buildDeliveryOption('Deliver All Together', 'Deliver All Together'),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10),
+          child: Text(
+            'For each store, products will be delivered together after the longest preparation time.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ),
+
+        // Deliver When Ready Option
+        _buildDeliveryOption('Deliver When Ready', 'Deliver When Ready'),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 10),
+          child: Text(
+            'Products will be delivered as soon as they are ready. This may result in higher delivery costs.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ),
+        const SizedBox(
+          height: 5,
+        ),
+        _buildCustomDivider(),
+
+        const SizedBox(
+          height: 15,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeliveryOption(String title, String value) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5), // Spacing
+      padding: const EdgeInsets.symmetric(horizontal: 5), // Internal padding
+      decoration: BoxDecoration(
+        color:
+            const Color.fromARGB(178, 239, 227, 241), // Light gray background
+        borderRadius: BorderRadius.circular(10), // Rounded edges
+      ),
+      child: RadioListTile<String>(
+        value: value,
+        groupValue: _deliveryPreference,
+        title: Text(
+          title,
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w500, color: myColor),
+        ),
+        activeColor: myColor,
+        controlAffinity:
+            ListTileControlAffinity.trailing, // Radio button on right
+        onChanged: (val) => setState(() => _deliveryPreference = val!),
       ),
     );
   }
@@ -565,6 +655,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               );
             },
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Please select a date and time for items that allow scheduled delivery.',
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: .5),
+            ),
           ),
           _buildCustomDivider(),
         ],
@@ -1089,12 +1190,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   bool _isPlaceOrderButtonEnabled() {
-    return isCityValid && // Include the city validation flag
+    bool allScheduledItemsValid = widget.cartItems.every((item) {
+      if (item['productId']['allowDeliveryDateSelection'] == true &&
+          item['productId']['deliveryType'] == 'scheduled') {
+        return item['selectedDate'] != null && item['selectedTime'] != null;
+      }
+      return true;
+    });
+
+    return isCityValid &&
         selectedCity != null &&
         streetController.text.isNotEmpty &&
         selectedPaymentMethod != null &&
         contactNumber != null &&
-        contactNumber!.isNotEmpty;
+        contactNumber!.isNotEmpty &&
+        allScheduledItemsValid;
   }
 
   Widget _buildPlaceOrderButton() {
@@ -1188,6 +1298,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
           "totalPriceWithQuantity": item["totalPriceWithQuantity"],
           "selectedOptions": item["selectedOptions"],
           "deliveryType": item["productId"]["deliveryType"],
+          if (item["productId"]["allowDeliveryDateSelection"] == true) ...{
+            "timePickingAllowed": true,
+            "selectedDate": (item["selectedDate"] as DateTime?)
+                ?.toIso8601String(), // Convert DateTime to ISO string
+            "selectedTime": item["selectedTime"]
+                ?.format(context), // Use TimeOfDay's format method
+          },
           "storeTotal": storeData["productsTotal"],
           "storeDeliveryCost": storeData["deliveryCost"],
         });
@@ -1195,7 +1312,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
 
     Map<String, dynamic> orderData = {
-      "userId": "YOUR_USER_ID", // Replace with actual user ID
       "items": items,
       "totalPrice": widget.total + deliveryCost, // Overall total
       "deliveryDetails": {
@@ -1204,6 +1320,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "contactNumber": contactNumber,
       },
       "status": "Pending",
+      "deliveryPreference": _deliveryPreference,
     };
 
     try {

@@ -1,5 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
-import 'package:craft_blend_project/pages/Store/orders_page.dart';
+import 'package:craft_blend_project/pages/Store/storeOrders_page.dart';
 import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:flutter/material.dart';
 import '../pages/Store/specialOrders/specialOrder_page.dart';

@@ -1,5 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
-import 'package:craft_blend_project/pages/Store/detailedOrder_page.dart';
+import 'package:craft_blend_project/pages/Store/storeDetailedOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -54,50 +54,52 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Main tabs: Received Orders and Special Orders
+      length: 3, // Main tabs: Received Orders and Special Orders
       child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text(
-            "Orders",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white70,
-            ),
-          ),
-          backgroundColor: myColor, // Use your custom color
-          centerTitle: true,
-          bottom: const TabBar(
-            indicator: UnderlineTabIndicator(
-              borderSide: BorderSide(
-                color: Colors.white, // Indicator color
-                width: 2.0, // Indicator thickness
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: const Text(
+              "Orders",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
               ),
             ),
-            labelColor: Colors.white, // Selected tab text color
-            unselectedLabelColor: Colors.grey, // Unselected tab text color
-            tabs: [
-              Tab(text: "Received Orders"),
-              Tab(text: "Special Orders"),
-            ],
+            backgroundColor: myColor, // Use your custom color
+            centerTitle: true,
+            bottom: const TabBar(
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(
+                  color: Colors.white, // Indicator color
+                  width: 2.0, // Indicator thickness
+                ),
+              ),
+              labelColor: Colors.white, // Selected tab text color
+              unselectedLabelColor: Colors.grey, // Unselected tab text color
+              tabs: [
+                Tab(text: "Instant Orders"),
+                Tab(text: "Scheduled Orders"),
+                Tab(text: "Special Orders"),
+              ],
+            ),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildNestedOrdersTabs(
-                _receivedOrders), // Nested tabs for received orders
-            _buildNestedOrdersTabs(
-                _specialOrders), // Nested tabs for special orders
-          ],
-        ),
-      ),
+          body: TabBarView(
+            children: [
+              _buildNestedOrdersTabs(
+                  _receivedOrders, "instant"), // Instant Orders
+              _buildNestedOrdersTabs(
+                  _receivedOrders, "scheduled"), // Scheduled Orders
+              _buildNestedOrdersTabs(_specialOrders, ""), // Special Orders
+            ],
+          )),
     );
   }
 
-  Widget _buildNestedOrdersTabs(Future<List<dynamic>> ordersFuture) {
+  Widget _buildNestedOrdersTabs(
+      Future<List<dynamic>> ordersFuture, String deliveryType) {
     return DefaultTabController(
-      length: 3, // Nested tabs: Pending, In Progress, Shipped, Delivered
+      length: 3,
       child: Column(
         children: [
           const TabBar(
@@ -106,7 +108,6 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
             indicatorColor: myColor,
             tabs: [
               Tab(text: "Pending"),
-              //Tab(text: "In Progress"),
               Tab(text: "Shipped"),
               Tab(text: "Delivered"),
             ],
@@ -114,10 +115,10 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
           Expanded(
             child: TabBarView(
               children: [
-                _buildFilteredOrdersList(ordersFuture, "Pending"),
-                //_buildFilteredOrdersList(ordersFuture, "In Progress"),
-                _buildFilteredOrdersList(ordersFuture, "Shipped"),
-                _buildFilteredOrdersList(ordersFuture, "Delivered"),
+                _buildFilteredOrdersList(ordersFuture, "Pending", deliveryType),
+                _buildFilteredOrdersList(ordersFuture, "Shipped", deliveryType),
+                _buildFilteredOrdersList(
+                    ordersFuture, "Delivered", deliveryType),
               ],
             ),
           ),
@@ -127,7 +128,7 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
   }
 
   Widget _buildFilteredOrdersList(
-      Future<List<dynamic>> ordersFuture, String status) {
+      Future<List<dynamic>> ordersFuture, String status, String deliveryType) {
     return FutureBuilder<List<dynamic>>(
       future: ordersFuture,
       builder: (context, snapshot) {
@@ -138,9 +139,18 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Center(child: Text("No $status orders available."));
         } else {
-          final orders = snapshot.data!
-              .where((order) => order['status'] == status)
-              .toList();
+          // Filter orders by storeStatus and orderDeliveryType
+          final orders = snapshot.data!.where((order) {
+            // Check the orderDeliveryType
+            if (order['orderDeliveryType'] != deliveryType) {
+              return false; // Skip if the type doesn't match
+            }
+
+            // Check if any item matches the storeStatus
+            final items = order['items'] as List<dynamic>;
+            if (items.isEmpty) return false; // Skip empty orders
+            return items[0]['storeStatus'] == status;
+          }).toList();
 
           if (orders.isEmpty) {
             return Center(child: Text("No $status orders available."));
@@ -150,8 +160,7 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              print('order  id:');
-              print(order['orderId']);
+
               // Extract `storeTotal` and `storeDeliveryCost` from the first item
               final items = order['items'] as List<dynamic>;
               final double storeTotal = items.isNotEmpty
@@ -191,22 +200,17 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Status: ${order['status']}",
+                          "Store Status: ${items[0]['storeStatus']}",
                           style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Store Total: \$${storeTotal.toStringAsFixed(2)}",
+                          "Store Total: ${storeTotal.toStringAsFixed(2)} ₪",
                           style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Delivery Cost: \$${storeDeliveryCost.toStringAsFixed(2)}",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "City: ${order['deliveryDetails']['city']}",
+                          "Delivery Cost: ${storeDeliveryCost.toStringAsFixed(2)} ₪",
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
@@ -217,9 +221,6 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                     color: myColor.withOpacity(0.7),
                   ),
                   onTap: () {
-                    print("Navigating with order: ${order.toString()}");
-
-                    // Navigate to detailed order view
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -227,7 +228,6 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                       ),
                     ).then((result) {
                       if (result == true) {
-                        // Refresh the order list
                         setState(() {
                           _receivedOrders = fetchOrders('/getReceivedOrders');
                           _specialOrders = fetchOrders('/getSpecialOrders');

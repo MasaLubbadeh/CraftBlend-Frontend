@@ -60,6 +60,7 @@ const String placeOrder = '${url}order/placeOrder';
 const String getOrdersByStoreId = '${url}order/getOrdersByStoreId';
 const String getUserOrders = '${url}order/getUserOrders';
 const String updateOrderStatusUrl = '${url}order';
+const String updateOrderItemsStatusUrl = '${url}order/updateItemStatus';
 
 const String getFirstLast = '${url}getFullName';
 const String createPost = '${url}posts';

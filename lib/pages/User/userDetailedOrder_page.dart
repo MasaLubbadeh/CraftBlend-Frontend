@@ -1,5 +1,10 @@
+import 'dart:convert';
+
+import 'package:craft_blend_project/components/statusBadge.dart';
 import 'package:flutter/material.dart';
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserOrderDetailsPage extends StatefulWidget {
   final dynamic order;
@@ -12,6 +17,8 @@ class UserOrderDetailsPage extends StatefulWidget {
 
 class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
   late dynamic order;
+
+  get http => null;
 
   @override
   void initState() {
@@ -32,17 +39,55 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
         groupedItems[storeId] = {
           'storeDetails': store,
           'items': [],
-          'storeTotal': 0.0,
-          'deliveryCost': 0.0,
+          'storeTotal':
+              item['storeTotal'] ?? 0.0, // Set the total from the first item
+          'deliveryCost': item['storeDeliveryCost'] ??
+              0.0, // Set the delivery cost from the first item
         };
       }
 
       groupedItems[storeId]['items'].add(item);
-      groupedItems[storeId]['storeTotal'] += item['storeTotal'] ?? 0.0;
-      groupedItems[storeId]['deliveryCost'] = item['storeDeliveryCost'] ?? 0.0;
+      //   groupedItems[storeId]['storeTotal'] = item[0]['storeTotal'] ?? 0.0;
+      // groupedItems[storeId]['deliveryCost'] =
+      //   item[0]['storeDeliveryCost'] ?? 0.0;
     }
 
     return groupedItems;
+  }
+
+  Future<void> _markOrderAsReceived() async {
+    try {
+      final response = await http.put(
+        Uri.parse('$updateOrderStatusUrl/${order['_id']}/markAsReceived'),
+        headers: {
+          'Authorization': 'Bearer ${await _getToken()}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'status': 'Delivered'}),
+      );
+
+      if (response.statusCode == 200) {
+        // Update local order status
+        setState(() {
+          order['status'] = 'Delivered';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Order marked as received!")),
+        );
+      } else {
+        throw Exception('Failed to update order status');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
+  }
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 
   @override
@@ -79,7 +124,10 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
               child: const Text(
                 "Order items:",
                 style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: myColor),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 1.5),
               ),
             ),
             ...groupedItems.entries.map((entry) {
@@ -89,6 +137,32 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
               return _buildStoreSection(storeData);
             }).toList(),
           ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomButton(),
+    );
+  }
+
+  Widget _buildBottomButton() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: const Color.fromARGB(171, 243, 229, 245),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          _markOrderAsReceived();
+        },
+        label: const Text(
+          "Mark as Received",
+          style: TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70),
+        ),
+        icon: const Icon(LineAwesomeIcons.check_square, color: Colors.white70),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: myColor,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       ),
     );
@@ -107,16 +181,33 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
           children: [
             const Text(
               "Order Summary",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: myColor,
+                  letterSpacing: 1.5),
             ),
-            Divider(),
+            const Divider(),
             const SizedBox(height: 5),
+            // Display the overall order status
+            Text(
+              "Status: ${order['status'] ?? 'Unknown'}",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                //color: myColor,
+              ),
+            ),
+            const SizedBox(height: 10),
             ...groupedStores.entries.map((entry) {
               final storeDetails = entry.value['storeDetails'];
               final storeName = storeDetails['storeName'] ?? 'Unknown Store';
               final storeLogo = storeDetails['logo'] ?? '';
               final storeTotal = entry.value['storeTotal'];
               final deliveryCost = entry.value['deliveryCost'];
+              final storeStatus = entry.value['items'].isNotEmpty
+                  ? entry.value['items'][0]['storeStatus'] ?? 'Unknown'
+                  : 'Unknown';
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -146,12 +237,19 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
                             ),
                           ),
                           const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              const Text("Store Status: ",
+                                  style: TextStyle(fontSize: 14)),
+                              StatusBadge.getBadge(storeStatus),
+                            ],
+                          ),
                           Text(
-                            "Store Total: \$${storeTotal.toStringAsFixed(2)}",
+                            "Store Total: ${storeTotal.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
                           Text(
-                            "Delivery Cost: \$${deliveryCost.toStringAsFixed(2)}",
+                            "Delivery Cost: ${deliveryCost.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
                         ],
@@ -214,7 +312,7 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
                     ],
                   ),
                 ),
-                _buildStatusBadge(storeStatus),
+                StatusBadge.getBadge(storeStatus),
               ],
             ),
             const SizedBox(height: 10),
@@ -276,44 +374,11 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
                   ),
                   const SizedBox(height: 5),
                   Text("Quantity: $quantity"),
-                  Text("Price: \$${price.toStringAsFixed(2)}"),
+                  Text("Price: ${price.toStringAsFixed(2)} ₪"),
                 ],
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color badgeColor;
-    switch (status.toLowerCase()) {
-      case 'pending':
-        badgeColor = Colors.orange;
-        break;
-      case 'shipped':
-        badgeColor = Colors.blue;
-        break;
-      case 'delivered':
-        badgeColor = Colors.green;
-        break;
-      default:
-        badgeColor = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: badgeColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
         ),
       ),
     );

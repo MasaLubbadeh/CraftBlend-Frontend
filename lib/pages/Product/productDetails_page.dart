@@ -151,13 +151,18 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   String formatTimeRequired(int? timeRequired) {
-    if (timeRequired == null) return "No time specified";
-    if (timeRequired < 24) {
-      return "$timeRequired hours";
-    } else {
-      final days = (timeRequired / 24).ceil();
-      return "$days day${days > 1 ? 's' : ''}";
+    if (timeRequired == null || timeRequired <= 0) return "No time specified";
+
+    // Convert to days and round
+    final days = (timeRequired / 1440).round();
+
+    // If less than a day, show hours
+    if (days == 0) {
+      final hours = (timeRequired / 60).round(); // Convert to hours
+      return "$hours hour${hours > 1 ? 's' : ''}";
     }
+
+    return "$days day${days > 1 ? 's' : ''}";
   }
 
   @override

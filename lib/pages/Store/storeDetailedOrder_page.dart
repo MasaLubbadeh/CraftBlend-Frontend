@@ -43,7 +43,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         backgroundColor: myColor,
         toolbarHeight: appBarHeight,
         title: Text(
-          "Order Details: #${order['userOrderNumber']}",
+          "Order Details: #${order['orderNumber']}",
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -105,8 +105,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       }
 
       storeTotals[storeId]!['storeTotal'] =
-          storeTotals[storeId]!['storeTotal'] ??
-              0.0 + (item['storeTotal'] ?? 0.0);
+          (storeTotals[storeId]!['storeTotal'] ?? 0.0) +
+              (item['storeTotal'] ?? 0.0);
       storeTotals[storeId]!['storeDeliveryCost'] =
           (item['storeDeliveryCost'] ?? 0.0);
     }
@@ -126,7 +126,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 Text(
                   "Order #: ${order['userOrderNumber'] ?? 'N/A'}",
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),
@@ -147,7 +149,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             Text("Contact: ${order['deliveryDetails']['contactNumber']}"),
             const SizedBox(height: 10),
             Text(
-              "Total Price: \$${order['totalPrice']?.toStringAsFixed(2) ?? '0.00'}",
+              "Total Price: ${order['totalPrice']?.toStringAsFixed(2) ?? '0.00'} ₪",
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 10),
@@ -156,24 +158,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             ...storeTotals.entries.map((entry) {
-              // Parse `entry.key` directly if it is a string
-              Map<String, dynamic> storeKey;
-              if (entry.key is String) {
-                try {
-                  storeKey = jsonDecode(entry.key) as Map<String, dynamic>;
-                } catch (e) {
-                  // Handle invalid format gracefully
-                  print("Error decoding key: $e");
-                  return SizedBox(); // Return an empty widget if parsing fails
-                }
-              } else {
-                storeKey = entry.key as Map<String, dynamic>;
-              }
-
-              final storeId = storeKey['_id'] ?? 'Unknown ID';
-              final storeName = storeKey['storeName'] ?? 'Unknown Store';
-              final storeLogo = storeKey['logo'] ?? '';
-
+              final storeId = entry.key;
               final totals = entry.value;
               final storeTotal = totals['storeTotal'] ?? 0.0;
               final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
@@ -183,24 +168,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Store Logo
-                    if (storeLogo.isNotEmpty)
-                      CircleAvatar(
-                        backgroundImage: NetworkImage(storeLogo),
-                        radius: 20,
-                      )
-                    else
-                      const CircleAvatar(
-                        child: Icon(Icons.store, color: myColor),
-                        radius: 20,
-                      ),
+                    const CircleAvatar(
+                      child: Icon(Icons.store, color: myColor),
+                      radius: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            storeName,
+                            "Store ID: $storeId",
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -208,11 +186,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            "Total: \$${storeTotal.toStringAsFixed(2)}",
+                            "Total: ${storeTotal.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
                           Text(
-                            "Delivery Cost: \$${deliveryCost.toStringAsFixed(2)}",
+                            "Delivery Cost: ${deliveryCost.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
                         ],
@@ -316,11 +294,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     style: const TextStyle(fontSize: 14),
                   ),
                   Text(
-                    "Price: \$${unitPrice.toStringAsFixed(2)}",
+                    "Price: ${unitPrice.toStringAsFixed(2)} ₪",
                     style: const TextStyle(fontSize: 14),
                   ),
                   Text(
-                    "Total: \$${itemTotalPrice.toStringAsFixed(2)}",
+                    "Total: ${itemTotalPrice.toStringAsFixed(2)} ₪",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -333,19 +311,25 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildStatusButton() {
-    // Determine the button label and action based on the order's current status
-    String buttonLabel;
-    String nextStatus;
+    // Determine the button label and action based on the store's current status
+    String buttonLabel = "Unknown";
+    String nextStatus = "";
+    String storeStatus = "Unknown";
 
-    if (order['status'] == "Pending") {
+    if (order['items'] != null && order['items'].isNotEmpty) {
+      storeStatus = order['items'][0]['storeStatus'] ?? "Unknown";
+      print('storeStatus in _buildStatusButton');
+      print(storeStatus);
+    }
+
+    if (storeStatus == "Pending") {
       buttonLabel = "Mark as Shipped";
       nextStatus = "Shipped";
-    } else if (order['status'] == "Shipped") {
+    } else if (storeStatus == "Shipped") {
       buttonLabel = "Mark as Delivered";
       nextStatus = "Delivered";
     } else {
-      // If the status is Delivered, no button is needed
-      return const SizedBox.shrink();
+      return const SizedBox.shrink(); // No button needed for other statuses
     }
 
     return Container(
@@ -421,16 +405,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final token = await _fetchToken();
       if (token == null) return;
 
-      final url = '$updateOrderStatusUrl/$orderId/updateStatus';
+      final url = '$updateOrderItemsStatusUrl/$orderId';
       print('Final URL: $url');
 
-      final response = await http.put(
+      final response = await http.patch(
         Uri.parse(url),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"status": newStatus}),
+        body: jsonEncode({"newStatus": newStatus}),
       );
 
       if (response.statusCode == 200) {
