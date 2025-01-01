@@ -144,14 +144,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                             // Fallback to a default image if the logo fails to load
                                             return const Image(
                                               image: AssetImage(
-                                                  "assets/images/storeLogo.png"),
+                                                  "assets/images/logo.png"),
                                               fit: BoxFit.cover,
                                             );
                                           },
                                         )
                                       : const Image(
                                           image: AssetImage(
-                                              "assets/images/storeLogo.png"), // Default logo
+                                              "assets/images/logo.png"), // Default logo
                                           fit: BoxFit.cover,
                                         ),
                                 ),

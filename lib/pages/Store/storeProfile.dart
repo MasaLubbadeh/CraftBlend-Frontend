@@ -3,7 +3,9 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../components/post.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
 
 class StoreProfilePage extends StatefulWidget {
@@ -18,6 +20,9 @@ class StoreProfilePage extends StatefulWidget {
 class _StoreProfilePageState extends State<StoreProfilePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  //fetching posts
+  List<dynamic> posts = [];
+  bool isLoading = true;
 
   // Initialize variables with default values
   String _storeName = "Loading...";
@@ -37,6 +42,39 @@ class _StoreProfilePageState extends State<StoreProfilePage>
     _tabController = TabController(length: 2, vsync: this);
 
     _fetchProfileData(); // Fetch profile data when the page initializes
+    fetchPosts();
+  }
+
+  Future<void> fetchPosts() async {
+    final String userID = widget.userID; // Get the userID from the widget
+    final String apiUrl = '$fetchAllPosts/$userID'; // Construct the API URL
+
+    try {
+      final response = await http.get(Uri.parse('$fetchAccountPosts/$userID'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        setState(() {
+          posts = data.map((post) {
+            final storeId = post['store_id']; // Ensure this field exists
+            return {
+              ...post,
+              'isLiked': false,
+              'isUpvoted': false,
+              'storeId': storeId,
+            };
+          }).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to fetch posts');
+      }
+    } catch (e) {
+      print('Error fetching posts: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchProfileData() async {
@@ -75,6 +113,169 @@ class _StoreProfilePageState extends State<StoreProfilePage>
         SnackBar(content: Text("Failed to load profile data")),
       );
     }
+  }
+
+  Future<void> handleLike(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isLiked']) {
+      print('Post already liked.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('${likes}posts/$postId/like'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          posts[postIndex]['isLiked'] = true;
+          posts[postIndex]['likes'] = data['likes'];
+        });
+        print('Post liked successfully. Total likes: ${data['likes']}');
+      } else {
+        print('Failed to like post: ${response.body}');
+      }
+    } catch (e) {
+      print('Error liking post: $e');
+    }
+  }
+
+  Future<void> handleUpvote(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isUpvoted']) {
+      print('Post already upvoted.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('${upvotes}posts/$postId/upvote'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          posts
+              .sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
+
+          posts[postIndex]['isUpvoted'] = true;
+          posts[postIndex]['upvotes'] = data['upvotes'];
+        });
+        print('Post upvoted successfully. Total upvotes: ${data['upvotes']}');
+      } else {
+        print('Failed to upvote post: ${response.body}');
+      }
+    } catch (e) {
+      print('Error upvoting post: $e');
+    }
+  }
+
+  Future<void> handleDownvote(String postId) async {
+    final postIndex = posts.indexWhere((post) => post['_id'] == postId);
+    if (postIndex == -1) return;
+
+    if (posts[postIndex]['isDownvoted'] != null &&
+        posts[postIndex]['isDownvoted']) {
+      print('Post already downvoted.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('${downvotes}posts/$postId/downvote'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          posts.sort(
+              (a, b) => (a['downvotes'] ?? 0).compareTo(b['downvotes'] ?? 0));
+
+          posts[postIndex]['isDownvoted'] = true;
+          posts[postIndex]['downvotes'] = data['downvotes'];
+        });
+        print(
+            'Post downvoted successfully. Total downvotes: ${data['downvotes']}');
+      } else {
+        print('Failed to downvote post: ${response.body}');
+      }
+    } catch (e) {
+      print('Error downvoting post: $e');
+    }
+  }
+
+  Future<void> handleComment(String postId) async {
+    final TextEditingController _commentController = TextEditingController();
+
+    // Fetch user details from SharedPreferences
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? firstName = prefs.getString('firstName');
+    String? lastName = prefs.getString('lastName');
+
+    // If first name or last name is not available, set a default
+    String username = (firstName != null && lastName != null)
+        ? '$firstName $lastName'
+        : 'Anonymous';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Comment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _commentController,
+                decoration:
+                    const InputDecoration(hintText: 'Write your comment'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_commentController.text.isNotEmpty) {
+                  try {
+                    final response = await http.post(
+                      Uri.parse(
+                          'https://your-api-endpoint/posts/$postId/comment'),
+                      headers: {'Content-Type': 'application/json'},
+                      body: json.encode({
+                        'username':
+                            username, // Use the username from shared preferences
+                        'comment': _commentController.text.trim(),
+                      }),
+                    );
+
+                    if (response.statusCode == 200) {
+                      print('Comment added successfully.');
+                    } else {
+                      print('Failed to add comment: ${response.body}');
+                    }
+                  } catch (e) {
+                    print('Error adding comment: $e');
+                  }
+
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Post'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -145,17 +346,33 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                     ),
                   ),
                   const SizedBox(height: 5),
-                  SizedBox(
-                    width: 150,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => StoreProfileScreen()),
-                        );
-                      },
-                      child: const Text('Edit Profile'),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // SizedBox(width: 5),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => StoreProfileScreen()),
+                            );
+                          },
+                          child: const Text('Edit Profile'),
+                        ),
+                        const SizedBox(width: 5),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => StoreProfileScreen()),
+                            );
+                          },
+                          child: const Text('Dashboard'),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -167,34 +384,63 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                     ],
                   ),
                   SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.1,
+                    height: MediaQuery.of(context).size.height *
+                        0.8, // Adjust height as needed
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        GridView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: _postImages.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 2, // Reduced spacing
-                            crossAxisSpacing: 2, // Reduced spacing
-                            childAspectRatio: 0.9, // Smaller aspect ratio
-                          ),
+                        ListView.builder(
+                          physics:
+                              NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          shrinkWrap: true, // Allow ListView to fit its content
+                          itemCount: posts.length,
                           itemBuilder: (context, index) {
-                            final String imageUrl = _postImages[index];
-                            return Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: NetworkImage(imageUrl),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                            final post = posts[index];
+                            return PostCard(
+                              profileImageUrl:
+                                  'https://via.placeholder.com/100',
+                              username: '${post['fullName']}',
+                              content: post['content'],
+                              likes: post['likes'] ?? 0,
+                              initialUpvotes: post['upvotes'] ?? 0,
+                              initialDownvotes: post['downvotes'] ?? 0,
+                              commentsCount: post['comments']?.length ?? 0,
+                              isLiked: post['isLiked'],
+                              isUpvoted: post['isUpvoted'],
+                              isDownvoted: post['isDownvoted'] ?? false,
+                              onLike: () {
+                                handleLike(post['_id']);
+                              },
+                              onUpvote: (newUpvotes) {
+                                handleUpvote(post['_id']);
+                              },
+                              onDownvote: (newDownvotes) {
+                                handleDownvote(post['_id']);
+                              },
+                              onComment: () {
+                                handleComment(post['_id']);
+                              },
+                              photoUrls: post['images'] != null &&
+                                      post['images'].isNotEmpty
+                                  ? List<String>.from(post['images'])
+                                  : [],
+                              creatorId: post['storeId'] ?? '',
+                              onUsernameTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => StoreProfilePage(
+                                        userID: post['storeId'].toString()),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),
                         ListView.builder(
+                          physics:
+                              NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          shrinkWrap: true, // Allow ListView to fit its content
                           padding: const EdgeInsets.all(16.0),
                           itemCount: _feedbacksList.length,
                           itemBuilder: (context, index) {

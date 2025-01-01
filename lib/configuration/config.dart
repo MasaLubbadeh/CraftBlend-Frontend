@@ -59,6 +59,7 @@ const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
 
 const String fetchProfileInfo = '${url}store/fetchProfileInfo';
+const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

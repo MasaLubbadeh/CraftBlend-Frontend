@@ -3,73 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../components/post.dart';
 import '../configuration/config.dart';
-import 'Posts/createStorePost.dart';
-import 'Posts/createUserPost.dart';
-import 'Store/storeProfile.dart';
 
-class FeedPage extends StatefulWidget {
-  @override
-  _FeedPageState createState() => _FeedPageState();
-}
+class PostActions {
+  final BuildContext context;
+  final List<Map<String, dynamic>> posts;
+  final String likesEndpoint;
+  final String upvotesEndpoint;
+  final String downvotesEndpoint;
 
-class _FeedPageState extends State<FeedPage> {
-  List<dynamic> posts = [];
-  bool isLoading = true;
-  bool isLiked = false;
-  bool isUpvoted = false;
-  // int likes = 0;
-  @override
-  void initState() {
-    super.initState();
-    fetchPosts();
-  }
-
-/////////so it will only open profile if store is pressed
-  bool isStore(String type) {
-    if (type == 'S') {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  Future<void> fetchPosts() async {
-    try {
-      final response = await http.get(Uri.parse(fetchAllPosts));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        print("these are the fetched posts:");
-        print(data);
-        // Sort posts by upvotes in ascending order before updating state
-        data.sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
-        posts.sort(
-            (a, b) => (a['downvotes'] ?? 0).compareTo(b['downvotes'] ?? 0));
-
-        setState(() {
-          posts = data.map((post) {
-            final storeId = post['store_id']; // Check this field exists
-
-            return {
-              ...post,
-              'isLiked': false,
-              'isUpvoted': false,
-              'storeId': storeId,
-            };
-          }).toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to fetch posts');
-      }
-    } catch (e) {
-      print('Error fetching posts: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+  PostActions({
+    required this.context,
+    required this.posts,
+    required this.likesEndpoint,
+    required this.upvotesEndpoint,
+    required this.downvotesEndpoint,
+  });
 
   Future<void> handleLike(String postId) async {
     final postIndex = posts.indexWhere((post) => post['_id'] == postId);
@@ -87,10 +36,10 @@ class _FeedPageState extends State<FeedPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
+        /*  setState(() {
           posts[postIndex]['isLiked'] = true;
           posts[postIndex]['likes'] = data['likes'];
-        });
+        });*/
         print('Post liked successfully. Total likes: ${data['likes']}');
       } else {
         print('Failed to like post: ${response.body}');
@@ -116,13 +65,13 @@ class _FeedPageState extends State<FeedPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
+        /* setState(() {
           posts
               .sort((a, b) => (b['upvotes'] ?? 0).compareTo(a['upvotes'] ?? 0));
 
           posts[postIndex]['isUpvoted'] = true;
           posts[postIndex]['upvotes'] = data['upvotes'];
-        });
+        });*/
         print('Post upvoted successfully. Total upvotes: ${data['upvotes']}');
       } else {
         print('Failed to upvote post: ${response.body}');
@@ -149,13 +98,13 @@ class _FeedPageState extends State<FeedPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
+        /* setState(() {
           posts.sort(
               (a, b) => (a['downvotes'] ?? 0).compareTo(b['downvotes'] ?? 0));
 
           posts[postIndex]['isDownvoted'] = true;
           posts[postIndex]['downvotes'] = data['downvotes'];
-        });
+        });*/
         print(
             'Post downvoted successfully. Total downvotes: ${data['downvotes']}');
       } else {
@@ -231,89 +180,6 @@ class _FeedPageState extends State<FeedPage> {
           ],
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'CraftBlend',
-          style: TextStyle(
-            fontFamily: 'Pacifico',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.black87,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CreateStorePostPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: fetchPosts,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : posts.isEmpty
-                ? const Center(child: Text('No posts available'))
-                : ListView.builder(
-                    itemCount: posts.length,
-                    itemBuilder: (context, index) {
-                      final post = posts[index];
-
-                      return PostCard(
-                        profileImageUrl: 'https://via.placeholder.com/100',
-                        username: '${post['fullName']}',
-                        content: post['content'],
-                        likes: post['likes'] ?? 0,
-                        initialUpvotes: post['upvotes'] ?? 0,
-                        initialDownvotes: post['downvotes'] ?? 0,
-                        commentsCount: post['comments']?.length ?? 0,
-                        isLiked: post['isLiked'],
-                        isUpvoted: post['isUpvoted'],
-                        isDownvoted: post['isDownvoted'] ?? false,
-                        onLike: () {
-                          handleLike(post['_id']);
-                        },
-                        onUpvote: (newUpvotes) {
-                          handleUpvote(post['_id']);
-                        },
-                        onDownvote: (newDownvotes) {
-                          handleDownvote(post['_id']);
-                        },
-                        onComment: () {
-                          handleComment(post['_id']);
-                        },
-                        photoUrls:
-                            post['images'] != null && post['images'].isNotEmpty
-                                ? List<String>.from(post['images'])
-                                : [],
-                        creatorId: post['storeId'] ?? '',
-                        onUsernameTap: () {
-                          print("this is the id of the store:");
-                          print(post['storeId'].toString());
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => StoreProfilePage(
-                                  userID: post['storeId'].toString()),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-      ),
     );
   }
 }
