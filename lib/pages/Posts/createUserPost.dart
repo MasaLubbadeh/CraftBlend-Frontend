@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../feedPage.dart'; // Add this import
 
 class CreateUserPostPage extends StatefulWidget {
+  final String userID;
+  CreateUserPostPage({required this.userID});
   @override
   _CreateUserPostPageState createState() => _CreateUserPostPageState();
 }
@@ -22,6 +24,7 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
 
   String firstName = ''; // To hold the first name
   String lastName = ''; // To hold the last name
+  String userType = '';
 
   @override
   void initState() {
@@ -34,6 +37,7 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
     setState(() {
       firstName = prefs.getString('firstName') ?? 'Guest';
       lastName = prefs.getString('lastName') ?? 'User';
+      // userType = prefs.getString('userType') ?? 'No Type';
     });
   }
 
@@ -120,18 +124,29 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
       print('firstname create user post:$firstName');
       print('lastname create user post:$lastName');
       print('email create user post:$email');
-
+      String? token = prefs.getString('token');
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
+      String storeID = widget.userID;
       Map<String, dynamic> postData = {
         "firstName": firstName,
         "lastName": lastName,
         "content": content,
         "images": imageUrls, // Add uploaded image URLs
+        "store_id": storeID,
       };
 
       var response = await http.post(
         Uri.parse(createUserPost),
         headers: {
           "Content-Type": "application/json",
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(postData),
       );
