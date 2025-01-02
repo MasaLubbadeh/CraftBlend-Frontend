@@ -55,6 +55,7 @@ dependencies:
   flutter_picker: ^2.0.7
   permission_handler: ^11.2.0
   flutter_sound: ^9.4.2
+  fl_chart: ^0.40.0 # Add this line
 
 dev_dependencies:
   flutter_test:
