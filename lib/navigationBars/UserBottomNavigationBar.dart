@@ -3,7 +3,7 @@ import 'package:craft_blend_project/pages/Posts/createUserPost.dart';
 import 'package:craft_blend_project/pages/feedPage.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
-import '../pages/Store/storeProfile.dart';
+import '../pages/Store/Profile/storeProfile.dart';
 import '../pages/chatting/allChats.dart';
 import '../pages/categoriesPage.dart';
 import '../pages/cart_checkout_pages/cart_page.dart';

@@ -185,6 +185,7 @@ class _LoginPageState extends State<LoginPage> {
         print('first Name:$firstName');
         print('last Name:$lastName');
         print('email:$email');
+        print('userType:$userType');
 
         // Save email and password only if "remember me" is checked
         if (rememberUser) {

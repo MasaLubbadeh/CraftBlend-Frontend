@@ -5,12 +5,12 @@ import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:craft_blend_project/services/userServices.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../pages/Store/storeProfile.dart';
+import '../pages/Store/Profile/storeProfile.dart';
 import '../pages/feedPage.dart';
 import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
-import '../pages/Store/storeProfile_page.dart';
+import '../pages/Store/Profile/storeProfile_page.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
   const OwnerBottomNavigationBar({super.key});

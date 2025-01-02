@@ -7,7 +7,8 @@ import '../components/post.dart';
 import '../configuration/config.dart';
 import 'Posts/createStorePost.dart';
 import 'Posts/createUserPost.dart';
-import 'Store/storeProfile.dart';
+import 'Store/Profile/StoreProfile_UserView.dart';
+import 'Store/Profile/storeProfile.dart';
 
 class FeedPage extends StatefulWidget {
   @override
@@ -305,7 +306,7 @@ class _FeedPageState extends State<FeedPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => StoreProfilePage(
+                              builder: (context) => StoreProfilePage_UserView(
                                   userID: post['storeId'].toString()),
                             ),
                           );
