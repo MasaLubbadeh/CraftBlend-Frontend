@@ -1,5 +1,6 @@
 import 'package:craft_blend_project/components/addressWidget.dart';
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:craft_blend_project/pages/Product/Pastry/pastryUser_page.dart';
 import 'package:craft_blend_project/pages/googleMapsPage.dart';
 import 'package:craft_blend_project/pages/wishlist_page.dart';
 import 'package:flutter/material.dart' hide CarouselController;
@@ -21,12 +22,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<String> adImages = [
-    'https://via.placeholder.com/800x300?text=Ad+1',
-    'https://via.placeholder.com/800x300?text=Ad+2',
-    'https://via.placeholder.com/800x300?text=Ad+3',
-    'https://invalid-url.com/invalid.jpg', // Intentional invalid URL for testing
-  ];
+  List<String> adImages = []; // Initialize as empty list
+  bool isLoadingAds = true;
 
   final CarouselSliderController buttonCarouselController =
       CarouselSliderController();
@@ -34,6 +31,9 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> categories = [];
   bool isLoadingCategories = true;
   String selectedCity = "Choose city"; // Default value if no city is chosen
+  int currentAdIndex = 0; // Add this to your state
+  List<String> adStoreIds = []; // Store IDs corresponding to ads
+  List<String> adStoreNames = []; // Store Names corresponding to ads
 
   @override
   void initState() {
@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage> {
     _fetchCategories();
     _loadSelectedCity();
     _checkLocation();
+    _fetchAdvertisements(); // Fetch ads
   }
 
   Future<void> _checkLocation() async {
@@ -48,6 +49,49 @@ class _HomePageState extends State<HomePage> {
     String? location = prefs.getString('selectedLocation');
     if (location == null || location.isEmpty) {
       Navigator.pushReplacementNamed(context, '/map');
+    }
+  }
+
+  Future<void> _fetchAdvertisements() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token'); // Fetch authentication token
+
+      final response = await http.get(
+        Uri.parse(getAllAdvertisements), // Replace with your API endpoint
+        headers: {
+          'Authorization': 'Bearer $token', // Add token for authorization
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        setState(() {
+          adImages = [];
+          adStoreIds = [];
+          adStoreNames = [];
+          for (var ad in jsonResponse['advertisements']) {
+            if (ad['image'] != null && ad['storeId'] != null) {
+              adImages.add(ad['image']);
+              adStoreIds.add(
+                  ad['storeId']['_id']); // Assuming nested storeId structure
+              adStoreNames.add(
+                  ad['storeId']['storeName']); // Assuming storeName is present
+            }
+          }
+          isLoadingAds = false;
+        });
+      } else {
+        throw Exception('Failed to load advertisements');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoadingAds = false;
+        });
+      }
+      print('Error fetching advertisements: $e');
     }
   }
 
@@ -327,60 +371,132 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Column(
         children: [
-          // Carousel Slider
-          SizedBox(
-            width: MediaQuery.of(context).size.width, // Force full width
-            child: CarouselSlider(
-              items: adImages.map((ad) {
-                return Builder(
-                  builder: (BuildContext context) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          ad,
-                          width: MediaQuery.of(context)
-                              .size
-                              .width, // Image full width
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            // Placeholder for error case
-                            return Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: Text(
-                                  'Image failed to load',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
-              }).toList(),
-              carouselController: buttonCarouselController,
-              options: CarouselOptions(
-                height: 250.0,
-                autoPlay: true,
-                autoPlayInterval: const Duration(seconds: 3),
-                enlargeCenterPage: false, // Disable enlarge to fill the width
-                viewportFraction: 1.0, // Make each item take the full width
-              ),
-            ),
+          const SizedBox(
+            height: 30,
           ),
+          // Carousel Slider
+          isLoadingAds
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                )
+              : adImages.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No advertisements available.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        children: [
+                          CarouselSlider(
+                            items: adImages.asMap().entries.map((entry) {
+                              final int index = entry.key;
+                              final String adImage = entry.value;
+
+                              return Builder(
+                                builder: (BuildContext context) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // Navigate to PastryPage with storeId
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PastryPage(
+                                            storeId: adStoreIds[index],
+                                            storeName: adStoreNames[index],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5.0),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.white,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          adImage,
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child: Text(
+                                                  'Image failed to load',
+                                                  style: TextStyle(
+                                                      color: Colors.black54),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }).toList(),
+                            carouselController: buttonCarouselController,
+                            options: CarouselOptions(
+                              height: 200.0,
+                              autoPlay: true,
+                              autoPlayInterval: const Duration(seconds: 4),
+                              autoPlayAnimationDuration:
+                                  const Duration(milliseconds: 800),
+                              enlargeCenterPage: false,
+                              viewportFraction: 1.0,
+                              onPageChanged: (index, reason) {
+                                setState(() {
+                                  currentAdIndex =
+                                      index; // Update the currentAdIndex
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(
+                              height:
+                                  8), // Space between carousel and indicators
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: adImages.asMap().entries.map((entry) {
+                              return GestureDetector(
+                                onTap: () => buttonCarouselController
+                                    .animateToPage(entry.key),
+                                child: Container(
+                                  width:
+                                      currentAdIndex == entry.key ? 10.0 : 6.0,
+                                  height:
+                                      currentAdIndex == entry.key ? 10.0 : 6.0,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 4.0),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: currentAdIndex == entry.key
+                                        ? myColor
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
           const SizedBox(height: 20),
 
           // Fancy Heading
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6.0),
+            padding: EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
               "What's on your mind?",
               style: TextStyle(

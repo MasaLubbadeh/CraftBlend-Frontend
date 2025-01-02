@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/pages/Store/ManageAdvertisement_Page.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -209,6 +210,27 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                 color: myColor),
                             title: const Text(
                               "Manage your delivery locations",
+                              style: TextStyle(
+                                color: myColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            trailing: const Icon(LineAwesomeIcons.angle_right,
+                                color: myColor),
+                          ),
+                          ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ManageAdvertisementPage()),
+                              );
+                            },
+                            leading:
+                                const Icon(LineAwesomeIcons.ad, color: myColor),
+                            title: const Text(
+                              "Home Page Ad Management",
                               style: TextStyle(
                                 color: myColor,
                                 fontWeight: FontWeight.w800,

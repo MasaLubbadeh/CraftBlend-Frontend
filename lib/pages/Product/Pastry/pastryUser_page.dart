@@ -33,7 +33,6 @@ class _PastryPageState extends State<PastryPage> {
   void initState() {
     super.initState();
     _checkIfFavorite();
-
     _fetchPastries();
   }
 
