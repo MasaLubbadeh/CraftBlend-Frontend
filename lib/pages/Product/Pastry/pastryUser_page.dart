@@ -34,11 +34,41 @@ class _PastryPageState extends State<PastryPage> {
     super.initState();
     _checkIfFavorite();
     _fetchPastries();
+    _addUserViewingStore(); // Log the store view when the page is opened
   }
 
   Future<String?> _fetchToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  Future<void> _addUserViewingStore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userType = prefs.getString('userType');
+
+      if (userType != 'user') {
+        return; // Only log store views for regular users
+      }
+
+      final response = await http.post(
+        Uri.parse(addStoreView), // Your endpoint from the config
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'storeId': widget.storeId}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Store view recorded successfully.');
+      } else {
+        print('Failed to record store view: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error recording store view: $error');
+    }
   }
 
   Future<void> _fetchPastries() async {

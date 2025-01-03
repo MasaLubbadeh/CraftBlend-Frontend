@@ -62,6 +62,15 @@ const String getUserOrders = '${url}order/getUserOrders';
 const String updateOrderStatusUrl = '${url}order';
 const String updateOrderItemsStatusUrl = '${url}order/updateItemStatus';
 
+const String incrementItemSearchCounts = '${url}search/incrementSearchCounts';
+
+const String getUserActivity = '${url}userActivity/getActivity';
+const String updateLastVisitedCategory =
+    '${url}userActivity/updateLastVisitedCategory';
+const String addProductVisit = '${url}userActivity/addProductVisit';
+const String addSearchHistory = '${url}userActivity/addSearchHistory';
+const String addStoreView = '${url}userActivity/addStoreView';
+
 const String getFirstLast = '${url}getFullName';
 const String createPost = '${url}posts';
 const String fetchAllPosts = '${url}fetchAllPosts';

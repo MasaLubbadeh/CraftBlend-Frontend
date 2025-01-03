@@ -33,6 +33,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     if (widget.selectedCategoryId != null) {
       selectedCategoryId = widget.selectedCategoryId;
       _fetchStores(selectedCategoryId!);
+      _updateLastVisitedCategory(selectedCategoryId!);
     }
 
     // Save scroll offset whenever it changes
@@ -52,6 +53,35 @@ class _CategoriesPageState extends State<CategoriesPage> {
   void dispose() {
     _categoryScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateLastVisitedCategory(String categoryId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userType = prefs.getString('userType');
+
+      if (userType != 'user') {
+        return; // Exit if userType is not 'user'
+      }
+
+      final response = await http.post(
+        Uri.parse(updateLastVisitedCategory),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'categoryId': categoryId}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Last visited category updated successfully.');
+      } else {
+        print('Failed to update last visited category: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error updating last visited category: $error');
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -178,6 +208,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           setState(() {
                             selectedCategoryId = category['_id'];
                           });
+                          _updateLastVisitedCategory(
+                              category['_id']); // Pass the correct categoryId
+
                           _fetchStores(category['_id']);
                         },
                         child: Padding(

@@ -18,12 +18,16 @@ class _SearchPageState extends State<SearchPage> {
   List<Map<String, dynamic>> allStores = [];
   List<Map<String, dynamic>> filteredResults = [];
   List<Map<String, dynamic>> mostSearchedItems = [];
+  List<String> interactedProductIds = [];
+  List<String> interactedStoreIds = [];
+
   bool isLoading = true;
   String selectedFilter = 'Both'; // 'Stores', 'Products', or 'Both'
   String currentQuery = '';
   String? selectedCity; // Store the selected city ID
   bool filterDelivery = false; // Track the delivery filter state
   String selectedSortOrder = 'None'; // Default sort order
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -200,6 +204,7 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+/*
   void search(String query) {
     setState(() {
       currentQuery = query;
@@ -210,6 +215,80 @@ class _SearchPageState extends State<SearchPage> {
     for (final item in filteredResults) {
       final isStore = allStores.contains(item);
       //updateSearchCount(item['_id'], isStore ? 'store' : 'product');
+    }
+    // Save search only if there are results
+    if (filteredResults.isNotEmpty) {
+      saveSearchQuery(query);
+    }
+  }*/
+  void search(String query) {
+    setState(() {
+      currentQuery = query;
+      updateFilteredResults();
+    });
+  }
+
+  Future<void> saveInteractedItem(String query,
+      {String? productId, String? storeId}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userType = prefs.getString('userType');
+
+      // Only save searches for user-type accounts
+      if (userType != 'user') return;
+
+      // Skip if the query is empty
+      if (query.isEmpty) return;
+
+      // Prepare headers and payload
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      // Prepare request payload
+      final searchHistoryBody = json.encode({
+        'query': query,
+        'interactedProductIds': productId != null ? [productId] : [],
+        'interactedStoreIds': storeId != null ? [storeId] : [],
+      });
+
+      // API Call to save search history
+      final searchHistoryResponse = await http.post(
+        Uri.parse(addSearchHistory),
+        headers: headers,
+        body: searchHistoryBody,
+      );
+
+      if (searchHistoryResponse.statusCode == 200) {
+        print('Search query and interactions saved successfully.');
+      } else {
+        print(
+            'Failed to save search query: ${searchHistoryResponse.statusCode}');
+      }
+
+      // Prepare payload for incrementing search counts
+      final incrementCountsBody = json.encode({
+        'productIds': productId != null ? [productId] : [],
+        'storeIds': storeId != null ? [storeId] : [],
+      });
+
+      // API Call to increment search counts
+      final incrementCountsResponse = await http.post(
+        Uri.parse(incrementItemSearchCounts),
+        headers: headers,
+        body: incrementCountsBody,
+      );
+
+      if (incrementCountsResponse.statusCode == 200) {
+        print('Search counts updated successfully.');
+      } else {
+        print(
+            'Failed to update search counts: ${incrementCountsResponse.statusCode}');
+      }
+    } catch (error) {
+      print('Error saving search query and interactions: $error');
     }
   }
 
@@ -257,21 +336,48 @@ class _SearchPageState extends State<SearchPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      onChanged: (value) {
-                        search(value);
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search stores, products...',
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        filled: true,
-                        fillColor: Colors.grey[200]?.withOpacity(0.8),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
+                    child: Row(
+                      children: [
+                        // Search TextField
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              // Keep showing results while typing
+                              search(value);
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Search stores, products...',
+                              prefixIcon:
+                                  const Icon(Icons.search, color: Colors.grey),
+                              filled: true,
+                              fillColor: Colors.grey[200]?.withOpacity(0.8),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+
+                        // Send Button
+                        IconButton(
+                          icon: const Icon(
+                            Icons.send,
+                            color: Colors.grey,
+                            size: 17,
+                          ),
+                          onPressed: () {
+                            final query = _searchController.text.trim();
+                            if (query.isNotEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Search submitted: $query')),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   Wrap(
@@ -445,32 +551,43 @@ class _SearchPageState extends State<SearchPage> {
                                           'storeName'); // Determine type
 
                                       return GestureDetector(
-                                        onTap: () {
+                                        onTap: () async {
+                                          final query = _searchController.text
+                                              .trim(); // Capture current query
                                           if (isStore) {
-                                            // Navigate to PastryPage for stores
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    PastryPage(
-                                                  storeId: item[
-                                                      '_id'], // Assuming `_id` is the store ID
-                                                  storeName:
-                                                      item['storeName'] ?? '',
+                                            // Save store interaction
+                                            if (item['_id'] != null) {
+                                              await saveInteractedItem(query,
+                                                  storeId: item['_id']);
+                                              // Navigate to the store page
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PastryPage(
+                                                    storeId: item['_id'],
+                                                    storeName:
+                                                        item['storeName'] ?? '',
+                                                  ),
                                                 ),
-                                              ),
-                                            );
+                                              );
+                                            }
                                           } else {
-                                            // Navigate to DetailPage for products
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    DetailPage(
-                                                  product: item,
+                                            // Save product interaction
+                                            if (item['_id'] != null) {
+                                              await saveInteractedItem(query,
+                                                  productId: item['_id']);
+                                              // Navigate to the product details page
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      DetailPage(
+                                                    product: item,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
+                                              );
+                                            }
                                           }
                                         },
                                         child: Container(

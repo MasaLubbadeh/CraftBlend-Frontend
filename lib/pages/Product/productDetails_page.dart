@@ -25,6 +25,8 @@ class _DetailPageState extends State<DetailPage> {
   void initState() {
     super.initState();
     _checkIfInWishlist();
+    _trackProductVisit(); // Track the visit for this product
+
     // Initialize selected options with null for optional options or first value for required options
     widget.product['availableOptions']?.forEach((key, values) {
       if (values.isNotEmpty) {
@@ -38,6 +40,38 @@ class _DetailPageState extends State<DetailPage> {
   Future<String?> _fetchToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  Future<void> _trackProductVisit() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userType = prefs.getString('userType');
+
+      if (userType != 'user') {
+        return; // Exit if userType is not 'user'
+      }
+
+      final productId = widget.product['_id'];
+
+      final response = await http.post(
+        Uri.parse(addProductVisit), // Configured in your backend
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'productId': productId}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Product visit tracked successfully.');
+      } else {
+        print(
+            'Failed to track product visit: ${response.statusCode} - ${response.body}');
+      }
+    } catch (error) {
+      print('Error tracking product visit: $error');
+    }
   }
 
   Future<void> _checkIfInWishlist() async {
