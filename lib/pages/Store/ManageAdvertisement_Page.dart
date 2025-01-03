@@ -62,7 +62,7 @@ class _ManageAdvertisementPageState extends State<ManageAdvertisementPage> {
       final token = prefs.getString('token');
 
       final response = await http.delete(
-        Uri.parse('removeAdvertisementEndpoint/adId'), // API endpoint
+        Uri.parse('$removeAdvertisement/$adId'), // API endpoint
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -94,7 +94,10 @@ class _ManageAdvertisementPageState extends State<ManageAdvertisementPage> {
         builder: (context) =>
             const AddAdvertisementPage(), // Redirect to AddAdvertisementPage
       ),
-    );
+    ).then((_) {
+      // Refresh advertisements when returning to this page
+      _fetchCurrentAdvertisement();
+    });
   }
 
   @override
@@ -109,7 +112,7 @@ class _ManageAdvertisementPageState extends State<ManageAdvertisementPage> {
         title: const Text(
           'Manage Advertisement',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),
@@ -213,7 +216,7 @@ class _ManageAdvertisementPageState extends State<ManageAdvertisementPage> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () => _removeAdvertisement(ad['_id']),
+                  onPressed: () => _showRemoveConfirmationDialog(ad['_id']),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.withOpacity(.6),
                   ),
@@ -232,45 +235,150 @@ class _ManageAdvertisementPageState extends State<ManageAdvertisementPage> {
   }
 
   Widget _buildNoAdvertisementView() {
-    return Center(
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'No current advertisement found.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 15),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'No current advertisement found.',
+              style: TextStyle(
+                fontSize: 18,
+                color: myColor,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+            SizedBox(height: 16),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildAddAdvertisementButton() {
+    final adCount = advertisements.length;
+    final canAddNewAd = adCount < 2;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: ElevatedButton.icon(
-        onPressed: _navigateToAddAdvertisementPage,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: myColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+      child: Column(
+        children: [
+          SizedBox(
+            width: double.infinity, // Ensures the button spans full width
+            child: ElevatedButton.icon(
+              onPressed: adCount == 0
+                  ? _navigateToAddAdvertisementPage // Allow directly adding if no ads
+                  : adCount == 1
+                      ? _showAddConfirmationDialog // Show confirmation if 1 ad exists
+                      : null, // Disable button if 2 or more ads exist
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canAddNewAd ? myColor : Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                adCount == 0
+                    ? 'Add Advertisement'
+                    : 'Add Another Advertisement',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          if (adCount >= 2)
+            const Padding(
+              padding: EdgeInsets.only(top: 8.0),
+              child: Text(
+                '**You already have 2 active advertisements. You cannot add more.**',
+                style: TextStyle(
+                    color: myColor, fontSize: 14, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Additional Advertisement'),
+        content: RichText(
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black, // Default text color
+            ),
+            children: [
+              TextSpan(
+                text: 'There will be ',
+                style: TextStyle(fontWeight: FontWeight.w300), // Make it bold
+              ),
+              TextSpan(
+                text: 'extra charges',
+                style: TextStyle(fontWeight: FontWeight.w500), // Make it bold
+              ),
+              TextSpan(
+                text:
+                    ' for adding another advertisement. Are you sure you want to proceed?',
+                style: TextStyle(fontWeight: FontWeight.w300), // Make it bold
+              ),
+            ],
           ),
         ),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Add Another Advertisement',
-          style: TextStyle(color: Colors.white),
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToAddAdvertisementPage();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: myColor,
+            ),
+            child: const Text(
+              'Proceed',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveConfirmationDialog(String adId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content:
+            const Text('Are you sure you want to remove this advertisement? '),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _removeAdvertisement(adId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: myColor,
+            ),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -75,6 +75,7 @@ const String incrementCityStoreCount = '${url}city/';
 const String addNewAdvertisement = '${url}advertisement/add';
 const String getAllAdvertisements = '${url}advertisement/getAll';
 const String getStoreAdvertisements = '${url}advertisement/getSoreAd';
+const String removeAdvertisement = '${url}advertisement/removeAdvertisement';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

@@ -66,7 +66,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const String tStoreProfile = "Store Profile";
+    const String tStoreProfile = "Profile";
     const double tDefaultSize = 20.0;
     const Color tPrimaryColor = myColor;
 
@@ -83,7 +83,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           title: const Text(
             tStoreProfile,
             style: TextStyle(
-              fontSize: 30,
+              fontSize: 27,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
             ),

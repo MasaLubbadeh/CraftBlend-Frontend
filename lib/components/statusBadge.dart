@@ -7,10 +7,10 @@ class StatusBadge {
       case 'pending':
         badgeColor = const Color.fromARGB(255, 117, 103, 127);
         break;
-      case 'shipped' || 'Expired':
+      case 'shipped' || 'expired':
         badgeColor = Colors.red.withOpacity(.6);
         break;
-      case 'delivered' || 'Active':
+      case 'delivered' || 'active':
         badgeColor = Colors.green;
         break;
       case 'partially shipped':

@@ -128,7 +128,27 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
-        leading: const Icon(Icons.store, color: myColor),
+        leading: ClipOval(
+          child: store['logo'] != null && store['logo'].isNotEmpty
+              ? Image.network(
+                  store['logo'], // Replace with the actual key for the logo URL
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.store,
+                      color: myColor,
+                      size: 50,
+                    ); // Fallback icon if image fails to load
+                  },
+                )
+              : const Icon(
+                  Icons.store,
+                  color: myColor,
+                  size: 50,
+                ), // Fallback icon if no logo URL is provided
+        ),
         title: Text(
           store['storeName'] ?? 'Store Name',
           style: const TextStyle(fontWeight: FontWeight.bold),
