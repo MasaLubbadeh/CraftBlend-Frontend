@@ -86,6 +86,7 @@ class _SearchPageState extends State<SearchPage> {
       final response = await http.get(Uri.parse(getMostSearched));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('fetchMostSearchedItemssss $data');
         if (data['success'] == true) {
           setState(() {
             mostSearchedItems = [
@@ -250,8 +251,8 @@ class _SearchPageState extends State<SearchPage> {
       // Prepare request payload
       final searchHistoryBody = json.encode({
         'query': query,
-        'interactedProductIds': productId != null ? [productId] : [],
-        'interactedStoreIds': storeId != null ? [storeId] : [],
+        'interactedProductId': productId,
+        'interactedStoreId': storeId,
       });
 
       // API Call to save search history
@@ -262,7 +263,7 @@ class _SearchPageState extends State<SearchPage> {
       );
 
       if (searchHistoryResponse.statusCode == 200) {
-        print('Search query and interactions saved successfully.');
+        print('Search query and interaction saved successfully.');
       } else {
         print(
             'Failed to save search query: ${searchHistoryResponse.statusCode}');
@@ -361,7 +362,7 @@ class _SearchPageState extends State<SearchPage> {
                         ),
 
                         // Send Button
-                        IconButton(
+/*IconButton(
                           icon: const Icon(
                             Icons.send,
                             color: Colors.grey,
@@ -377,6 +378,7 @@ class _SearchPageState extends State<SearchPage> {
                             }
                           },
                         ),
+                        */
                       ],
                     ),
                   ),

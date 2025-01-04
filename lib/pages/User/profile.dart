@@ -37,9 +37,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (token != null) {
       try {
         // Set isOwner based on userType
-        setState(() {
-          isUser = (userType == 'user');
-        });
+        if (mounted) {
+          setState(() {
+            isUser = (userType == 'user');
+          });
+        }
 
         // Fetch User Information
         final userResponse = await http.get(
@@ -50,34 +52,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
         if (userResponse.statusCode == 200) {
-          setState(() {
-            userData =
-                json.decode(userResponse.body); // Decode the user response
+          if (mounted) {
+            setState(() {
+              userData =
+                  json.decode(userResponse.body); // Decode the user response
 
-            // Only fetch and add credit card info if the user is not an owner
-            if (isUser) {
-              _fetchCreditCardDetails(token);
-            } else {
-              isLoading = false; // Stop loading
-            }
-          });
+              // Only fetch and add credit card info if the user is not an owner
+              if (isUser) {
+                _fetchCreditCardDetails(token);
+              } else {
+                isLoading = false; // Stop loading
+              }
+            });
+          }
         } else {
           print('Error fetching user data: ${userResponse.statusCode}');
-          setState(() {
-            isLoading = false; // Stop loading
-          });
+          if (mounted) {
+            setState(() {
+              isLoading = false; // Ensure the loading state is properly handled
+            });
+          }
         }
       } catch (e) {
         print('Exception while fetching data: $e');
-        setState(() {
-          isLoading = false; // Stop loading
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false; // Ensure the loading state is properly handled
+          });
+        }
+        // Stop loading
       }
     } else {
       print('Token not found. Cannot fetch data.');
-      setState(() {
-        isLoading = false; // Stop loading
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false; // Ensure the loading state is properly handled
+        });
+      }
     }
   }
 
@@ -121,15 +132,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       } else {
         print('Error fetching credit card data: ${cardResponse.statusCode}');
-        setState(() {
-          isLoading = false; // Stop loading
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false; // Ensure the loading state is properly handled
+          });
+        }
       }
     } catch (e) {
       print('Exception while fetching credit card data: $e');
-      setState(() {
-        isLoading = false; // Stop loading
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false; // Ensure the loading state is properly handled
+        });
+      }
     }
   }
 

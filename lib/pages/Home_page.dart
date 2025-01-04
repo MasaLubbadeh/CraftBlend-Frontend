@@ -1,6 +1,7 @@
 import 'package:craft_blend_project/components/addressWidget.dart';
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Product/Pastry/pastryUser_page.dart';
+import 'package:craft_blend_project/pages/Product/productDetails_page.dart';
 import 'package:craft_blend_project/pages/googleMapsPage.dart';
 import 'package:craft_blend_project/pages/wishlist_page.dart';
 import 'package:flutter/material.dart' hide CarouselController;
@@ -34,7 +35,19 @@ class _HomePageState extends State<HomePage> {
   int currentAdIndex = 0; // Add this to your state
   List<String> adStoreIds = []; // Store IDs corresponding to ads
   List<String> adStoreNames = []; // Store Names corresponding to ads
+  List<Map<String, dynamic>> favoriteStoreProducts = [];
+  List<Map<String, dynamic>> wishlistItems = [];
+  List<Map<String, dynamic>> mostSearchedItems = [];
+  List<Map<String, dynamic>> recentlyViewedProducts = [];
+  List<Map<String, dynamic>> recommendedStores = [];
+  List<Map<String, dynamic>> suggestedProducts = [];
 
+  bool isLoadingRecommendedStores = true;
+  bool isLoadingSuggested = true;
+  bool isLoadingRecentlyViewed = true;
+  bool isLoadingFavorites = true;
+  bool isLoadingWishlist = true;
+  bool isLoadingMostSearched = true;
   @override
   void initState() {
     super.initState();
@@ -42,6 +55,458 @@ class _HomePageState extends State<HomePage> {
     _loadSelectedCity();
     _checkLocation();
     _fetchAdvertisements(); // Fetch ads
+
+    _fetchFavoriteStoreProducts();
+    _fetchMostSearchedItems();
+    _fetchRecentlyViewedProducts();
+    _fetchRecommendedStores();
+    _fetchSuggestedProducts();
+  }
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<void> _fetchSuggestedProducts() async {
+    try {
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+
+      final response = await http.get(
+        Uri.parse(getSuggestedProducts),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true &&
+            responseData['products'] != null) {
+          setState(() {
+            suggestedProducts =
+                List<Map<String, dynamic>>.from(responseData['products']);
+            isLoadingSuggested = false;
+          });
+        } else {
+          throw Exception('Invalid response format or missing products key.');
+        }
+      } else {
+        throw Exception(
+            'Failed to fetch data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching suggested products: $e');
+      setState(() {
+        isLoadingSuggested = false;
+      });
+    }
+  }
+
+  Future<void> _fetchRecommendedStores() async {
+    try {
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.get(
+        Uri.parse(getRecommendedStoresByCategory),
+        headers: headers,
+      );
+      print('_fetchRecommendedStores ${response.body}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          recommendedStores = List<Map<String, dynamic>>.from(
+              json.decode(response.body)['stores']);
+          isLoadingRecommendedStores = false;
+        });
+      } else {
+        throw Exception('Failed to fetch recommended stores.');
+      }
+    } catch (e) {
+      print('Error fetching recommended stores: $e');
+      setState(() {
+        isLoadingRecommendedStores = false;
+      });
+    }
+  }
+
+  Future<void> _fetchFavoriteStoreProducts() async {
+    try {
+      // Fetch data for favorite store products
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+      final response = await http.get(
+        Uri.parse(getFavStoresProducts),
+        headers: headers,
+      );
+      //     print('_fetchFavoriteStoreProductss ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true &&
+            responseData['products'] != null) {
+          setState(() {
+            favoriteStoreProducts =
+                List<Map<String, dynamic>>.from(responseData['products']);
+            isLoadingFavorites = false;
+          });
+        } else {
+          throw Exception('Invalid response format or missing products key.');
+        }
+      } else {
+        throw Exception(
+            'Failed to fetch data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching favorite store products: $e');
+      setState(() {
+        isLoadingFavorites = false;
+      });
+    }
+  }
+
+/*
+  Future<void> _fetchWishlistItems() async {
+    try {
+      // Fetch data for wishlist items
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.get(
+        Uri.parse(getWishlistProducts),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true &&
+            responseData['products'] != null) {
+          setState(() {
+            wishlistItems =
+                List<Map<String, dynamic>>.from(responseData['products']);
+            isLoadingWishlist = false;
+          });
+        } else {
+          throw Exception('Invalid response format or missing products key.');
+        }
+      } else {
+        throw Exception(
+            'Failed to fetch data. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching wishlist items: $e');
+      setState(() {
+        isLoadingWishlist = false;
+      });
+    }
+  }
+*/
+  Future<void> _fetchMostSearchedItems() async {
+    try {
+      // Fetch data for most searched items
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.get(
+        Uri.parse(getMostSearched),
+        headers: headers,
+      );
+      //    print('_fetchMostSearchedItems ${response.body}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          mostSearchedItems = List<Map<String, dynamic>>.from(
+              json.decode(response.body)['products']);
+          isLoadingMostSearched = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching most searched items: $e');
+      setState(() {
+        isLoadingMostSearched = false;
+      });
+    }
+  }
+
+  Future<void> _fetchRecentlyViewedProducts() async {
+    try {
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+
+      final response = await http.get(
+        Uri.parse(getRecentlyViewedProducts),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      // print('_fetchRecentlyViewedProducts');
+      //print(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          recentlyViewedProducts = List<Map<String, dynamic>>.from(
+              json.decode(response.body)['products']);
+          isLoadingRecentlyViewed = false;
+        });
+      } else {
+        throw Exception(
+            'Failed to fetch recently viewed products. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching recently viewed products: $e');
+      setState(() {
+        isLoadingRecentlyViewed = false;
+      });
+    }
+  }
+
+  Widget _buildProductCard(Map<String, dynamic> product) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailPage(product: product),
+          ),
+        );
+      },
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.4, // 40% of screen width
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Responsive height for the image
+              AspectRatio(
+                aspectRatio: 1.1, // Square aspect ratio
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: product['image'] != null
+                      ? Image.network(
+                          product['image'],
+                          fit: BoxFit.cover,
+                        )
+                      : const Image(
+                          image:
+                              AssetImage('assets/images/default_product.jpg'),
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  product['name'] ?? 'No Name',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  '${product['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (product['store'] != null && product['store'] is Map)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: product['store']['logo'] != null
+                            ? NetworkImage(product['store']['logo'])
+                            : const AssetImage('assets/images/logo.png')
+                                as ImageProvider,
+                        backgroundColor: Colors.transparent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          product['store']['storeName'] ?? 'Unknown Store',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoreCard(Map<String, dynamic> store) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PastryPage(
+              storeId: store['_id'],
+              storeName: store['storeName'],
+            ),
+          ),
+        );
+      },
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.4, // 40% of screen width
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Store logo
+              AspectRatio(
+                aspectRatio: 1.0, // Square aspect ratio
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: store['logo'] != null
+                      ? Image.network(
+                          store['logo'],
+                          fit: BoxFit.cover,
+                        )
+                      : const Image(
+                          image: AssetImage('assets/images/default_store.jpg'),
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Store name
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  store['storeName'] ?? 'Unknown Store',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Category image and name
+              if (store['category'] != null) // Check if category data exists
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      // Category image
+                      if (store['category']['image'] != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: Image.network(
+                            store['category']['image'],
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image_not_supported, size: 24),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      // Category name
+                      Text(
+                        store['category']['name'] ?? 'Unknown Category',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(String title, List<Map<String, dynamic>> items,
+      Widget Function(Map<String, dynamic>) itemBuilder) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Text(
+            title,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: myColor,
+                letterSpacing: 1.5),
+          ),
+        ),
+        SizedBox(
+          height:
+              MediaQuery.of(context).size.height * 0.3, // 30% of screen height
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              return itemBuilder(items[index]);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _checkLocation() async {
@@ -294,6 +759,199 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget _buildCarousel() {
+    return adImages.isEmpty
+        ? const Center(
+            child: Text(
+              'No advertisements available.',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          )
+        : SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: Column(
+              children: [
+                CarouselSlider(
+                  items: adImages.asMap().entries.map((entry) {
+                    final int index = entry.key;
+                    final String adImage = entry.value;
+
+                    return Builder(
+                      builder: (BuildContext context) {
+                        return GestureDetector(
+                          onTap: () {
+                            // Navigate to PastryPage with storeId
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PastryPage(
+                                  storeId: adStoreIds[index],
+                                  storeName: adStoreNames[index],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.white,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                adImage,
+                                width: MediaQuery.of(context).size.width,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: Text(
+                                        'Image failed to load',
+                                        style: TextStyle(color: Colors.black54),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                  carouselController: buttonCarouselController,
+                  options: CarouselOptions(
+                    height: 200.0,
+                    autoPlay: true,
+                    autoPlayInterval: const Duration(seconds: 3),
+                    autoPlayAnimationDuration:
+                        const Duration(milliseconds: 800),
+                    enlargeCenterPage: false,
+                    viewportFraction: 1.0,
+                    onPageChanged: (index, reason) {
+                      setState(() {
+                        currentAdIndex = index; // Update the currentAdIndex
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(
+                    height: 8), // Space between carousel and indicators
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: adImages.asMap().entries.map((entry) {
+                    return GestureDetector(
+                      onTap: () =>
+                          buttonCarouselController.animateToPage(entry.key),
+                      child: Container(
+                        width: currentAdIndex == entry.key ? 10.0 : 6.0,
+                        height: currentAdIndex == entry.key ? 10.0 : 6.0,
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: currentAdIndex == entry.key
+                              ? myColor
+                              : Colors.grey,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          );
+  }
+
+  Widget _buildCategoriesSection() {
+    return Card(
+      elevation: 5,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
+      color: const Color.fromARGB(171, 243, 229, 245).withOpacity(.9),
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: categories.map((category) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CategoriesPage(selectedCategoryId: category['_id']),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 65,
+                        height: 65,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey,
+                            width: 2,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: category['image'] != null &&
+                                  category['image'].isNotEmpty
+                              ? Image.network(
+                                  category['image'],
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  color: Colors.grey,
+                                  child: Center(
+                                    child: Text(
+                                      category['name'][0],
+                                      style: const TextStyle(
+                                        fontSize: 25,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 80,
+                        child: Text(
+                          category['name'],
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                          softWrap: true,
+                          maxLines: 2,
+                          overflow: TextOverflow.clip,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -369,249 +1027,88 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 30,
-          ),
-          // Carousel Slider
-          isLoadingAds
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                )
-              : adImages.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No advertisements available.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: Column(
-                        children: [
-                          CarouselSlider(
-                            items: adImages.asMap().entries.map((entry) {
-                              final int index = entry.key;
-                              final String adImage = entry.value;
-
-                              return Builder(
-                                builder: (BuildContext context) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      // Navigate to PastryPage with storeId
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => PastryPage(
-                                            storeId: adStoreIds[index],
-                                            storeName: adStoreNames[index],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 5.0),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: Colors.white,
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          adImage,
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return Container(
-                                              color: Colors.grey[200],
-                                              child: const Center(
-                                                child: Text(
-                                                  'Image failed to load',
-                                                  style: TextStyle(
-                                                      color: Colors.black54),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }).toList(),
-                            carouselController: buttonCarouselController,
-                            options: CarouselOptions(
-                              height: 200.0,
-                              autoPlay: true,
-                              autoPlayInterval: const Duration(seconds: 4),
-                              autoPlayAnimationDuration:
-                                  const Duration(milliseconds: 800),
-                              enlargeCenterPage: false,
-                              viewportFraction: 1.0,
-                              onPageChanged: (index, reason) {
-                                setState(() {
-                                  currentAdIndex =
-                                      index; // Update the currentAdIndex
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(
-                              height:
-                                  8), // Space between carousel and indicators
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: adImages.asMap().entries.map((entry) {
-                              return GestureDetector(
-                                onTap: () => buttonCarouselController
-                                    .animateToPage(entry.key),
-                                child: Container(
-                                  width:
-                                      currentAdIndex == entry.key ? 10.0 : 6.0,
-                                  height:
-                                      currentAdIndex == entry.key ? 10.0 : 6.0,
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 4.0),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: currentAdIndex == entry.key
-                                        ? myColor
-                                        : Colors.grey,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-
-          const SizedBox(height: 20),
-
-          // Fancy Heading
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              "What's on your mind?",
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: myColor,
-                  letterSpacing: 2),
-              textAlign: TextAlign.center,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 30),
+            isLoadingAds
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  )
+                : _buildCarousel(),
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                "What's on your mind?",
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 2),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
+            isLoadingCategories
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  )
+                : _buildCategoriesSection(),
+            const SizedBox(height: 20),
 
-          // Categories Section
-          isLoadingCategories
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                )
-              : categories.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No categories available.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : Card(
-                      elevation: 5,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                      ),
-                      color: const Color.fromARGB(171, 243, 229, 245)
-                          .withOpacity(.9),
-                      margin: const EdgeInsets.only(bottom: 20),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: categories.map((category) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CategoriesPage(
-                                          selectedCategoryId: category['_id']),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        width: 65,
-                                        height: 65,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey,
-                                            width: 2,
-                                          ),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: ClipOval(
-                                          child: category['image'] != null &&
-                                                  category['image'].isNotEmpty
-                                              ? Image.network(
-                                                  category['image'],
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  color: Colors.grey,
-                                                  child: Center(
-                                                    child: Text(
-                                                      category['name'][0],
-                                                      style: const TextStyle(
-                                                        fontSize: 25,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        width: 80,
-                                        child: Text(
-                                          category['name'],
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.normal,
-                                            color: Colors.black54,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                          softWrap: true,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.clip,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
+            // Recently Viewed Products Row
+            if (!isLoadingRecentlyViewed && recentlyViewedProducts.isNotEmpty)
+              Column(
+                children: [
+                  _buildRow('Recently Viewed Products', recentlyViewedProducts,
+                      _buildProductCard),
+                  const SizedBox(height: 20),
+                ],
+              ),
 
-          const SizedBox(height: 20),
-        ],
+            if (!isLoadingSuggested && suggestedProducts.isNotEmpty)
+              Column(
+                children: [
+                  _buildRow('Suggested for You', suggestedProducts,
+                      _buildProductCard),
+                  const SizedBox(height: 20),
+                ],
+              ),
+
+            // From Your Favorite Stores Row
+            if (!isLoadingFavorites && favoriteStoreProducts.isNotEmpty)
+              Column(
+                children: [
+                  _buildRow('From Your Favorite Stores', favoriteStoreProducts,
+                      _buildProductCard),
+                  const SizedBox(height: 20),
+                ],
+              ),
+
+            // Most Searched Items Row
+            if (!isLoadingMostSearched && mostSearchedItems.isNotEmpty)
+              Column(
+                children: [
+                  _buildRow('Most Searched Items', mostSearchedItems,
+                      _buildProductCard),
+                  const SizedBox(height: 20),
+                ],
+              ),
+
+            if (!isLoadingRecommendedStores && recommendedStores.isNotEmpty)
+              Column(
+                children: [
+                  _buildRow('Stores You Might Be Interested In',
+                      recommendedStores, _buildStoreCard),
+                  const SizedBox(height: 20),
+                ],
+              ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

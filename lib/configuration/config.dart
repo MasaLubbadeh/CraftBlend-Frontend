@@ -11,18 +11,21 @@ const String forgotPassword = '${url}forgotPassword';
 const String getPersonalInfo = '${url}getPersonalInfo';
 const String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
 const String addCreditCard = '${url}addCreditCard';
-const String getCreditCardData = '${url}getCreditCardData'; //check-email
-const String checkEmail = '${url}check-email'; //addFavoriteStore
+const String getCreditCardData = '${url}getCreditCardData';
+const String checkEmail = '${url}check-email';
 
-const String addFavoriteStore = '${url}favoriteStores'; //addFavoriteStore
-const String removeFavoriteStore = '${url}favoriteStores'; //addFavoriteStore
-const String checkIfFavoriteStore =
-    '${url}favoriteStores/checkIfFav'; //addFavoriteStore
+const String addFavoriteStore = '${url}favoriteStores';
+const String removeFavoriteStore = '${url}favoriteStores';
+const String checkIfFavoriteStore = '${url}favoriteStores/checkIfFav';
+const String getFavStoresProducts = '${url}favoriteStores/getStoresProducts';
 
-const String addToWishlist = '${url}wishlist'; //addFavoriteStore
+const String addToWishlist = '${url}wishlist';
 const String removeFromWishlist = '${url}wishlist';
 const String checkIfInWishlist = '${url}wishlist/checkIfExist';
 const String getWishlistProducts = '${url}wishlist/getList';
+
+const String getRecommendedStoresByCategory =
+    '${url}getRecommendedStoresByCategory';
 
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
@@ -63,6 +66,8 @@ const String updateOrderStatusUrl = '${url}order';
 const String updateOrderItemsStatusUrl = '${url}order/updateItemStatus';
 
 const String incrementItemSearchCounts = '${url}search/incrementSearchCounts';
+const String getSuggestedProducts =
+    '${url}search/getSuggestedProducts'; // from search and wishList
 
 const String getUserActivity = '${url}userActivity/getActivity';
 const String updateLastVisitedCategory =
@@ -70,7 +75,8 @@ const String updateLastVisitedCategory =
 const String addProductVisit = '${url}userActivity/addProductVisit';
 const String addSearchHistory = '${url}userActivity/addSearchHistory';
 const String addStoreView = '${url}userActivity/addStoreView';
-
+const String getRecentlyViewedProducts =
+    '${url}userActivity/getRecentlyViewedProducts';
 const String getFirstLast = '${url}getFullName';
 const String createPost = '${url}posts';
 const String fetchAllPosts = '${url}fetchAllPosts';
