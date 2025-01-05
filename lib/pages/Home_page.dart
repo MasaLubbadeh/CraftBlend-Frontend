@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'CategoriesPage.dart';
 import 'Search_Page.dart'; // Import SearchPage for navigation
+import 'package:craft_blend_project/components/badge.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -250,9 +251,11 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error fetching most searched items: $e');
-      setState(() {
-        isLoadingMostSearched = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingMostSearched = false;
+        });
+      }
     }
   }
 
@@ -291,6 +294,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  String formatTimeRequired(int? timeRequired) {
+    if (timeRequired == null || timeRequired <= 0) return "No time specified";
+
+    // Convert to days and round
+    final days = (timeRequired / 1440).round();
+
+    // If less than a day, show hours
+    if (days == 0) {
+      final hours = (timeRequired / 60).round(); // Convert to hours
+      return "$hours hour${hours > 1 ? 's' : ''}";
+    }
+
+    return "$days day${days > 1 ? 's' : ''}";
+  }
+
   Widget _buildProductCard(Map<String, dynamic> product) {
     return GestureDetector(
       onTap: () {
@@ -311,24 +329,98 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Responsive height for the image
+              // Product image with badge overlay
               AspectRatio(
-                aspectRatio: 1.1, // Square aspect ratio
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: product['image'] != null
-                      ? Image.network(
-                          product['image'],
-                          fit: BoxFit.cover,
-                        )
-                      : const Image(
-                          image:
-                              AssetImage('assets/images/default_product.jpg'),
-                          fit: BoxFit.cover,
+                aspectRatio: 1.09, // Square aspect ratio
+                child: Stack(
+                  children: [
+                    // Product Image
+                    ClipRRect(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(12)),
+                      child: product['image'] != null
+                          ? Image.network(
+                              product['image'],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                          : const Image(
+                              image: AssetImage(
+                                  'assets/images/default_product.jpg'),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                    ),
+                    // Badge overlay
+                    /*  if (product['inStock'] == false)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Out of Stock',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
                         ),
+                      ),*/
+                    if (product['isUponOrder'] == true)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Upon Order',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (product['inStock'] == true)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Available',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              // Product name
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
@@ -338,6 +430,7 @@ class _HomePageState extends State<HomePage> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              // Product price
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
@@ -346,6 +439,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 4),
+              // Store information
               if (product['store'] != null && product['store'] is Map)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),

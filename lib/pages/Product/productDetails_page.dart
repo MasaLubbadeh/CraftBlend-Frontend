@@ -96,9 +96,15 @@ class _DetailPageState extends State<DetailPage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      } else {
+        // Optionally log the error if the widget is unmounted
+        print(
+            'Error occurred but the widget is no longer mounted: ${e.toString()}');
+      }
     }
   }
 

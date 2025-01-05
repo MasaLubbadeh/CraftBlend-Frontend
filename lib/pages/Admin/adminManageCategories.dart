@@ -405,42 +405,73 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                   Map<String, dynamic> category = entry.value;
 
                   return Card(
+                    color: const Color.fromARGB(171, 243, 229, 245),
                     elevation: 6,
-                    margin: const EdgeInsets.symmetric(vertical: 10),
-                    child: ListTile(
-                      leading: category['image'].isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.network(
-                                category['image'], // URL of the image
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: SizedBox(
+                      height: 120, // Fixed height for consistent card size
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 5.0, horizontal: 10.0),
+                        child: Row(
+                          children: [
+                            category['image'].isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Image.network(
+                                      category['image'], // URL of the image
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.category,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  Text(
+                                    category['name'],
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: myColor,
+                                        letterSpacing: 1),
+                                    maxLines:
+                                        1, // Ensure only one line for the name
+                                    overflow: TextOverflow
+                                        .ellipsis, // Handle overflow with ellipsis
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    category['description'],
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black54,
+                                    ),
+                                    maxLines:
+                                        2, // Restrict to two lines for the description
+                                    overflow: TextOverflow
+                                        .ellipsis, // Handle overflow
+                                  ),
+                                ],
                               ),
-                            )
-                          : const Icon(
-                              Icons.category,
-                              size: 60,
-                              color: Colors.grey,
                             ),
-                      title: Text(
-                        category['name'],
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: myColor,
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _confirmDeleteCategory(index),
+                            ),
+                          ],
                         ),
-                      ),
-                      subtitle: Text(
-                        category['description'],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmDeleteCategory(index),
                       ),
                     ),
                   );

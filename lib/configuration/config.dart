@@ -92,6 +92,12 @@ const String getAllAdvertisements = '${url}advertisement/getAll';
 const String getStoreAdvertisements = '${url}advertisement/getSoreAd';
 const String removeAdvertisement = '${url}advertisement/removeAdvertisement';
 
+const String submitNewSuggestion =
+    '${url}categorySuggestion/submitNewSuggestion';
+const String getAllSuggestions = '${url}categorySuggestion/getAllSuggestions';
+const String updateSuggestionStatus =
+    '${url}categorySuggestion/updateSuggestionStatus';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 const myColor2 = myColor;

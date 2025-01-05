@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/pages/Admin/ReviewSuggestions_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'adminManageCategories.dart';
@@ -39,6 +40,8 @@ class AdminDashboardPage extends StatelessWidget {
             child: Column(
               children: [
                 _buildManageCategoriesCard(context),
+                _buildReviewSuggestionsCard(
+                    context), // New card for reviewing suggestions
                 _buildLogoutTile(context),
               ],
             ),
@@ -69,6 +72,33 @@ class AdminDashboardPage extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => const ManageCategoriesPage()),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildReviewSuggestionsCard(BuildContext context) {
+    return Card(
+      elevation: 6,
+      margin: const EdgeInsets.symmetric(vertical: 14),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16.0),
+        leading: const Icon(Icons.rate_review, color: myColor, size: 36),
+        title: const Text(
+          'Review Category Suggestions',
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.bold,
+            color: myColor,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, color: myColor),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const ReviewSuggestionsPage()),
           );
         },
       ),
