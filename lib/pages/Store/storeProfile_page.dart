@@ -1,4 +1,5 @@
 import 'package:craft_blend_project/pages/Store/ManageAdvertisement_Page.dart';
+import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,6 +39,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             'Authorization': 'Bearer $token',
           },
         );
+        print(response.body);
 
         if (response.statusCode == 200) {
           setState(() {
@@ -239,7 +241,37 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                             trailing: const Icon(LineAwesomeIcons.angle_right,
                                 color: myColor),
                           ),
-
+                          ListTile(
+                            onTap: () {
+                              final category = storeData?['category'];
+                              if (category != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        SpecialOrdersPage(category: category),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Category not found for this store.')),
+                                );
+                              }
+                            },
+                            leading:
+                                const Icon(Icons.shopping_cart, color: myColor),
+                            title: const Text(
+                              "Manage special orders",
+                              style: TextStyle(
+                                color: myColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            trailing: const Icon(LineAwesomeIcons.angle_right,
+                                color: myColor),
+                          ),
                           // Change Password Button
                           ListTile(
                             onTap: () {

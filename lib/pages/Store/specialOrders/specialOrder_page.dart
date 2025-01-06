@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../storeOrders_page.dart';
 
 class SpecialOrdersPage extends StatefulWidget {
-  const SpecialOrdersPage({super.key});
+  final String category;
+
+  const SpecialOrdersPage({super.key, required this.category});
 
   @override
   _SpecialOrdersPageState createState() => _SpecialOrdersPageState();
@@ -22,6 +24,162 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     'Custom-Made Cake': false,
     'Large Orders': false,
   }; // Tracks the selection state of each option
+
+  @override
+  void initState() {
+    _initializeOrderOptions(); // Replace 'Bakery' with the actual category
+  }
+
+  Map<String, List<String>> categoryDefaultOptions = {
+    'Phone Accessories': ['Personalized designs', 'Large orders'],
+    'Pottery': ['Custom Pottery Design', 'Bulk orders'],
+    'Gift Items': [
+      'Personalized Gift Packaging',
+      'Custom Gift Set Design',
+    ],
+    'Crochet & Knitting': [
+      'Personalized designs',
+      'Large quantities',
+    ],
+    'Flowers': [
+      'Personalized designs',
+      'Event-specific bulk arrangements',
+    ],
+    'Pastry & Bakery': [
+      'Custom-Made Cake',
+      'Large Orders',
+    ],
+  };
+  String _getImageForOption(String option) {
+    Map<String, String> optionImages = {
+      'Custom-Made Cake': 'assets/images/notes.png',
+      'Large Orders': 'assets/images/bulkBuying1.png',
+      'Personalized designs': 'assets/images/notes.png',
+      'Bulk orders': 'assets/images/bulkBuying.png',
+      'Personalized Gift Packaging': 'assets/images/notes.png',
+      'Custom Gift Set Design': 'assets/images/notes.png',
+      'Custom Pottery Design': 'assets/images/notes.png',
+      'Event-specific bulk arrangements': 'assets/images/event.png',
+    };
+
+    return optionImages[option] ?? 'assets/images/default.png';
+  }
+
+  void _initializeOrderOptions() {
+    final defaultOptions = categoryDefaultOptions[widget.category] ?? [];
+    setState(() {
+      selectedOrderOptions = {for (var option in defaultOptions) option: false};
+    });
+  }
+
+  Widget _buildSpecialOrderOptions() {
+    if (selectedOrderOptions.isEmpty) {
+      return const Center(child: Text('No special order options available.'));
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: selectedOrderOptions.length,
+      itemBuilder: (context, index) {
+        final optionTitle = selectedOrderOptions.keys.elementAt(index);
+        final isSelected = selectedOrderOptions[optionTitle] ?? false;
+        final imagePath =
+            _getImageForOption(optionTitle); // Get image for the option
+
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.symmetric(vertical: 15),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: ListTile(
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.asset(
+                  imagePath,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              title: Text(optionTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Checkbox(
+                value: isSelected,
+                activeColor: myColor,
+                onChanged: (value) {
+                  setState(() {
+                    selectedOrderOptions[optionTitle] = value ?? false;
+                  });
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+/*
+  Widget _buildSpecialOrderOptions() {
+    if (selectedOrderOptions.isEmpty) {
+      return const Center(child: Text('No special order options available.'));
+    }
+
+    return Column(
+      children: selectedOrderOptions.entries.map((entry) {
+        return CheckboxListTile(
+          title: Text(entry.key),
+          value: entry.value,
+          onChanged: (value) {
+            setState(() {
+              selectedOrderOptions[entry.key] = value ?? false;
+            });
+          },
+          activeColor: myColor,
+        );
+      }).toList(),
+    );
+  }
+*/
+  Widget _buildAddOptionButton() {
+    final TextEditingController _newOptionController = TextEditingController();
+
+    return ElevatedButton.icon(
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Add Special Order Option'),
+            content: TextField(
+              controller: _newOptionController,
+              decoration: const InputDecoration(hintText: 'Enter new option'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  final newOption = _newOptionController.text.trim();
+                  if (newOption.isNotEmpty) {
+                    setState(() {
+                      selectedOrderOptions[newOption] = false;
+                    });
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          ),
+        );
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Add Option'),
+      style: ElevatedButton.styleFrom(backgroundColor: myColor),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +217,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
           ),
           SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
+            /*child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildReviewOrderRequestsCard(),
@@ -73,6 +231,23 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                 if (specialOrdersEnabled) _buildOrderOptionsSelectionCard(),
                 const SizedBox(height: 24),
                 if (specialOrdersEnabled) _buildManageFormsButton(),
+              ],
+            ),*/
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'Special Order Options',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                _buildSpecialOrderOptions(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildAddOptionButton(),
+                ),
               ],
             ),
           ),

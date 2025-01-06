@@ -1,3 +1,4 @@
+import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,6 +23,7 @@ class _PastryPageState extends State<PastryPage> {
   bool isLoading = true;
   bool _isSearching = false;
   bool _isSorting = false; // New state for sorting dropdown
+  bool allowSpecialOrders = false; // Track special orders permission
 
   bool isFavorite = false;
   String selectedSortOrder = 'Recently Added'; // Default title for sorting
@@ -34,6 +36,7 @@ class _PastryPageState extends State<PastryPage> {
     super.initState();
     _checkIfFavorite();
     _fetchPastries();
+    _fetchAllowSpecialOrders();
     _addUserViewingStore(); // Log the store view when the page is opened
   }
 
@@ -71,6 +74,40 @@ class _PastryPageState extends State<PastryPage> {
     }
   }
 
+  Future<void> _fetchAllowSpecialOrders() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("Token is missing.");
+      }
+
+      final response = await http.get(
+        Uri.parse('$checkIfAllowSpecialOrders/${widget.storeId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        setState(() {
+          allowSpecialOrders =
+              jsonResponse['data']['allowSpecialOrders'] ?? false;
+        });
+      } else {
+        throw Exception('Failed to fetch allowSpecialOrders');
+      }
+    } catch (err) {
+      print('Error fetching allowSpecialOrders: $err');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching allowSpecialOrders')),
+      );
+    }
+  }
+
   Future<void> _fetchPastries() async {
     try {
       final response = await http
@@ -82,6 +119,7 @@ class _PastryPageState extends State<PastryPage> {
           setState(() {
             pastries = List<Map<String, dynamic>>.from(jsonResponse['data']);
             filteredPastries = pastries;
+
             isLoading = false;
           });
         } else {
@@ -253,7 +291,7 @@ class _PastryPageState extends State<PastryPage> {
 
   Widget _buildSortDropdown() {
     return Positioned(
-      top: appBarHeight * .01,
+      top: appBarHeight, // Position it right below the app bar
       left: 0,
       right: 0,
       child: Material(
@@ -382,6 +420,9 @@ class _PastryPageState extends State<PastryPage> {
         children: [
           Column(
             children: [
+              // Show the "Make a Special Order" row if allowed
+              if (_isSorting) _buildSortDropdown(),
+
               if (_isSearching)
                 Container(
                   color: const Color.fromARGB(171, 243, 229, 245),
@@ -403,6 +444,42 @@ class _PastryPageState extends State<PastryPage> {
                     ),
                   ),
                 ),
+              if (allowSpecialOrders)
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to the special order form
+                    /*Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SpecialOrdersPage(
+                            //    storeId: widget.storeId,
+                            //    storeName: widget.storeName,
+                            ),
+                      ),
+                    );*/
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    color: myColor.withOpacity(0.1),
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag, color: myColor),
+                        SizedBox(width: 8),
+                        Text(
+                          'Make a Special Order',
+                          style: TextStyle(
+                            color: myColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
               Expanded(
                 child: isLoading
                     ? const Center(
@@ -580,7 +657,6 @@ class _PastryPageState extends State<PastryPage> {
                             },
                           ),
               ),
-              if (_isSorting) _buildSortDropdown(),
             ],
           ),
         ],

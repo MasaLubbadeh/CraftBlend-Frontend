@@ -159,6 +159,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _logout() async {
+    // Perform logout actions
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('You have logged out successfully.'),
+      ),
+    );
+  }
+
+  Widget _buildYourInfoTab() {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            // Add your profile and other details here
+            const SizedBox(height: 20),
+            ListTile(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ResetPasswordPage()),
+                );
+              },
+              leading: const Icon(LineAwesomeIcons.key, color: myColor),
+              title: const Text(
+                "Change Password",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              trailing:
+                  const Icon(LineAwesomeIcons.angle_right, color: myColor),
+            ),
+            ListTile(
+              onTap: () {
+                _logout();
+              },
+              leading: const Icon(LineAwesomeIcons.alternate_sign_out,
+                  color: myColor),
+              title: const Text(
+                "Logout",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const String tProfile = "Profile";
@@ -177,18 +233,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: myColor, // Change to your desired color
-          title: const Text(tProfile,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                color: Colors.white70,
-              ),
-              textAlign: TextAlign.center),
+          backgroundColor: myColor, // Your primary color
+          title: const Text(
+            tProfile,
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              color: Colors.white70,
+            ),
+            textAlign: TextAlign.center,
+          ),
           centerTitle: true,
+          leading: Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: const Icon(LineAwesomeIcons.bars, color: Colors.white),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer(); // Open the drawer
+                },
+              );
+            },
+          ),
           actions: [
             IconButton(
-              onPressed: () {}, // No function for the toggle
+              onPressed: () {}, // Toggle functionality
               icon: Icon(isDark ? LineAwesomeIcons.sun : LineAwesomeIcons.moon),
             ),
           ],
@@ -199,6 +267,131 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tabs: [
               Tab(text: "Your Info"),
               Tab(text: "Your Activity"),
+            ],
+          ),
+        ),
+        drawer: Drawer(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(0),
+              topRight: Radius.circular(30),
+              bottomLeft: Radius.circular(0),
+              bottomRight: Radius.circular(0),
+            ),
+          ),
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: mediaSize.height * 0.27,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/arcTest2.png'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: mediaSize.height * 0.18,
+                    left: mediaSize.width / 4.5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white24,
+                          width: 7,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: CircleAvatar(
+                        radius: mediaSize.height * 0.07,
+                        backgroundImage:
+                            AssetImage('assets/images/profilePURPLE.jpg'),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: mediaSize.height * 0.09),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.account_box, color: myColor),
+                title: const Text(
+                  "Your Account",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ////////////////////////
+              ///const Divider(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.key, color: myColor),
+                title: const Text(
+                  "Change Password",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ResetPasswordPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+
+              ///
+              const Spacer(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.alternate_sign_out,
+                    color: myColor),
+                title: const Text(
+                  "Logout",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () async {
+                  final _auth = AuthService();
+                  _auth.signOut();
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+
+                  isLoggedIn = false;
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    ),
+                  );
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have logged out successfully.'),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
