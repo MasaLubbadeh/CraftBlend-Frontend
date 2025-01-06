@@ -56,6 +56,9 @@ dependencies:
   permission_handler: ^11.2.0
   flutter_sound: ^9.4.2
   fl_chart: ^0.40.0 # Add this line
+  googleapis_auth: ^1.6.0
+  firebase_messaging: ^15.1.6
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
