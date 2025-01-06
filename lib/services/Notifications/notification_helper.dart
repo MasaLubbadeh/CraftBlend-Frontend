@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart' as auth;
 
@@ -7,7 +8,9 @@ class NotificationService {
   /// Get access token for Google Cloud Console
   static Future<String> getAccessToken() async {
     // Replace this with your service account credentials JSON
-    const serviceAccountJson = {
+    String? serviceAccountJson = dotenv.env['GOOGLE_SERVICE_KEY'];
+
+    /*  const serviceAccountJson = {
       "type": "service_account",
       "project_id": "craftblend-c388a",
       "private_key_id": "35f23f77d5ed2d6abc672773aceff288a43fe738",
@@ -23,7 +26,7 @@ class NotificationService {
       "client_x509_cert_url":
           "https://www.googleapis.com/robot/v1/metadata/x509/craftblendserviceaccount%40craftblend-c388a.iam.gserviceaccount.com",
       "universe_domain": "googleapis.com"
-    };
+    };*/
 
     List<String> scopes = [
       "https://www.googleapis.com/auth/userinfo.email",
