@@ -33,6 +33,7 @@ const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
 const String reduceProductQuantity = '${url}product/reduce-quantity';
 const String getMostSearched = '${url}product/getMostSearched';
+const String rateProduct = '${url}product/rateProduct';
 
 const String addNewCategory = '${url}category/add';
 const String deleteCategory = '${url}category/delete';
@@ -53,6 +54,7 @@ const String updateDeliveryCitiesUrl = '${url}store/UpdateDelivery-cities';
 const String getAllStores = '${url}store/getAllStores';
 const String checkIfAllowSpecialOrders =
     '${url}store/checkIfAllowSpecialOrders';
+const String rateStore = '${url}store/rateStore';
 
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';

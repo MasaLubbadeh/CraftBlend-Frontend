@@ -213,6 +213,15 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                           "Delivery Cost: ${storeDeliveryCost.toStringAsFixed(2)} ₪",
                           style: const TextStyle(fontSize: 14),
                         ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        if (order['paymentDetails'] != null &&
+                            order['paymentDetails']['method'] != null)
+                          Text(
+                            "Payment Method: ${order['paymentDetails']['method']}",
+                            style: const TextStyle(fontSize: 14),
+                          ),
                       ],
                     ),
                   ),

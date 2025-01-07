@@ -88,11 +88,13 @@ class _HomePageState extends State<HomePage> {
         final responseData = json.decode(response.body);
         if (responseData['success'] == true &&
             responseData['products'] != null) {
-          setState(() {
-            suggestedProducts =
-                List<Map<String, dynamic>>.from(responseData['products']);
-            isLoadingSuggested = false;
-          });
+          if (mounted) {
+            setState(() {
+              suggestedProducts =
+                  List<Map<String, dynamic>>.from(responseData['products']);
+              isLoadingSuggested = false;
+            });
+          }
         } else {
           throw Exception('Invalid response format or missing products key.');
         }
@@ -102,9 +104,11 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error fetching suggested products: $e');
-      setState(() {
-        isLoadingSuggested = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingSuggested = false;
+        });
+      }
     }
   }
 
@@ -136,9 +140,11 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error fetching recommended stores: $e');
-      setState(() {
-        isLoadingRecommendedStores = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingRecommendedStores = false;
+        });
+      }
     }
   }
 
@@ -163,11 +169,13 @@ class _HomePageState extends State<HomePage> {
         final responseData = json.decode(response.body);
         if (responseData['success'] == true &&
             responseData['products'] != null) {
-          setState(() {
-            favoriteStoreProducts =
-                List<Map<String, dynamic>>.from(responseData['products']);
-            isLoadingFavorites = false;
-          });
+          if (mounted) {
+            setState(() {
+              favoriteStoreProducts =
+                  List<Map<String, dynamic>>.from(responseData['products']);
+              isLoadingFavorites = false;
+            });
+          }
         } else {
           throw Exception('Invalid response format or missing products key.');
         }
@@ -177,9 +185,11 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error fetching favorite store products: $e');
-      setState(() {
-        isLoadingFavorites = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingFavorites = false;
+        });
+      }
     }
   }
 
@@ -243,11 +253,13 @@ class _HomePageState extends State<HomePage> {
       //    print('_fetchMostSearchedItems ${response.body}');
 
       if (response.statusCode == 200) {
-        setState(() {
-          mostSearchedItems = List<Map<String, dynamic>>.from(
-              json.decode(response.body)['products']);
-          isLoadingMostSearched = false;
-        });
+        if (mounted) {
+          setState(() {
+            mostSearchedItems = List<Map<String, dynamic>>.from(
+                json.decode(response.body)['products']);
+            isLoadingMostSearched = false;
+          });
+        }
       }
     } catch (e) {
       print('Error fetching most searched items: $e');
@@ -277,20 +289,24 @@ class _HomePageState extends State<HomePage> {
       //print(response.body);
 
       if (response.statusCode == 200) {
-        setState(() {
-          recentlyViewedProducts = List<Map<String, dynamic>>.from(
-              json.decode(response.body)['products']);
-          isLoadingRecentlyViewed = false;
-        });
+        if (mounted) {
+          setState(() {
+            recentlyViewedProducts = List<Map<String, dynamic>>.from(
+                json.decode(response.body)['products']);
+            isLoadingRecentlyViewed = false;
+          });
+        }
       } else {
         throw Exception(
             'Failed to fetch recently viewed products. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching recently viewed products: $e');
-      setState(() {
-        isLoadingRecentlyViewed = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingRecentlyViewed = false;
+        });
+      }
     }
   }
 
@@ -626,21 +642,24 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        setState(() {
-          adImages = [];
-          adStoreIds = [];
-          adStoreNames = [];
-          for (var ad in jsonResponse['advertisements']) {
-            if (ad['image'] != null && ad['storeId'] != null) {
-              adImages.add(ad['image']);
-              adStoreIds.add(
-                  ad['storeId']['_id']); // Assuming nested storeId structure
-              adStoreNames.add(
-                  ad['storeId']['storeName']); // Assuming storeName is present
+
+        if (mounted) {
+          setState(() {
+            adImages = [];
+            adStoreIds = [];
+            adStoreNames = [];
+            for (var ad in jsonResponse['advertisements']) {
+              if (ad['image'] != null && ad['storeId'] != null) {
+                adImages.add(ad['image']);
+                adStoreIds.add(
+                    ad['storeId']['_id']); // Assuming nested storeId structure
+                adStoreNames.add(ad['storeId']
+                    ['storeName']); // Assuming storeName is present
+              }
             }
-          }
-          isLoadingAds = false;
-        });
+            isLoadingAds = false;
+          });
+        }
       } else {
         throw Exception('Failed to load advertisements');
       }
@@ -659,11 +678,13 @@ class _HomePageState extends State<HomePage> {
       final response = await http.get(Uri.parse(getAllCategories));
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        setState(() {
-          categories =
-              List<Map<String, dynamic>>.from(jsonResponse['categories']);
-          isLoadingCategories = false;
-        });
+        if (mounted) {
+          setState(() {
+            categories =
+                List<Map<String, dynamic>>.from(jsonResponse['categories']);
+            isLoadingCategories = false;
+          });
+        }
       } else {
         throw Exception('Failed to load categories');
       }
@@ -848,9 +869,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadSelectedCity() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      selectedCity = prefs.getString('selectedLocation') ?? "Choose city";
-    });
+    if (mounted) {
+      setState(() {
+        selectedCity = prefs.getString('selectedLocation') ?? "Choose city";
+      });
+    }
   }
 
   Widget _buildCarousel() {
@@ -925,9 +948,11 @@ class _HomePageState extends State<HomePage> {
                     enlargeCenterPage: false,
                     viewportFraction: 1.0,
                     onPageChanged: (index, reason) {
-                      setState(() {
-                        currentAdIndex = index; // Update the currentAdIndex
-                      });
+                      if (mounted) {
+                        setState(() {
+                          currentAdIndex = index; // Update the currentAdIndex
+                        });
+                      }
                     },
                   ),
                 ),

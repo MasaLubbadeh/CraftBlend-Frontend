@@ -70,18 +70,33 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        final List<dynamic> data = jsonResponse['data'];
+        final jsonResponse = json.decode(response.body);
 
-        if (mounted) {
-          setState(() {
-            pastries = List<Map<String, dynamic>>.from(data);
-            filteredPastries = pastries; // Initialize filtered list
-            isLoading = false;
-          });
+        if (jsonResponse['status'] == true && jsonResponse['data'] != null) {
+          // Check if `data` is a list or a map
+          if (jsonResponse['data'] is List) {
+            setState(() {
+              pastries = List<Map<String, dynamic>>.from(jsonResponse['data']);
+              filteredPastries = pastries; // Initialize filtered list
+              isLoading = false;
+            });
+          } else if (jsonResponse['data'] is Map &&
+              jsonResponse['data']['products'] != null) {
+            setState(() {
+              pastries = List<Map<String, dynamic>>.from(
+                  jsonResponse['data']['products']);
+              filteredPastries = pastries; // Initialize filtered list
+              isLoading = false;
+            });
+          } else {
+            throw Exception('Unexpected data structure in response.');
+          }
+        } else {
+          throw Exception(
+              'Failed to load pastries: ${jsonResponse['message']}');
         }
       } else {
-        throw Exception('Failed to load pastries');
+        throw Exception('HTTP error: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching pastries: $e');

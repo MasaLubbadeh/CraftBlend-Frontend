@@ -1214,13 +1214,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
         onPressed: _isPlaceOrderButtonEnabled()
             ? () async {
                 print('Placing Order...');
-
                 try {
-                  // Proceed to place the order
-                  await _placeOrder();
-
-                  // Show success modal on successful order placement
-                  _showThankYouModal(context);
+                  final success = await _placeOrder(); // Check if successful
+                  if (success) {
+                    // Show success modal on successful order placement
+                    _showThankYouModal(context);
+                  } else {
+                    // Notify the user of failure
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content:
+                              Text('Failed to place order. Please try again.')),
+                    );
+                  }
                 } catch (e) {
                   // Handle errors gracefully
                   print('Error placing order: $e');
@@ -1230,6 +1236,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 }
               }
             : null, // Disable button if conditions are not met
+        // Disable button if conditions are not met
         style: ElevatedButton.styleFrom(
           backgroundColor: _isPlaceOrderButtonEnabled()
               ? myColor
@@ -1247,9 +1254,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Future<void> _placeOrder() async {
+  Future<bool> _placeOrder() async {
     final token = await _fetchToken(); // Fetch authentication token
-    if (token == null) return;
+    if (token == null) return false;
 
     Map<String, double> deliveryCostsByStore =
         selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
@@ -1319,10 +1326,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "street": streetController.text,
         "contactNumber": contactNumber,
       },
+      "paymentDetails": {
+        "method": selectedPaymentMethod == 'Cash on Delivery'
+            ? 'Cash on Delivery'
+            : selectedPaymentMethod == 'Apple Pay'
+                ? 'Apple Pay'
+                : 'Visa',
+        if (selectedPaymentMethod != 'Cash on Delivery') ...{
+          "cardNumber": creditCards.isNotEmpty
+              ? creditCards[0].replaceAll('*', '').trim() // Masked card number
+              : null,
+        },
+      },
       "status": "Pending",
       "deliveryPreference": _deliveryPreference,
     };
-
     try {
       final response = await http.post(
         Uri.parse(placeOrder), // Replace with your API URL
@@ -1338,11 +1356,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
         await _reduceProductQuantities();
         await _refreshCart();
         // _showThankYouModal(context);
+        return true;
       } else {
         print('Failed to place order: ${response.body}');
+        return false; // Indicate failure
       }
     } catch (e) {
       print('Error placing order: $e');
+      return false;
     }
   }
 

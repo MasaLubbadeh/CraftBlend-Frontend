@@ -18,15 +18,134 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'pages/googleMapsPage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+////////Notifications
+//import 'services/Notifications/notify_testPage.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-Future main() async {
+// Notification channel constants
+const String channelId = 'default_notification_channel';
+const String channelName = 'General Notifications';
+const String channelDescription = 'This channel is for general notifications.';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> _firebaseMessagingForegroundHandler(RemoteMessage message) async {
+  RemoteNotification? notification = message.notification;
+  AndroidNotification? android = notification?.android;
+
+  if (notification != null && android != null) {
+    flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+    );
+  }
+}
+
+// Function to show local notification
+void _showNotification(RemoteMessage message) async {
+  AndroidNotificationDetails androidPlatformChannelSpecifics =
+      const AndroidNotificationDetails(
+    channelId,
+    channelName,
+    channelDescription: channelDescription,
+    importance: Importance.high,
+    priority: Priority.high,
+    icon: '@mipmap/ic_launcher',
+  );
+
+  NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.show(
+    message.hashCode,
+    message.notification?.title,
+    message.notification?.body,
+    platformChannelSpecifics,
+  );
+}
+
+// Background message handler
+Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
+  print('Handling a background message: ${message.messageId}');
+  if (message.notification != null) {
+    flutterLocalNotificationsPlugin.show(
+      message.hashCode,
+      message.notification?.title,
+      message.notification?.body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+    );
+  }
+}
+
+// Request notification permissions for Android 13+
+void requestNotificationPermissions() async {
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  //await FirebaseAppCheck.instance.activate(androidProvider: null);
-  // Disable App Check for development
-  /*await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.playIntegrity,
-  );*/
+
+  String? token = await FirebaseMessaging.instance.getToken();
+  print("FCM Token: $token");
+
+  // Initialize local notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Create notification channel
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(AndroidNotificationChannel(
+        channelId,
+        channelName,
+        description: channelDescription,
+        importance: Importance.high,
+      ));
+
+  // Firebase messaging setup
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  FirebaseMessaging.onMessage.listen(_firebaseMessagingForegroundHandler);
+  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+
+  // Print FCM token for testing
+  String? tokenn = await messaging.getToken();
+  print("FCM Token: $tokenn");
+
+  // Request permissions
+  requestNotificationPermissions();
+
   await dotenv.load(fileName: "assets/.env");
 
   runApp(const MyApp());

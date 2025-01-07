@@ -139,6 +139,22 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
+            if (order['paymentDetails'] != null &&
+                order['paymentDetails']['method'] != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Payment Method: ",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "${order['paymentDetails']['method']}",
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
             const Text(
               "Delivery Details:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

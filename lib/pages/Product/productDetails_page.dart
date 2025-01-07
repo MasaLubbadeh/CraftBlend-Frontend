@@ -215,7 +215,7 @@ class _DetailPageState extends State<DetailPage> {
         title: Text(
           widget.product['name'] ?? 'Product Details',
           style: TextStyle(
-              fontWeight: FontWeight.w900, fontSize: screenWidth * .08),
+              fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
         ),
         foregroundColor: Colors.white70,
         backgroundColor: myColor,
@@ -249,7 +249,7 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   _buildProductSpecialNote(),
                   const SizedBox(height: 16),
                   _buildProductDescription(),
@@ -341,33 +341,47 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildProductTitle(double screenWidth) {
-    return Text(
-      widget.product['name'] ?? 'Product Name',
-      style: TextStyle(
-        fontSize: screenWidth * 0.09,
-        fontWeight: FontWeight.bold,
-        color: Colors.black54,
-      ),
+    final double productRating =
+        (widget.product['rating']?['average'] ?? 0.0).toDouble();
+    final int totalRatings = widget.product['rating']?['count'] ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.product['name'] ?? 'Product Name',
+          style: TextStyle(
+            fontSize: screenWidth * 0.09,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        ),
+        // const SizedBox(height: 2), // Space between the title and rating
+        if (productRating > 0) _buildStarRating(productRating, totalRatings),
+      ],
     );
   }
 
   Widget _buildProductSpecialNote() {
     if (widget.product['isUponOrder'] == true) {
-      return Row(
-        children: [
-          const badge(
-            text: 'Upon Order',
-            color: Colors.orangeAccent,
-          ),
-          const SizedBox(width: 8),
-          if (widget.product['timeRequired'] != null)
-            badge(
-              text:
-                  "You should order it before: ${formatTimeRequired(widget.product['timeRequired'])}",
-              color: myColor.withOpacity(.6),
-              icon: Icons.timer, // Optional icon
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+        child: Row(
+          children: [
+            const badge(
+              text: 'Upon Order',
+              color: Colors.orangeAccent,
             ),
-        ],
+            const SizedBox(width: 8),
+            if (widget.product['timeRequired'] != null)
+              badge(
+                text:
+                    "You should order it before: ${formatTimeRequired(widget.product['timeRequired'])}",
+                color: myColor.withOpacity(.6),
+                icon: Icons.timer, // Optional icon
+              ),
+          ],
+        ),
       );
     } else if (widget.product['inStock'] == false) {
       return const badge(
@@ -656,6 +670,37 @@ class _DetailPageState extends State<DetailPage> {
         ),
       ),
       child: Text(availableStock == 0 ? 'Out of Stock' : 'Add to Cart'),
+    );
+  }
+
+  Widget _buildStarRating(double rating, int totalRatings, {int maxStars = 5}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Display the stars
+          Row(
+            children: List.generate(maxStars, (index) {
+              return Icon(
+                index < rating ? Icons.star : Icons.star_border,
+                color: myColor,
+                size: 20, // Adjust the size of the stars as needed
+              );
+            }),
+          ),
+          const SizedBox(width: 8), // Space between stars and count
+          // Display the total ratings
+          Text(
+            '($totalRatings)',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

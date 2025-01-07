@@ -1,4 +1,5 @@
 import 'package:craft_blend_project/pages/User/login_page.dart';
+import 'package:craft_blend_project/services/Notifications/notification_helper.dart';
 import 'package:craft_blend_project/services/authentication/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../configuration/config.dart';
@@ -60,7 +61,7 @@ class WelcomePage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Navigate to the next page or perform any action
                 Navigator.of(context).push(
                   MaterialPageRoute(

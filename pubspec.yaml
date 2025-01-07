@@ -56,6 +56,10 @@ dependencies:
   flutter_sound: ^9.4.2
   carousel_slider: ^5.0.0
   flutter_cache_manager: ^3.4.1
+  fl_chart: ^0.40.0 # Add this line
+  googleapis_auth: ^1.6.0
+  firebase_messaging: ^15.1.6
+  flutter_local_notifications: ^18.0.1
   
 
 dev_dependencies:

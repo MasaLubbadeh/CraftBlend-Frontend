@@ -174,6 +174,8 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
   }
 
   Widget _buildOrderCard(dynamic order) {
+    final bool isDelivered = order['status']?.toLowerCase() == 'delivered';
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       shape: RoundedRectangleBorder(
@@ -206,7 +208,7 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
               Row(
                 children: [
                   const Text("Status: "),
-                  StatusBadge.getBadge(order['status'] ?? 'Unknown')
+                  StatusBadge.getBadge(order['status'] ?? 'Unknown'),
                 ],
               ),
               const SizedBox(height: 4),
@@ -215,10 +217,34 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
                 style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 4),
-              /*   Text(
-                "City: ${order['deliveryDetails']['city'] ?? 'N/A'}",
-                style: const TextStyle(fontSize: 14),
-              ),*/
+              if (order['paymentDetails'] != null &&
+                  order['paymentDetails']['method'] != null)
+                Text(
+                  "Payment Method: ${order['paymentDetails']['method']}",
+                  // style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+              const SizedBox(height: 4),
+              if (isDelivered)
+                const Row(
+                  children: [
+                    Icon(Icons.star, size: 18, color: Colors.amber),
+                    SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        "You can rate the product and store!",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
+                        ),
+                        softWrap:
+                            true, // Ensures the text wraps to the next line
+                        overflow: TextOverflow
+                            .visible, // Allows visible overflow if needed
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

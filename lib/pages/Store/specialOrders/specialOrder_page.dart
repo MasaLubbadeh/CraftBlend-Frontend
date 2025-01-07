@@ -50,19 +50,35 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
       'Large Orders',
     ],
   };
-  String _getImageForOption(String option) {
-    Map<String, String> optionImages = {
-      'Custom-Made Cake': 'assets/images/notes.png',
-      'Large Orders': 'assets/images/bulkBuying1.png',
-      'Personalized designs': 'assets/images/notes.png',
-      'Bulk orders': 'assets/images/bulkBuying.png',
-      'Personalized Gift Packaging': 'assets/images/notes.png',
-      'Custom Gift Set Design': 'assets/images/notes.png',
-      'Custom Pottery Design': 'assets/images/notes.png',
-      'Event-specific bulk arrangements': 'assets/images/event.png',
+  String _getImageForOption(String option, String category) {
+    Map<String, Map<String, String>> categoryImages = {
+      'Pastry & Bakery': {
+        'Custom-Made Cake': 'assets/images/cake.png',
+        'Large Orders': 'assets/images/bulk-buying1.png',
+      },
+      'Flowers': {
+        'Event-specific bulk arrangements': 'assets/images/bulk-buying1.png',
+        'Personalized designs': 'assets/images/notes.png',
+      },
+      'Pottery': {
+        'Custom Pottery Design': 'assets/images/notes.png',
+        'Bulk orders': 'assets/images/bulkBuying.png',
+      },
+      'Gift Items': {
+        'Personalized Gift Packaging': 'assets/images/notes.png',
+        'Custom Gift Set Design': 'assets/images/notes.png',
+      },
+      'Crochet & Knitting': {
+        'Personalized designs': 'assets/images/notes.png',
+        'Large quantities': 'assets/images/bulkBuying.png',
+      },
+      'Phone Accessories': {
+        'Personalized designs': 'assets/images/notes.png',
+        'Large orders': 'assets/images/bulkBuying.png',
+      },
     };
 
-    return optionImages[option] ?? 'assets/images/default.png';
+    return categoryImages[category]?[option] ?? 'assets/images/notes.png';
   }
 
   void _initializeOrderOptions() {
@@ -83,8 +99,8 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
       itemBuilder: (context, index) {
         final optionTitle = selectedOrderOptions.keys.elementAt(index);
         final isSelected = selectedOrderOptions[optionTitle] ?? false;
-        final imagePath =
-            _getImageForOption(optionTitle); // Get image for the option
+        final imagePath = _getImageForOption(
+            optionTitle, widget.category); // Use dynamic category
 
         return Card(
           elevation: 3,
@@ -175,8 +191,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
           ),
         );
       },
-      icon: const Icon(Icons.add),
-      label: const Text('Add Option'),
+      icon: const Icon(Icons.add, color: Colors.white70),
+      label: const Text(
+        'Add Option',
+        style: TextStyle(color: Colors.white70),
+      ),
       style: ElevatedButton.styleFrom(backgroundColor: myColor),
     );
   }
@@ -187,7 +206,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -200,6 +218,10 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Stack(
         children: [
