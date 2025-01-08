@@ -97,6 +97,7 @@ const String removeAdvertisement = '${url}advertisement/removeAdvertisement';
 
 const String profile = '${url}profile';
 const String getID = '${url}getID';
+
 const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
 
