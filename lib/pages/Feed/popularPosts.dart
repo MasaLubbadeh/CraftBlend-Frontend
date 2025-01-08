@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../components/post.dart';
-import '../configuration/config.dart';
-import 'Posts/createStorePost.dart';
-import 'Posts/createUserPost.dart';
-import 'Store/Profile/StoreProfile_UserView.dart';
-import 'Store/Profile/storeProfile.dart';
+import '../../components/myAppBar.dart';
+import '../../components/post.dart';
+import '../../configuration/config.dart';
+import '../Posts/createStorePost.dart';
+import '../Posts/createUserPost.dart';
+import '../Store/Profile/StoreProfile_UserView.dart';
+import '../Store/Profile/storeProfile.dart';
 
-class FeedPage extends StatefulWidget {
+class PopularPostsPage extends StatefulWidget {
   @override
-  _FeedPageState createState() => _FeedPageState();
+  _PopularPostsPageState createState() => _PopularPostsPageState();
 }
 
-class _FeedPageState extends State<FeedPage> {
+class _PopularPostsPageState extends State<PopularPostsPage> {
   List<dynamic> posts = [];
   bool isLoading = true;
   bool isLiked = false;
@@ -26,6 +27,8 @@ class _FeedPageState extends State<FeedPage> {
     super.initState();
     fetchPosts();
   }
+
+  late DateTime createdAt;
 
 /////////so it will only open profile if store is pressed
   bool isStore(String type) {
@@ -51,12 +54,14 @@ class _FeedPageState extends State<FeedPage> {
         setState(() {
           posts = data.map((post) {
             final storeId = post['store_id']; // Check this field exists
+            createdAt = DateTime.parse(post['createdAt']);
 
             return {
               ...post,
               'isLiked': false,
               'isUpvoted': false,
               'storeId': storeId,
+              'createdAt': createdAt,
             };
           }).toList();
           isLoading = false;
@@ -238,29 +243,6 @@ class _FeedPageState extends State<FeedPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'CraftBlend',
-          style: TextStyle(
-            fontFamily: 'Pacifico',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.black87,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CreateStorePostPage()),
-              );
-            },
-          ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: fetchPosts,
         child: isLoading
@@ -283,6 +265,7 @@ class _FeedPageState extends State<FeedPage> {
                         isLiked: post['isLiked'],
                         isUpvoted: post['isUpvoted'],
                         isDownvoted: post['isDownvoted'] ?? false,
+                        createdAt: post['createdAt'],
                         onLike: () {
                           handleLike(post['_id']);
                         },

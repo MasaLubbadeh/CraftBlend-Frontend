@@ -29,6 +29,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
   List<dynamic> feedbacks = [];
   bool isLoading = true;
 
+  late DateTime createdAt;
+
   // Initialize variables with default values
   String _storeName = "Loading...";
   String _bio = "Loading...";
@@ -82,12 +84,14 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
           data.forEach((post) {
             final storeId = post['store_id']; // Ensure this field exists
             final postType = post['post_type']; // Check the post type
+            createdAt = DateTime.parse(post['createdAt']);
 
             final enrichedPost = {
               ...post,
               'isLiked': false,
               'isUpvoted': false,
               'storeId': storeId,
+              'createdAt': createdAt,
             };
 
             if (postType == 'P') {
@@ -430,6 +434,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                               isLiked: post['isLiked'],
                               isUpvoted: post['isUpvoted'],
                               isDownvoted: post['isDownvoted'] ?? false,
+                              createdAt: post['createdAt'],
                               onLike: () {
                                 handleLike(post['_id']);
                               },
@@ -479,6 +484,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                               isLiked: feedback['isLiked'],
                               isUpvoted: feedback['isUpvoted'],
                               isDownvoted: feedback['isDownvoted'] ?? false,
+                              createdAt: feedback['createdAt'],
                               onLike: () {
                                 handleLike(feedback['_id']);
                               },

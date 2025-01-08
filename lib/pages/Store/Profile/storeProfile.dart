@@ -37,6 +37,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
   List<Map<String, String>> _feedbacksList = [];
   bool _isLoading = true; // To show loading indicator
   String _dateCreated = ""; // Add a new variable for the formatted date
+  late DateTime createdAt;
 
   @override
   void initState() {
@@ -73,12 +74,14 @@ class _StoreProfilePageState extends State<StoreProfilePage>
           data.forEach((post) {
             final storeId = post['store_id']; // Ensure this field exists
             final postType = post['post_type']; // Check the post type
+            createdAt = DateTime.parse(post['createdAt']);
 
             final enrichedPost = {
               ...post,
               'isLiked': false,
               'isUpvoted': false,
               'storeId': storeId,
+              'createdAt': createdAt,
             };
 
             if (postType == 'P') {
@@ -432,6 +435,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                               isLiked: post['isLiked'],
                               isUpvoted: post['isUpvoted'],
                               isDownvoted: post['isDownvoted'] ?? false,
+                              createdAt: post['createdAt'],
                               onLike: () {
                                 handleLike(post['_id']);
                               },
@@ -480,6 +484,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                               isLiked: feedback['isLiked'],
                               isUpvoted: feedback['isUpvoted'],
                               isDownvoted: feedback['isDownvoted'] ?? false,
+                              createdAt: feedback['createdAt'],
                               onLike: () {
                                 handleLike(feedback['_id']);
                               },

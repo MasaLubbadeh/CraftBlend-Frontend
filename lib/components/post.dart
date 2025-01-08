@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class PostCard extends StatefulWidget {
   final String profileImageUrl;
@@ -18,6 +19,7 @@ class PostCard extends StatefulWidget {
   final List<String>? photoUrls;
   final String creatorId; // Add isStore flag to check if it's a store
   final VoidCallback onUsernameTap; // Add the onUsernameTap callback
+  final DateTime? createdAt;
 
   const PostCard({
     Key? key,
@@ -37,7 +39,8 @@ class PostCard extends StatefulWidget {
     required this.onComment,
     this.photoUrls,
     required this.creatorId,
-    required this.onUsernameTap, // Pass the callback to the constructor
+    required this.onUsernameTap,
+    required this.createdAt, // Pass the callback to the constructor
   }) : super(key: key);
 
   @override
@@ -53,7 +56,7 @@ class _PostCardState extends State<PostCard> {
   bool isDownvoted = false;
   int currentImageIndex = 0; // Tracks the current image index
   final List<Map<String, String>> comments = [];
-
+  String formattedDate = '';
   @override
   void initState() {
     super.initState();
@@ -63,6 +66,7 @@ class _PostCardState extends State<PostCard> {
     isLiked = widget.isLiked;
     isUpvoted = widget.isUpvoted;
     isDownvoted = widget.isDownvoted;
+    formattedDate = DateFormat('EEEE, MMM d').format(widget.createdAt!);
   }
 
   void toggleLike() {
@@ -122,6 +126,41 @@ class _PostCardState extends State<PostCard> {
               ),
             ),
           ),
+// Date Section with Enhanced Styling
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200, // Light background color
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today, // Calendar icon
+                        size: 14,
+                        color: Colors.grey, // Subtle icon color
+                      ),
+                      const SizedBox(width: 4), // Spacing between icon and text
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          fontSize: 12, // Smaller font size for subtlety
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Content Section
           Padding(
             padding: const EdgeInsets.all(12.0),
