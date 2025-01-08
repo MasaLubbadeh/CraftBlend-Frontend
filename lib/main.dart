@@ -1,3 +1,5 @@
+import 'package:craft_blend_project/pages/Home_page.dart';
+
 import "configuration/config.dart";
 import 'pages/User/profile.dart';
 import 'pages/signUp/UserSignUp/profilePageState.dart';
@@ -7,7 +9,7 @@ import 'pages/User/login_page.dart';
 import 'pages/welcome.dart';
 import 'pages/Product/Pastry/pastryUser_page.dart';
 import 'pages/Product/Pastry/pastryOwner_page.dart';
-import 'pages/specialOrders/specialOrder_page.dart';
+import 'pages/Store/specialOrders/specialOrder_page.dart';
 import 'navigationBars/OwnerBottomNavigationBar.dart';
 import 'navigationBars/UserBottomNavigationBar.dart';
 import 'navigationBars/AdminBottomNavigationBar.dart';
@@ -16,9 +18,8 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'pages/googleMapsPage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 ////////Notifications
-import 'services/Notifications/notify_testPage.dart';
+//import 'services/Notifications/notify_testPage.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -110,6 +111,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+  String? token = await FirebaseMessaging.instance.getToken();
+  print("FCM Token: $token");
+
   // Initialize local notifications
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -136,8 +140,8 @@ Future<void> main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
   // Print FCM token for testing
-  String? token = await messaging.getToken();
-  print("FCM Token: $token");
+  String? tokenn = await messaging.getToken();
+  print("FCM Token: $tokenn");
 
   // Request permissions
   requestNotificationPermissions();
@@ -155,6 +159,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Craft Blend',
+        initialRoute: '/welcome',
+        routes: {
+          '/welcome': (context) => const WelcomePage(),
+          '/login': (context) => const LoginPage(),
+          '/home': (context) => const HomePage(),
+          '/map': (context) => const MapPage(),
+          '/userNavBar': (context) =>
+              const UserBottomNavigationBar(), // Add this
+        },
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,

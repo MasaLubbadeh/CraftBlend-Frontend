@@ -7,6 +7,9 @@ class badge extends StatelessWidget {
   final EdgeInsetsGeometry padding; // Padding around the text
   final BorderRadiusGeometry
       borderRadius; // Border radius for the badge corners
+  final IconData? icon; // Optional icon to display
+  final double iconSize; // Size of the icon
+  final Color iconColor; // Color of the icon
 
   const badge({
     super.key,
@@ -15,6 +18,9 @@ class badge extends StatelessWidget {
     this.fontSize = 12.0,
     this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+    this.icon,
+    this.iconSize = 14.0,
+    this.iconColor = Colors.white,
   });
 
   @override
@@ -25,13 +31,26 @@ class badge extends StatelessWidget {
         color: color,
         borderRadius: borderRadius,
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: iconSize,
+              color: iconColor,
+            ),
+            const SizedBox(width: 4), // Space between icon and text
+          ],
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

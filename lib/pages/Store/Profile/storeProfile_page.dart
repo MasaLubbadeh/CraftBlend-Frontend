@@ -1,3 +1,5 @@
+import 'package:craft_blend_project/pages/Store/ManageAdvertisement_Page.dart';
+import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +39,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             'Authorization': 'Bearer $token',
           },
         );
+        print(response.body);
 
         if (response.statusCode == 200) {
           setState(() {
@@ -65,7 +68,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const String tStoreProfile = "Store Profile";
+    const String tStoreProfile = "Profile";
     const double tDefaultSize = 20.0;
     const Color tPrimaryColor = myColor;
 
@@ -82,20 +85,192 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           title: const Text(
             tStoreProfile,
             style: TextStyle(
-              fontSize: 30,
+              fontSize: 27,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
             ),
             textAlign: TextAlign.center,
           ),
           centerTitle: true,
+          leading: Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: const Icon(LineAwesomeIcons.bars, color: Colors.white),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer(); // Open the drawer
+                },
+              );
+            },
+          ),
           bottom: const TabBar(
-            labelColor: Colors.white, // Selected tab text color
-            unselectedLabelColor: Colors.white70, // Unselected tab text color
-            indicatorColor: Colors.white, // Indicator color under the tab
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
             tabs: [
               Tab(text: "Your Info"),
               Tab(text: "Your Activity"),
+            ],
+          ),
+        ),
+        drawer: Drawer(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: mediaSize.height * 0.27,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/arcTest2.png'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: mediaSize.height * 0.18,
+                    left: mediaSize.width / 4.5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white24,
+                          width: 7,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: CircleAvatar(
+                        radius: mediaSize.height * 0.07,
+                        backgroundImage:
+                            AssetImage('assets/images/profilePURPLE.jpg'),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: mediaSize.height * 0.09),
+              const Divider(),
+              // Add Your Info Tiles
+              ListTile(
+                leading: const Icon(Icons.delivery_dining, color: myColor),
+                title: const Text(
+                  "Manage your delivery locations",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const ManageDeliveryLocationsPage()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.ad, color: myColor),
+                title: const Text(
+                  "Home Page Ad Management",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManageAdvertisementPage()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.shopping_cart, color: myColor),
+                title: const Text(
+                  "Manage special orders",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  final category = storeData?['category'];
+                  if (category != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SpecialOrdersPage(category: category),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Category not found for this store.')),
+                    );
+                  }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.key, color: myColor),
+                title: const Text(
+                  "Change Password",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ResetPasswordPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              const Spacer(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.alternate_sign_out,
+                    color: myColor),
+                title: const Text(
+                  "Logout",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    ),
+                  );
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have logged out successfully.'),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -217,7 +392,58 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                             trailing: const Icon(LineAwesomeIcons.angle_right,
                                 color: myColor),
                           ),
-
+                          ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ManageAdvertisementPage()),
+                              );
+                            },
+                            leading:
+                                const Icon(LineAwesomeIcons.ad, color: myColor),
+                            title: const Text(
+                              "Home Page Ad Management",
+                              style: TextStyle(
+                                color: myColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            trailing: const Icon(LineAwesomeIcons.angle_right,
+                                color: myColor),
+                          ),
+                          ListTile(
+                            onTap: () {
+                              final category = storeData?['category'];
+                              if (category != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        SpecialOrdersPage(category: category),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Category not found for this store.')),
+                                );
+                              }
+                            },
+                            leading:
+                                const Icon(Icons.shopping_cart, color: myColor),
+                            title: const Text(
+                              "Manage special orders",
+                              style: TextStyle(
+                                color: myColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            trailing: const Icon(LineAwesomeIcons.angle_right,
+                                color: myColor),
+                          ),
                           // Change Password Button
                           ListTile(
                             onTap: () {

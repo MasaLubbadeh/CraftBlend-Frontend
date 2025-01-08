@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../configuration/config.dart';
 import 'Product/Pastry/pastryUser_page.dart';
 
 class CategoriesPage extends StatefulWidget {
-  const CategoriesPage({super.key});
+  final String? selectedCategoryId;
+
+  const CategoriesPage({super.key, required this.selectedCategoryId});
 
   @override
   _CategoriesPageState createState() => _CategoriesPageState();
@@ -17,13 +20,21 @@ class _CategoriesPageState extends State<CategoriesPage> {
   bool isLoadingStores = false;
   bool isLoadingCategories = true;
   String? selectedCategoryId;
+  String? selectedCity; // To store the selected city name
   final ScrollController _categoryScrollController = ScrollController();
   double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _loadSelectedCity(); // Load selected city from SharedPreferences
     _fetchCategories();
+
+    if (widget.selectedCategoryId != null) {
+      selectedCategoryId = widget.selectedCategoryId;
+      _fetchStores(selectedCategoryId!);
+      _updateLastVisitedCategory(selectedCategoryId!);
+    }
 
     // Save scroll offset whenever it changes
     _categoryScrollController.addListener(() {
@@ -31,10 +42,46 @@ class _CategoriesPageState extends State<CategoriesPage> {
     });
   }
 
+  Future<void> _loadSelectedCity() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedCity = prefs.getString('selectedLocationID'); // Get saved city
+    });
+  }
+
   @override
   void dispose() {
     _categoryScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateLastVisitedCategory(String categoryId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userType = prefs.getString('userType');
+
+      if (userType != 'user') {
+        return; // Exit if userType is not 'user'
+      }
+
+      final response = await http.post(
+        Uri.parse(updateLastVisitedCategory),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'categoryId': categoryId}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Last visited category updated successfully.');
+      } else {
+        print('Failed to update last visited category: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error updating last visited category: $error');
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -69,22 +116,198 @@ class _CategoriesPageState extends State<CategoriesPage> {
         isLoadingStores = true;
       });
 
+      // Fetch all stores for the selected category
       final response =
           await http.get(Uri.parse('$getStoresByCategory/$categoryId/stores'));
+
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
+
         setState(() {
-          stores = List<Map<String, dynamic>>.from(jsonResponse);
+          var fetchedStores = List<Map<String, dynamic>>.from(jsonResponse);
+
+          // Filter stores by deliveryCities or existing in the selected city
+          if (selectedCity != null) {
+            fetchedStores = fetchedStores
+                .where((store) =>
+                    // Check if the store delivers to the selected city
+                    (store['deliveryCities'] as List<dynamic>?)!.any(
+                      (deliveryCity) => deliveryCity['city'] == selectedCity,
+                    ) ||
+                    // OR check if the store exists in the selected city
+                    store['city'] == selectedCity)
+                .toList();
+          }
+          print('Filtered Stores: $fetchedStores');
+
+          stores = fetchedStores;
           isLoadingStores = false;
         });
       } else {
         throw Exception('Failed to load stores');
       }
     } catch (e) {
-      setState(() {
-        isLoadingStores = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingStores = false;
+        });
+      }
       print('Error fetching stores: $e');
+    }
+  }
+
+  void _showSuggestionForm(BuildContext context) {
+    // Declare controllers outside the builder to retain their state
+    final TextEditingController categoryController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    String? errorMessage; // Error message for category validation
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Suggest a New Category",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: myColor,
+                        letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: categoryController,
+                    decoration: InputDecoration(
+                      labelText: "Category Name",
+                      border: const OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(10.0))),
+                      errorText: errorMessage, // Show the error message
+                    ),
+                    onChanged: (_) {
+                      setState(() {
+                        errorMessage = null; // Clear error on input
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(
+                      labelText:
+                          "Why should we add this category?\n (Optional)",
+                      border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(10.0))),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the modal
+                        },
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: myColor),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final category = categoryController.text.trim();
+                          final description = descriptionController.text.trim();
+
+                          if (category.isEmpty) {
+                            setState(() {
+                              errorMessage = "Category name cannot be empty.";
+                            });
+                            return;
+                          }
+
+                          _submitCategorySuggestion(
+                              category, description); // Submit the suggestion
+                          Navigator.pop(context); // Close the modal
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: myColor, // Set the background color
+                          foregroundColor: Colors.white, // Set the text color
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12), // Optional padding
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                30), // Optional rounded corners
+                          ),
+                        ),
+                        child: const Text(
+                          "Submit",
+                          style: TextStyle(
+                              fontWeight:
+                                  FontWeight.bold), // Additional text styling
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitCategorySuggestion(
+      String category, String description) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) throw Exception("User not authenticated.");
+
+      final response = await http.post(
+        Uri.parse(submitNewSuggestion),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: json.encode({
+          "categoryName": category, // Correct key
+          "description": description,
+          "userType": 'User', // Assuming UserType is 'User'
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Suggestion submitted successfully!")),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? "Failed to submit suggestion.");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
     }
   }
 
@@ -94,7 +317,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
@@ -107,6 +329,20 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white70,
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline, color: Colors.white70),
+            tooltip: "Suggest a Category",
+            onPressed: () {
+              _showSuggestionForm(context); // Open suggestion form
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -118,7 +354,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
             )
           else
             Card(
-              borderOnForeground: true,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
@@ -137,6 +372,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           setState(() {
                             selectedCategoryId = category['_id'];
                           });
+                          _updateLastVisitedCategory(
+                              category['_id']); // Pass the correct categoryId
+
                           _fetchStores(category['_id']);
                         },
                         child: Padding(
@@ -211,13 +449,17 @@ class _CategoriesPageState extends State<CategoriesPage> {
             child: isLoadingStores
                 ? const Center(child: CircularProgressIndicator())
                 : stores.isEmpty
-                    ? Center(
-                        child: Text(
-                          selectedCategoryId == null
-                              ? 'Select a category to view stores.'
-                              : 'No stores available for this category.',
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Center(
+                          child: Text(
+                            selectedCategoryId == null
+                                ? 'Select a category to view stores.'
+                                : 'Sorry, No stores available for this  category in this location.',
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       )
                     : GridView.builder(
