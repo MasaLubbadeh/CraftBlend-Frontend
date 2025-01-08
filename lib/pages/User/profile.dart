@@ -127,9 +127,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       print('Exception while fetching credit card data: $e');
-      setState(() {
-        isLoading = false; // Stop loading
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false; // Stop loading
+        });
+      }
     }
   }
 

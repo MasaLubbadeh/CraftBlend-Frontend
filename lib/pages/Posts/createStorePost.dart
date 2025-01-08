@@ -8,32 +8,32 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../categoriesPage.dart'; // Add this import
+import '../Feed/feedPage.dart';
 
-class CreatePostPage extends StatefulWidget {
+class CreateStorePostPage extends StatefulWidget {
   @override
-  _CreatePostPageState createState() => _CreatePostPageState();
+  _CreateStorePostPageState createState() => _CreateStorePostPageState();
 }
 
-class _CreatePostPageState extends State<CreatePostPage> {
-  final TextEditingController _contentController = TextEditingController();
+class _CreateStorePostPageState extends State<CreateStorePostPage> {
+  final TextEditingController _productDescriptionController =
+      TextEditingController();
   final List<File> _selectedImages = [];
   int _currentPage = 0;
 
-  String firstName = ''; // To hold the first name
-  String lastName = ''; // To hold the last name
+  String storeName = ''; // To hold the store name
 
   @override
   void initState() {
     super.initState();
-    _loadUserDetails();
+    _loadStoreDetails();
   }
 
-  Future<void> _loadUserDetails() async {
+  Future<void> _loadStoreDetails() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      firstName = prefs.getString('firstName') ?? 'Guest';
-      lastName = prefs.getString('lastName') ?? 'User';
+      storeName =
+          prefs.getString('storeName') ?? 'My Store'; // Default store name
     });
   }
 
@@ -49,7 +49,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
       for (var image in images) {
         String uniqueFileName =
-            'posts_images/${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
+            'store_posts_images/${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
 
         UploadTask uploadTask =
             FirebaseStorage.instance.ref().child(uniqueFileName).putFile(image);
@@ -71,9 +71,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Future<void> _submitPost() async {
-    String content = _contentController.text.trim();
+    String productDescription = _productDescriptionController.text.trim();
 
-    if (content.isEmpty && _selectedImages.isEmpty) {
+    if (productDescription.isEmpty && _selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -94,45 +94,55 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
 
     // Add uploaded image URLs to post data
-    await sendPostToBackend(context, content, uploadedImageUrls);
+    await sendStorePostToBackend(
+        context, productDescription, uploadedImageUrls);
 
     // Clear the form or navigate away
     setState(() {
-      _contentController.clear();
+      _productDescriptionController.clear();
       _selectedImages.clear();
     });
 
-    // Optionally navigate to another page
-    /* Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => FeedPage(),
-    ),
-  ); */
+    // Optionally navigate to another page, e.g., Store Feed page
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            FeedPage(), // Change to StoreFeedPage for store-related posts
+      ),
+    );
   }
 
-  Future<void> sendPostToBackend(
-      BuildContext context, String content, List<String> imageUrls) async {
+  Future<void> sendStorePostToBackend(
+      BuildContext context, String description, List<String> imageUrls) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? email = prefs.getString('email');
-      String? firstName = prefs.getString('firstName');
-      String? lastName = prefs.getString('lastName');
-
+      String? storeName = prefs.getString('storeName');
+      String? token = prefs.getString('token');
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Authentication token not found. Please log in again.')),
+        );
+        return;
+      }
       Map<String, dynamic> postData = {
-        "firstName": firstName,
-        "lastName": lastName,
-        "content": content,
+        "fullName": storeName,
+        "content": description,
         "images": imageUrls, // Add uploaded image URLs
       };
+      print(jsonEncode(postData));
 
       var response = await http.post(
-        Uri.parse(createPost),
+        Uri.parse(createStorePost), // Use store-specific endpoint
         headers: {
           "Content-Type": "application/json",
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(postData),
       );
-
+      print("response status code store post creation:");
+      print(response.statusCode);
       if (response.statusCode == 201) {
         showDialog(
           context: context,
@@ -151,7 +161,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    "Posted Successfully",
+                    "Post Created Successfully",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -213,7 +223,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   bool get _isPostButtonEnabled {
-    return _contentController.text.isNotEmpty || _selectedImages.isNotEmpty;
+    return _productDescriptionController.text.isNotEmpty ||
+        _selectedImages.isNotEmpty;
   }
 
   void _removeImage(File image) {
@@ -236,7 +247,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Center(child: const Text("New Post")),
+        title: Center(child: const Text("New Store Post")),
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
@@ -268,7 +279,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                         NetworkImage('https://via.placeholder.com/150'),
                   ),
                   title: Text(
-                    "$firstName $lastName",
+                    storeName,
                     style: TextStyle(
                         color: Colors.black, fontWeight: FontWeight.bold),
                   ),
@@ -277,11 +288,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   padding: EdgeInsets.symmetric(
                       horizontal: constraints.maxWidth * 0.04),
                   child: TextField(
-                    controller: _contentController,
+                    controller: _productDescriptionController,
                     maxLines: null,
                     style: const TextStyle(color: Colors.black, fontSize: 18),
                     decoration: const InputDecoration(
-                      hintText: "What's new?",
+                      hintText: "Describe your product...",
                       hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
                     ),
@@ -370,22 +381,31 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: constraints.maxWidth * 0.04,
-                      vertical: constraints.maxHeight * 0.01),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.photo_outlined, color: myColor),
-                        onPressed: _pickImages,
+                      vertical: constraints.maxHeight * 0.02),
+                  child: ElevatedButton(
+                    onPressed: _pickImages,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.all(14),
+                      backgroundColor: myColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      Text(
-                        "${_selectedImages.length}/5",
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontSize: 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.add_a_photo,
+                          size: 20,
+                          color: Colors.white,
                         ),
-                      ),
-                      const Spacer(),
-                    ],
+                        SizedBox(width: 8),
+                        Text(
+                          "Add Images (Max 5)",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -407,20 +427,11 @@ class FullScreenImageView extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.black,
+        title: const Text('Image Preview'),
       ),
       body: Center(
-        child: InteractiveViewer(
-          panEnabled: true,
-          minScale: 0.5,
-          maxScale: 3.0,
-          child: Image.file(image, fit: BoxFit.contain),
-        ),
+        child: Image.file(image),
       ),
     );
   }
