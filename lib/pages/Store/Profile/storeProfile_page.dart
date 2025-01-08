@@ -68,7 +68,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const String tStoreProfile = "Profile";
+    const String tStoreProfile = "Your Account";
     const double tDefaultSize = 20.0;
     const Color tPrimaryColor = myColor;
 
@@ -80,19 +80,23 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       length: 2, // Two tabs for 'Your Info' and 'Your Activity'
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: false,
+          //automaticallyImplyLeading: false,
           backgroundColor: myColor,
           title: const Text(
             tStoreProfile,
             style: TextStyle(
-              fontSize: 27,
+              fontSize: 25,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
             ),
             textAlign: TextAlign.center,
           ),
           centerTitle: true,
-          leading: Builder(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          /*   leading: Builder(
             builder: (BuildContext context) {
               return IconButton(
                 icon: const Icon(LineAwesomeIcons.bars, color: Colors.white),
@@ -101,7 +105,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 },
               );
             },
-          ),
+          ),*/
           bottom: const TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
@@ -370,7 +374,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                 Icons.location_city),
                           ]),
                           const SizedBox(height: 20),
-
+/*
                           ListTile(
                             onTap: () {
                               Navigator.push(
@@ -498,7 +502,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                          ),
+                          ),*/
                         ],
                       ),
                     ),

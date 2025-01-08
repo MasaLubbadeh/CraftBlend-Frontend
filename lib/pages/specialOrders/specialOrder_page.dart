@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../../configuration/config.dart';
 
 class SpecialOrdersPage extends StatefulWidget {
-  const SpecialOrdersPage({super.key});
+  const SpecialOrdersPage({super.key, required category});
 
   @override
   _SpecialOrdersPageState createState() => _SpecialOrdersPageState();

@@ -12,7 +12,11 @@ class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
   _MyAppBarState createState() => _MyAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(
+        WidgetsBinding.instance.window.physicalSize.height *
+            0.1 /
+            WidgetsBinding.instance.window.devicePixelRatio,
+      );
 }
 
 class _MyAppBarState extends State<MyAppBar> {
@@ -21,9 +25,15 @@ class _MyAppBarState extends State<MyAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
     return AppBar(
       backgroundColor: myColor, // Replace with your desired color
       elevation: 4,
+      toolbarHeight: appBarHeight, // Use the calculated height here
+      automaticallyImplyLeading:
+          false, // No back arrow initiallyyyyyy change this masa if u need
+
       title: PopupMenuButton<String>(
         onSelected: (value) async {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -70,8 +80,9 @@ class _MyAppBarState extends State<MyAppBar> {
               selectedItem,
               style: const TextStyle(
                 fontFamily: 'Pacifico',
-                fontSize: 24,
-                color: Colors.white,
+                fontSize: 26,
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 5),
@@ -80,7 +91,7 @@ class _MyAppBarState extends State<MyAppBar> {
               duration: const Duration(milliseconds: 300),
               child: const Icon(
                 Icons.keyboard_arrow_down,
-                color: Colors.white,
+                color: Colors.white70,
               ),
             ),
           ],
@@ -158,7 +169,7 @@ class _MyAppBarState extends State<MyAppBar> {
       ),
       actions: [
         IconButton(
-          color: Colors.white,
+          color: Colors.white70,
           icon: const Icon(Icons.add),
           onPressed: () {
             // Handle button press
