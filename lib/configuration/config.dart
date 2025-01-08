@@ -84,9 +84,11 @@ const String getRecentlyViewedProducts =
 const String getFirstLast = '${url}getFullName';
 const String createUserPost = '${url}posts/userCreate';
 const String createStorePost = '${url}posts/storeCreate';
+
 const String fetchAllPosts = '${url}fetchAllPosts';
 const String likes = '${url}';
 const String upvotes = '${url}';
+const String downvotes = '${url}';
 const String downvotes = '${url}';
 const String comments = '${url}';
 
