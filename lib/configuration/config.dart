@@ -89,7 +89,6 @@ const String fetchAllPosts = '${url}fetchAllPosts';
 const String likes = '${url}';
 const String upvotes = '${url}';
 const String downvotes = '${url}';
-const String downvotes = '${url}';
 const String comments = '${url}';
 
 const String addNewAdvertisement = '${url}advertisement/add';
