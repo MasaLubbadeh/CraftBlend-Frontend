@@ -1,4 +1,5 @@
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:craft_blend_project/pages/Feed/feedPage.dart';
 import 'package:craft_blend_project/pages/Home_page.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
@@ -29,7 +30,7 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
       // Home
       const ProfileScreen(), // Profile
       CartPage(onTabChange: _onItemTapped), // Cart with callback
-      AllChats(), // Chat
+      FeedPage(), // Chat
     ];
   }
 
@@ -58,8 +59,8 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
             label: 'Cart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat', // This matches AllChats()
+            icon: Icon(Icons.feed_outlined),
+            label: 'Feed', // This matches AllChats()
           ),
         ],
         currentIndex: _currentIndex,

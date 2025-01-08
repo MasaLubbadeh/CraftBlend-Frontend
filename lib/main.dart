@@ -147,6 +147,7 @@ Future<void> main() async {
   requestNotificationPermissions();
 
   await dotenv.load(fileName: "assets/.env");
+  print(dotenv.env['GOOGLE_MAPS_API_KEY']);
 
   runApp(const MyApp());
 }
