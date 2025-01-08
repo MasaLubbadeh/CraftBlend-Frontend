@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
+=======
+>>>>>>> main
 import '../../configuration/config.dart';
 
 class EditPastryProduct extends StatefulWidget {
@@ -20,7 +23,10 @@ class _EditPastryProductState extends State<EditPastryProduct> {
   late TextEditingController stockController;
 
   late Map<String, List<Map<String, dynamic>>> availableOptions;
+<<<<<<< HEAD
   late Map<String, bool> availableOptionStatus;
+=======
+>>>>>>> main
 
   @override
   void initState() {
@@ -41,6 +47,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         availableOptions[key] = List<Map<String, dynamic>>.from(value);
       });
     }
+<<<<<<< HEAD
 
     // Initialize available option status with existing product data, defaulting to false
     availableOptionStatus = {};
@@ -54,10 +61,13 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         availableOptionStatus[key] = false;
       }
     }
+=======
+>>>>>>> main
   }
 
   Future<void> _updateProduct() async {
     try {
+<<<<<<< HEAD
       // Retrieve token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
@@ -71,6 +81,8 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         return;
       }
 
+=======
+>>>>>>> main
       final updatedProduct = {
         '_id': widget.product['_id'], // Use the MongoDB product ID
         'name': nameController.text,
@@ -78,16 +90,23 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         'description': descriptionController.text,
         'stock': int.tryParse(stockController.text) ?? 0,
         'availableOptions': availableOptions,
+<<<<<<< HEAD
         'availableOptionStatus': availableOptionStatus, // Add the status here
+=======
+>>>>>>> main
       };
 
       final response = await http.put(
         Uri.parse(updateProductInfo),
+<<<<<<< HEAD
         headers: {
           'Content-Type': 'application/json',
           'Authorization':
               'Bearer $token', // Include the token for authentication
         },
+=======
+        headers: {'Content-Type': 'application/json'},
+>>>>>>> main
         body: jsonEncode(updatedProduct),
       );
 
@@ -97,6 +116,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         );
         Navigator.pop(context, updatedProduct); // Pass updated data back
       } else {
+<<<<<<< HEAD
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update product: ${response.body}')),
         );
@@ -104,6 +124,13 @@ class _EditPastryProductState extends State<EditPastryProduct> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
+=======
+        throw Exception('Failed to update product');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+>>>>>>> main
       );
     }
   }
@@ -293,8 +320,13 @@ class _EditPastryProductState extends State<EditPastryProduct> {
                 onPressed: () {
                   if (groupController.text.isNotEmpty) {
                     setState(() {
+<<<<<<< HEAD
                       availableOptions[groupController.text] = [];
                       availableOptionStatus[groupController.text] = isOptional;
+=======
+                      // Add the new group to availableOptions with an empty list of options
+                      availableOptions[groupController.text] = [];
+>>>>>>> main
                     });
                     Navigator.pop(context);
                   }
@@ -312,6 +344,88 @@ class _EditPastryProductState extends State<EditPastryProduct> {
     );
   }
 
+<<<<<<< HEAD
+=======
+  @override
+  Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'Edit Product',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Stack(
+        children: [
+          // Background Image with Opacity
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('images/pastry.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInputField(nameController, 'Name'),
+                const SizedBox(height: 16),
+                _buildInputField(priceController, 'Price', isNumber: true),
+                const SizedBox(height: 16),
+                _buildInputField(descriptionController, 'Description'),
+                const SizedBox(height: 16),
+                _buildInputField(stockController, 'Stock', isNumber: true),
+                const SizedBox(height: 24),
+                _buildOptionsSection(),
+                const SizedBox(height: 24),
+                _buildAddNewGroupButton(),
+                const SizedBox(height: 24),
+                _buildSaveButton(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField(TextEditingController controller, String label,
+      {bool isNumber = false}) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.black54),
+        border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: myColor, width: 2.0),
+        ),
+      ),
+    );
+  }
+
+>>>>>>> main
   Widget _buildOptionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,6 +433,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+<<<<<<< HEAD
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -357,6 +472,19 @@ class _EditPastryProductState extends State<EditPastryProduct> {
             ),
             const SizedBox(height: 8),
             if (availableOptions[optionGroup]!.isNotEmpty)
+=======
+            Text(
+              optionGroup,
+              style: const TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+                color: myColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (availableOptions[optionGroup]!
+                .isNotEmpty) // Ensure we only create the card if there are options
+>>>>>>> main
               Card(
                 color: const Color.fromARGB(255, 149, 131, 162),
                 child: Padding(
@@ -473,6 +601,7 @@ class _EditPastryProductState extends State<EditPastryProduct> {
       ),
     );
   }
+<<<<<<< HEAD
 
   @override
   Widget build(BuildContext context) {
@@ -552,4 +681,6 @@ class _EditPastryProductState extends State<EditPastryProduct> {
       ),
     );
   }
+=======
+>>>>>>> main
 }

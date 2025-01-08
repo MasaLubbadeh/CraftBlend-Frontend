@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import 'package:craft_blend_project/pages/User/login_page.dart';
 import 'package:craft_blend_project/services/Notifications/notification_helper.dart';
 import 'package:craft_blend_project/services/authentication/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../configuration/config.dart';
+=======
+import 'package:flutter/material.dart';
+import '../configuration/config.dart';
+import 'signUp/account_type_selection_page.dart';
+>>>>>>> main
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -42,7 +48,11 @@ class WelcomePage extends StatelessWidget {
           const SizedBox(height: 0),
 
           // Privacy Policy Text
+<<<<<<< HEAD
           /*  const Padding(
+=======
+          const Padding(
+>>>>>>> main
             padding: EdgeInsets.symmetric(horizontal: 32.0),
             child: Text(
               "Read our Privacy Policy. Tap Agree and Continue to accept the Terms of Services.",
@@ -53,19 +63,30 @@ class WelcomePage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+<<<<<<< HEAD
           
           */
+=======
+>>>>>>> main
           const Spacer(),
 
           // "Agree & Continue" Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
+<<<<<<< HEAD
               onPressed: () async {
                 // Navigate to the next page or perform any action
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const LoginPage(),
+=======
+              onPressed: () {
+                // Navigate to the next page or perform any action
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AccountTypeSelectionPage(),
+>>>>>>> main
                   ),
                 );
               },
@@ -81,12 +102,19 @@ class WelcomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
+<<<<<<< HEAD
                     "Continue",
+=======
+                    "Agree & Continue",
+>>>>>>> main
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+<<<<<<< HEAD
                       letterSpacing: 3,
+=======
+>>>>>>> main
                     ),
                   ),
                   SizedBox(width: 8),

@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 /assets/.env
+=======
+>>>>>>> main
 gradle-wrapper.jar
 /.gradle
 /captures/
@@ -6,7 +9,10 @@ gradle-wrapper.jar
 /gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
+<<<<<<< HEAD
 android/java_pid*.hprof
+=======
+>>>>>>> main
 
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/to/reference-keystore

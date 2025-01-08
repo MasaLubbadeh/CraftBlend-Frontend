@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
+=======
+>>>>>>> main
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,6 +18,7 @@ class PastryOwnerPage extends StatefulWidget {
 }
 
 class _PastryOwnerPageState extends State<PastryOwnerPage> {
+<<<<<<< HEAD
   String businessName = 'Pastry Delights';
   List<Map<String, dynamic>> pastries = [];
   List<Map<String, dynamic>> filteredPastries = [];
@@ -22,10 +26,20 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   bool _isAddingProduct = false;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+=======
+  final String businessName = 'Pastry Delights';
+
+  List<Map<String, dynamic>> pastries = [];
+  bool isLoading = true;
+
+  // Define a count for header items
+  static const int headerCount = 1;
+>>>>>>> main
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _fetchStoreDetails();
     fetchPastries();
   }
@@ -120,12 +134,37 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                 pastry['name'] != null &&
                 pastry['name'].toLowerCase().contains(query.toLowerCase()))
             .toList();
+=======
+    fetchPastries();
+  }
+
+  Future<void> fetchPastries() async {
+    try {
+      final response = await http.get(
+        Uri.parse(getAllProducts),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          pastries = List<Map<String, dynamic>>.from(data);
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load pastries');
+      }
+    } catch (e) {
+      print('Error fetching pastries: $e');
+      setState(() {
+        isLoading = false;
+>>>>>>> main
       });
     }
   }
 
   Future<void> _deleteProduct(String productId) async {
     try {
+<<<<<<< HEAD
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
@@ -143,6 +182,10 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         headers: {
           'Authorization': 'Bearer $token',
         },
+=======
+      final response = await http.delete(
+        Uri.parse('${deleteProductByID}/$productId'),
+>>>>>>> main
       );
 
       if (response.statusCode == 200) {
@@ -153,7 +196,11 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           pastries.removeWhere((product) => product['_id'] == productId);
         });
       } else {
+<<<<<<< HEAD
         throw Exception('Failed to delete product: ${response.body}');
+=======
+        throw Exception('Failed to delete product');
+>>>>>>> main
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -169,17 +216,25 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
         title: const Text('Confirm Delete'),
         content: Text(
           'Are you sure you want to delete "$productName"?',
+<<<<<<< HEAD
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+=======
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+>>>>>>> main
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
             },
+<<<<<<< HEAD
             child: const Text(
               'Cancel',
               style: TextStyle(color: myColor),
             ),
+=======
+            child: const Text('Cancel'),
+>>>>>>> main
           ),
           TextButton(
             onPressed: () {
@@ -202,10 +257,21 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
 
     return Scaffold(
       appBar: AppBar(
+<<<<<<< HEAD
         automaticallyImplyLeading: false,
         backgroundColor: myColor,
         elevation: 0,
         toolbarHeight: appBarHeight,
+=======
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white70,
+          onPressed: () => Navigator.pop(context),
+        ),
+>>>>>>> main
         title: Text(
           businessName,
           style: const TextStyle(
@@ -215,6 +281,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           ),
         ),
         centerTitle: true,
+<<<<<<< HEAD
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -258,11 +325,18 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
             ),
           Expanded(
             child: Stack(
+=======
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+>>>>>>> main
               children: [
                 Opacity(
                   opacity: 0.2,
                   child: Container(
                     decoration: const BoxDecoration(
+<<<<<<< HEAD
                         color: Color.fromARGB(135, 209, 183, 208)
                         /*
                       image: DecorationImage(
@@ -320,10 +394,45 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                                     color: myColor,
                                   ),
                           ),
+=======
+                      image: DecorationImage(
+                        image: AssetImage('images/pastry.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+                ListView.builder(
+                  itemCount: headerCount + pastries.length,
+                  padding: const EdgeInsets.all(8.0),
+                  itemBuilder: (context, index) {
+                    // Handle header items first
+                    if (index < headerCount) {
+                      return Card(
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          leading: const Icon(Icons.add, color: myColor),
+                          title: const Text(
+                            'Add New Product',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddPastryProduct(),
+                              ),
+                            );
+                            // Fetch the updated list of pastries after adding a new product
+                            fetchPastries();
+                          },
+>>>>>>> main
                         ),
                       );
                     }
 
+<<<<<<< HEAD
                     final pastry = filteredPastries[index - 1];
                     return Card(
                       color: const Color.fromARGB(171, 243, 229, 245),
@@ -423,6 +532,105 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                               ],
                             ),
                           ],
+=======
+                    // Handle product items
+                    final productIndex = index - headerCount;
+                    final pastry = pastries[productIndex];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6.0, horizontal: 10.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Slidable(
+                          key: ValueKey(pastry['_id']),
+                          endActionPane: ActionPane(
+                            motion: const DrawerMotion(),
+                            extentRatio: 0.26,
+                            children: [
+                              SlidableAction(
+                                onPressed: (context) {
+                                  _showDeleteConfirmationDialog(
+                                      pastry['_id'], pastry['name']);
+                                },
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                icon: Icons.delete,
+                                label: 'Delete',
+                              ),
+                            ],
+                          ),
+                          child: Card(
+                            color: const Color.fromARGB(171, 243, 229, 245),
+                            elevation: 5,
+                            margin: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      image: const DecorationImage(
+                                        image: AssetImage('images/pastry.jpg'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          pastry['name'] ?? 'No Name',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () async {
+                                      final updatedProduct =
+                                          await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              EditPastryProduct(
+                                                  product: pastry),
+                                        ),
+                                      );
+
+                                      if (updatedProduct != null) {
+                                        setState(() {
+                                          pastries[index - 1] = updatedProduct;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+>>>>>>> main
                         ),
                       ),
                     );
@@ -430,9 +638,12 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                 ),
               ],
             ),
+<<<<<<< HEAD
           ),
         ],
       ),
+=======
+>>>>>>> main
     );
   }
 }

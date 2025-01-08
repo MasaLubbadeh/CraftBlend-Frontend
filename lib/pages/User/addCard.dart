@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import '../../configuration/config.dart';
+=======
+import 'package:craft_blend_project/configuration/config.dart';
+>>>>>>> main
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -28,6 +32,7 @@ class _AddCardViewState extends State<AddCardView> {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
     var media = MediaQuery.of(context).size;
 
@@ -57,6 +62,22 @@ class _AddCardViewState extends State<AddCardView> {
           left: media.width * 0.05,
           right: media.width * 0.05,
         ),
+=======
+    var media = MediaQuery.of(context).size;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Add Card')),
+      body: Container(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+        width: media.width,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+>>>>>>> main
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -64,6 +85,7 @@ class _AddCardViewState extends State<AddCardView> {
               mainAxisAlignment: MainAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
+<<<<<<< HEAD
                 Container(
                   width: media.width,
                   padding:
@@ -146,6 +168,77 @@ class _AddCardViewState extends State<AddCardView> {
                     ],
                   ),
                 ),
+=======
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Add Credit/Debit Card Details",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.black,
+                        size: 25,
+                      ),
+                    ),
+                  ],
+                ),
+                Divider(color: Colors.grey.withOpacity(0.4), height: 1),
+                const SizedBox(height: 15),
+                _buildTextField(
+                  hintText: "Card Number",
+                  controller: txtCardNumber,
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a card number'
+                      : !RegExp(r'^[0-9]{16}$').hasMatch(value)
+                          ? 'Enter a valid 16-digit card number'
+                          : null,
+                ),
+                const SizedBox(height: 15),
+                _buildExpiryRow(),
+                const SizedBox(height: 15),
+                _buildTextField(
+                  hintText: "Card Security Code",
+                  controller: txtCardCode,
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter the security code'
+                      : !RegExp(r'^[0-9]{3,4}$').hasMatch(value)
+                          ? 'Enter a valid 3 or 4 digit code'
+                          : null,
+                ),
+                const SizedBox(height: 15),
+                _buildTextField(
+                  hintText: "First Name",
+                  controller: txtFirstName,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your first name'
+                      : null,
+                ),
+                const SizedBox(height: 15),
+                _buildTextField(
+                  hintText: "Last Name",
+                  controller: txtLastName,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your last name'
+                      : null,
+                ),
+                const SizedBox(height: 25),
+                isLoading
+                    ? const CircularProgressIndicator() // Show loading indicator
+                    : _buildSubmitButton(media),
+                const SizedBox(height: 25),
+>>>>>>> main
               ],
             ),
           ),
@@ -176,9 +269,15 @@ class _AddCardViewState extends State<AddCardView> {
         const Text(
           "Expiry",
           style: TextStyle(
+<<<<<<< HEAD
             color: myColor,
             fontSize: 14,
             fontWeight: FontWeight.bold,
+=======
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+>>>>>>> main
           ),
         ),
         const Spacer(),
@@ -285,7 +384,11 @@ class _AddCardViewState extends State<AddCardView> {
           }
         },
         style: ElevatedButton.styleFrom(
+<<<<<<< HEAD
           backgroundColor: myColor,
+=======
+          backgroundColor: myColor, // Set your primary color here
+>>>>>>> main
           shape: const StadiumBorder(),
         ),
         child: const Text(
@@ -323,6 +426,7 @@ class RoundTextfield extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       onSaved: onSaved,
+<<<<<<< HEAD
       style: const TextStyle(color: myColor, fontWeight: FontWeight.w400),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(10),
@@ -341,6 +445,15 @@ class RoundTextfield extends StatelessWidget {
           borderSide: const BorderSide(color: myColor),
         ),
         errorStyle: const TextStyle(color: myColor),
+=======
+      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400),
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.all(10),
+        hintText: hintText,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+>>>>>>> main
       ),
     );
   }

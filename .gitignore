@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 # Environment Variables
 .env
+=======
+>>>>>>> main
 # Miscellaneous
 *.class
 *.log
@@ -43,5 +46,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+<<<<<<< HEAD
 
 android/java_pid*.hprof
+=======
+>>>>>>> main

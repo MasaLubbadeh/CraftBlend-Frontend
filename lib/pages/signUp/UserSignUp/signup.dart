@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'genreSelection.dart';
 import 'package:http/http.dart' as http;
+<<<<<<< HEAD
 import '../../User/login_page.dart';
+=======
+>>>>>>> main
 
 import '../../../configuration/config.dart';
 import '../../../models/user_sign_up_data.dart';
@@ -18,6 +21,10 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+<<<<<<< HEAD
+=======
+  // late Color myColor;
+>>>>>>> main
   late Size mediaSize;
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -26,6 +33,7 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   bool showPassword = false;
+<<<<<<< HEAD
   final bool _isNotValid = false;
 
   // Form Key to validate fields
@@ -99,6 +107,13 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
+=======
+  bool _isNotValid = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // myColor = const Color(0xff456268);
+>>>>>>> main
     mediaSize = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
@@ -125,11 +140,18 @@ class _SignUpPageState extends State<SignUpPage> {
       height: mediaSize.height * .93,
       child: Card(
         shape: const RoundedRectangleBorder(
+<<<<<<< HEAD
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(30),
             topRight: Radius.circular(30),
           ),
         ),
+=======
+            borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        )),
+>>>>>>> main
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: _buildForm(),
@@ -140,6 +162,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
+<<<<<<< HEAD
       child: Form(
         key: _formKey, // Form key to manage form validation
         child: Column(
@@ -248,6 +271,40 @@ class _SignUpPageState extends State<SignUpPage> {
       child: const Text(
         "Next",
         style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
+=======
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Create Account",
+            style: TextStyle(
+                color: myColor, fontSize: 28, fontWeight: FontWeight.w500),
+          ),
+          _buildGreyText("Please sign up with your information"),
+          const SizedBox(height: 20),
+          _buildGreyText("First Name"),
+          _buildInputField(firstNameController),
+          const SizedBox(height: 12),
+          _buildGreyText("Last Name"),
+          _buildInputField(lastNameController),
+          const SizedBox(height: 12),
+          _buildGreyText("Email"),
+          _buildInputField(emailController),
+          const SizedBox(height: 12),
+          _buildGreyText("Phone Number"),
+          _buildNumberInputField(phoneController),
+          const SizedBox(height: 12),
+          _buildGreyText("Password"),
+          _buildInputField(passwordController, isPassword: true),
+          const SizedBox(height: 12),
+          _buildGreyText("Confirm Password"),
+          _buildInputField(confirmPasswordController, isPassword: true),
+          const SizedBox(height: 18),
+          _buildSignUpButton(),
+          const SizedBox(height: 5),
+          _buildGoToLogin(),
+        ],
+>>>>>>> main
       ),
     );
   }
@@ -259,6 +316,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+<<<<<<< HEAD
   Widget _buildInputField(TextEditingController controller,
       {bool isPassword = false,
       bool isEmail = false,
@@ -266,13 +324,26 @@ class _SignUpPageState extends State<SignUpPage> {
     return SizedBox(
       height: 40,
       child: TextFormField(
+=======
+  Widget _buildNumberInputField(TextEditingController controller,
+      {bool isPassword = false}) {
+    return SizedBox(
+      height: 40,
+      child: TextField(
+>>>>>>> main
         controller: controller,
         decoration: InputDecoration(
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
+<<<<<<< HEAD
                       showPassword ? Icons.visibility_off : Icons.visibility,
                       color: myColor),
+=======
+                    showPassword ? Icons.visibility_off : Icons.visibility,
+                    color: myColor,
+                  ),
+>>>>>>> main
                   onPressed: () {
                     setState(() {
                       showPassword = !showPassword;
@@ -288,8 +359,94 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
         obscureText: isPassword ? !showPassword : false,
+<<<<<<< HEAD
         validator: validator,
         keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
+=======
+        keyboardType: isPassword ? TextInputType.text : TextInputType.phone,
+      ),
+    );
+  }
+
+  Widget _buildInputField(TextEditingController controller,
+      {bool isPassword = false}) {
+    return SizedBox(
+      height: 40,
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    showPassword ? Icons.visibility_off : Icons.visibility,
+                    color: myColor,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      showPassword = !showPassword;
+                    });
+                  },
+                )
+              : null,
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: myColor),
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: myColor),
+          ),
+        ),
+        obscureText: isPassword ? !showPassword : false,
+      ),
+    );
+  }
+
+  Widget _buildSignUpButton() {
+    return ElevatedButton(
+      onPressed: () {
+        //registerUser();
+
+        String password = passwordController.text;
+        String confirmPassword = confirmPasswordController.text;
+
+        if (password == confirmPassword) {
+          // Save user data
+          SignUpData signUpData = SignUpData(
+              firstName: firstNameController.text,
+              lastName: lastNameController.text,
+              email: emailController.text,
+              phoneNumber: phoneController.text,
+              password: passwordController.text, // Include the password
+              accountType: widget.signUpData.accountType);
+
+          // Navigate to GenreSelectionPage and pass the data
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => GenreSelectionApp(
+                signUpData: signUpData,
+              ),
+            ),
+          );
+          print(signUpData.toString());
+          // signUpData.accountType = "U";
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Passwords do not match!"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        shape: const StadiumBorder(),
+        elevation: 20,
+        shadowColor: myColor,
+        minimumSize: const Size.fromHeight(50),
+      ),
+      child: const Text(
+        "Next",
+        style: TextStyle(fontWeight: FontWeight.w700, color: myColor),
+>>>>>>> main
       ),
     );
   }
@@ -303,10 +460,14 @@ class _SignUpPageState extends State<SignUpPage> {
           const SizedBox(width: 0),
           ElevatedButton(
             onPressed: () {
+<<<<<<< HEAD
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
               );
+=======
+              debugPrint("Navigate to Login page (not implemented yet)");
+>>>>>>> main
             },
             style: ElevatedButton.styleFrom(
               shape: const StadiumBorder(),

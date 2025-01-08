@@ -16,6 +16,7 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
+<<<<<<< HEAD
 buildscript {
     repositories {
         google()
@@ -27,3 +28,5 @@ buildscript {
     }
 }
 
+=======
+>>>>>>> main

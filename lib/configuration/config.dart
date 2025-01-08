@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
+<<<<<<< HEAD
 const String url = 'http://192.168.1.22:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
@@ -27,10 +28,26 @@ const String getWishlistProducts = '${url}wishlist/getList';
 const String getRecommendedStoresByCategory =
     '${url}getRecommendedStoresByCategory';
 
+=======
+const String url = 'http://192.168.1.17:3000/';
+bool isLoggedIn = false;
+final String login = '${url}login';
+final String registration = '${url}registration';
+final String storeRegistration = '${url}store/registration';
+
+final String validateTokenEndpoint = '${url}validateToken';
+final String resetPassword = '${url}resetPassword';
+final String forgotPassword = '${url}forgotPassword';
+final String getPersonalInfo = '${url}getPersonalInfo';
+final String updateUserPersonalInfo = '${url}updateUserPersonalInfo';
+final String addCreditCard = '${url}addCreditCard';
+final String getCreditCardData = '${url}getCreditCardData';
+>>>>>>> main
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';
 const String deleteProductByID = '${url}product/deleteProduct';
+<<<<<<< HEAD
 const String reduceProductQuantity = '${url}product/reduce-quantity';
 const String getMostSearched = '${url}product/getMostSearched';
 const String rateProduct = '${url}product/rateProduct';
@@ -113,6 +130,11 @@ const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 const myColor2 = myColor;
+=======
+
+const Color myColor = Color.fromARGB(
+    255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
+>>>>>>> main
 
 const Color primaryColor = Color(0xffA47551); // A warm brown color
 const Color accentColor = Color(0xffD9C4B1); // A lighter beige accent

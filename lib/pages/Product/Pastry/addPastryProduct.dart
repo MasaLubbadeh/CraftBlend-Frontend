@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+=======
+import 'package:craft_blend_project/configuration/config.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+>>>>>>> main
 import 'dart:convert';
 
 class AddPastryProduct extends StatefulWidget {
@@ -23,18 +29,25 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
+<<<<<<< HEAD
   String? deliveryType = 'instant'; // Default to 'instant'
   bool allowDeliveryDateSelection = false; // Default to false
+=======
+
+>>>>>>> main
   // Availability States
   String? selectedAvailability = 'In Stock';
   String? selectedDay = "0";
   String? selectedHour = "0";
   String? selectedMinute = "0";
 
+<<<<<<< HEAD
   File? _selectedImage;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
+=======
+>>>>>>> main
   // Predefined Options
   final Map<String, List<Map<String, dynamic>>> predefinedOptions = {
     'Topping': [
@@ -63,6 +76,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     'Flavor': [],
   };
 
+<<<<<<< HEAD
   Future<void> _pickImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
@@ -145,27 +159,44 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         return;
       }
 
+=======
+  // Add Product Method
+  Future<void> _addProduct() async {
+    try {
+>>>>>>> main
       final Map<String, dynamic> productData = {
         'name': titleController.text,
         'description': descriptionController.text,
         'price': double.tryParse(priceController.text) ?? 0,
+<<<<<<< HEAD
         'stock': selectedAvailability == 'In Stock'
             ? int.tryParse(stockController.text) ?? 0
             : 0,
         'timeRequired': selectedAvailability == 'Upon Order'
+=======
+        'category': 'Pastry',
+        'stock': selectedAvailability == 'In Stock'
+            ? int.tryParse(stockController.text) ?? 0
+            : 0,
+        'timeRequired': selectedAvailability == 'Time Required'
+>>>>>>> main
             ? (int.parse(selectedDay!) * 1440 +
                 int.parse(selectedHour!) * 60 +
                 int.parse(selectedMinute!))
             : null,
+<<<<<<< HEAD
         'isUponOrder': selectedAvailability == 'Upon Order',
         'deliveryType': deliveryType, // Include delivery type
         'allowDeliveryDateSelection':
             allowDeliveryDateSelection, // Include date selection
+=======
+>>>>>>> main
         'inStock': selectedAvailability == 'In Stock',
         'availableOptions': selectedOptions.map((optionGroup, options) {
           return MapEntry(optionGroup, options);
         }),
         'availableOptionStatus': availableOptionStatus,
+<<<<<<< HEAD
         'image': imageUrl,
       };
 
@@ -175,6 +206,16 @@ class _AddPastryProductState extends State<AddPastryProduct> {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+=======
+      };
+
+      print("productData SENT:");
+      print(jsonEncode(productData));
+
+      final response = await http.post(
+        Uri.parse(addNewPastryProduct),
+        headers: {'Content-Type': 'application/json'},
+>>>>>>> main
         body: jsonEncode(productData),
       );
 
@@ -192,6 +233,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
+<<<<<<< HEAD
     } finally {
       setState(() {
         _isUploading = false;
@@ -200,6 +242,12 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   }
 
 // Add New Option Method
+=======
+    }
+  }
+
+  // Add New Option Method
+>>>>>>> main
   void _addNewOption(String optionGroup) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
@@ -236,7 +284,10 @@ class _AddPastryProductState extends State<AddPastryProduct> {
             onPressed: () {
               if (nameController.text.isNotEmpty) {
                 setState(() {
+<<<<<<< HEAD
                   // Only add to predefinedOptions to avoid duplication
+=======
+>>>>>>> main
                   predefinedOptions[optionGroup]?.add({
                     'name': nameController.text.trim(),
                     'extraCost':
@@ -325,12 +376,16 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+<<<<<<< HEAD
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+=======
+>>>>>>> main
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
+<<<<<<< HEAD
         elevation: 0,
         toolbarHeight: appBarHeight,
         title: const Text(
@@ -488,6 +543,54 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         "** These are starting points to help you set up your product options. You can use them, or add your own custom options. It's entirely flexible!.**",
         style: TextStyle(fontSize: 12, color: Colors.black54),
         textAlign: TextAlign.justify,
+=======
+        foregroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text('Add Pastry Product'),
+      ),
+      body: Stack(
+        children: [
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('images/pastry.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildInputField(titleController, 'Title'),
+                const SizedBox(height: 16),
+                _buildInputField(priceController, 'Price'),
+                const SizedBox(height: 16),
+                _buildInputField(descriptionController, 'Description'),
+                const SizedBox(height: 16),
+                _buildAvailabilityDropdown(),
+                const SizedBox(height: 16),
+                if (selectedAvailability == 'In Stock')
+                  _buildInputField(stockController, 'Stock Quantity'),
+                if (selectedAvailability == 'Time Required')
+                  _buildTimeRequiredDropdown(),
+                const SizedBox(height: 16),
+                ...predefinedOptions.keys.map((optionGroup) {
+                  return _buildOptionCard(optionGroup);
+                }),
+                const SizedBox(height: 24),
+                _buildAddNewCategoryButton(),
+                const SizedBox(height: 24),
+                _buildSubmitButton(),
+              ],
+            ),
+          ),
+        ],
+>>>>>>> main
       ),
     );
   }
@@ -503,6 +606,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     );
   }
 
+<<<<<<< HEAD
   Widget _buildDeliveryTypeDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedAvailability == 'Upon Order' ? 'scheduled' : deliveryType,
@@ -565,6 +669,8 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     );
   }
 
+=======
+>>>>>>> main
   Widget _buildAvailabilityDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedAvailability,
@@ -574,8 +680,13 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       ),
       items: const [
         DropdownMenuItem(value: 'In Stock', child: Text('In Stock')),
+<<<<<<< HEAD
         //DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
         DropdownMenuItem(value: 'Upon Order', child: Text('Upon Order')),
+=======
+        DropdownMenuItem(value: 'Out of Stock', child: Text('Out of Stock')),
+        DropdownMenuItem(value: 'Time Required', child: Text('Time Required')),
+>>>>>>> main
       ],
       onChanged: (value) {
         setState(() {

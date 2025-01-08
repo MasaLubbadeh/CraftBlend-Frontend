@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/store_sign_up_data.dart';
 import '../StoreSignUp/store_signUp_addLogo.dart';
+=======
+import '../../../configuration/config.dart';
+import '../../../models/user_sign_up_data.dart';
+import '../../../models/store_sign_up_data.dart';
+import '../StoreSignUp/store_sign_up_page.dart';
+>>>>>>> main
 
 class StoreGenreSelectionScreen extends StatefulWidget {
   final StoreSignUpData storeSignUpData;
@@ -15,6 +22,7 @@ class StoreGenreSelectionScreen extends StatefulWidget {
 }
 
 class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
+<<<<<<< HEAD
   List<Map<String, dynamic>> genres = [];
   String? selectedGenreId; // Store the ID of the selected genre
 
@@ -81,6 +89,28 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
           builder: (context) => StoreSignUpLogoPage(
             storeSignUpData: widget.storeSignUpData,
           ),
+=======
+  final List<Map<String, String>> genres = [
+    {'title': 'Pastries', 'image': 'assets/images/pastaries.jpg'},
+    {'title': 'Pottery', 'image': 'assets/images/pottery.jpg'},
+    {'title': 'Crochet', 'image': 'assets/images/crochet.png'},
+    {'title': 'Build A Bear', 'image': 'assets/images/buildbear.png'},
+    {'title': 'Phone Covers', 'image': 'assets/images/covers.png'},
+    {'title': 'Flowers', 'image': 'assets/images/flowers.png'},
+  ];
+
+  String? selectedGenre;
+
+  void onNextPressed() {
+    if (selectedGenre != null) {
+      // Update the SignUpData with the selected genre
+      widget.storeSignUpData.selectedGenre = selectedGenre;
+      print(widget.storeSignUpData.toString());
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              StoreSignUpPage(SignUpData: widget.storeSignUpData),
+>>>>>>> main
         ),
       );
     } else {
@@ -96,6 +126,7 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     return Scaffold(
@@ -116,18 +147,35 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
+=======
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Select Your Store Genre',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: myColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+>>>>>>> main
       ),
       body: Column(
         children: [
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
+<<<<<<< HEAD
               'You must select a genre for your store',
+=======
+              'You must select a genre for you store',
+>>>>>>> main
               style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
+<<<<<<< HEAD
             child: genres.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : GridView.builder(
@@ -155,6 +203,32 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
                       );
                     },
                   ),
+=======
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.1,
+              ),
+              itemCount: genres.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedGenre = genres[index]['title'];
+                    });
+                  },
+                  child: GenreCard(
+                    title: genres[index]['title']!,
+                    imagePath: genres[index]['image']!,
+                    isSelected: selectedGenre == genres[index]['title'],
+                  ),
+                );
+              },
+            ),
+>>>>>>> main
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -195,6 +269,7 @@ class GenreCard extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
+<<<<<<< HEAD
             image: imagePath.isNotEmpty
                 ? DecorationImage(
                     image: NetworkImage(imagePath),
@@ -205,6 +280,16 @@ class GenreCard extends StatelessWidget {
                     ),
                   )
                 : null, // No image decoration if imagePath is empty
+=======
+            image: DecorationImage(
+              image: AssetImage(imagePath),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(isSelected ? 0.5 : 0.2),
+                BlendMode.darken,
+              ),
+            ),
+>>>>>>> main
             border:
                 isSelected ? Border.all(color: Colors.white, width: 3) : null,
           ),
@@ -214,8 +299,13 @@ class GenreCard extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               child: Text(
                 title,
+<<<<<<< HEAD
                 style: TextStyle(
                   color: isSelected ? Colors.grey : Colors.white,
+=======
+                style: const TextStyle(
+                  color: Colors.white,
+>>>>>>> main
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -237,3 +327,27 @@ class GenreCard extends StatelessWidget {
     );
   }
 }
+<<<<<<< HEAD
+=======
+
+class NextSignUpScreen extends StatelessWidget {
+  final StoreSignUpData signUpData;
+
+  const NextSignUpScreen({super.key, required this.signUpData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Next Signup Step'),
+      ),
+      body: Center(
+        child: Text(
+          'SignUpData: ${signUpData.toString()}',
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+}
+>>>>>>> main

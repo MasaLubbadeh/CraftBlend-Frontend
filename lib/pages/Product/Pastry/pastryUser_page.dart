@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -12,12 +13,23 @@ class PastryPage extends StatefulWidget {
   final String storeName;
 
   const PastryPage({super.key, required this.storeId, required this.storeName});
+=======
+import 'package:craft_blend_project/configuration/config.dart';
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../productDetails_page.dart';
+
+class PastryPage extends StatefulWidget {
+  const PastryPage({super.key});
+>>>>>>> main
 
   @override
   _PastryPageState createState() => _PastryPageState();
 }
 
 class _PastryPageState extends State<PastryPage> {
+<<<<<<< HEAD
   List<Map<String, dynamic>> pastries = [];
   List<Map<String, dynamic>> filteredPastries = [];
   bool isLoading = true;
@@ -30,10 +42,17 @@ class _PastryPageState extends State<PastryPage> {
   String activeFilter = ''; // Tracks the active dropdown
   final TextEditingController _searchController = TextEditingController();
   late double appBarHeight;
+=======
+  final String businessName = 'Pastry Delights';
+  List<dynamic> pastries = []; // Dynamic list to hold fetched pastries
+  bool isLoading = true; // Loading indicator
+  String errorMessage = ''; // Error message for display
+>>>>>>> main
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _checkIfFavorite();
     _fetchPastries();
     _fetchAllowSpecialOrders();
@@ -106,10 +125,14 @@ class _PastryPageState extends State<PastryPage> {
         SnackBar(content: Text('Error fetching allowSpecialOrders')),
       );
     }
+=======
+    _fetchPastries(); // Fetch pastries from the backend
+>>>>>>> main
   }
 
   Future<void> _fetchPastries() async {
     try {
+<<<<<<< HEAD
       final response = await http
           .get(Uri.parse('$getStoreProductsForUser/${widget.storeId}'));
       print(response.body);
@@ -129,16 +152,33 @@ class _PastryPageState extends State<PastryPage> {
         }
       } else {
         setState(() {
+=======
+      // Replace with your actual backend URL
+      final response = await http.get(Uri.parse(getAllProducts));
+      if (response.statusCode == 200) {
+        setState(() {
+          pastries = jsonDecode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load pastries: ${response.body}';
+>>>>>>> main
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
+<<<<<<< HEAD
+=======
+        errorMessage = 'An error occurred: $e';
+>>>>>>> main
         isLoading = false;
       });
     }
   }
 
+<<<<<<< HEAD
   void _filterPastries(String query) {
     List<Map<String, dynamic>> results = pastries;
 
@@ -378,25 +418,39 @@ class _PastryPageState extends State<PastryPage> {
   @override
   Widget build(BuildContext context) {
     appBarHeight = MediaQuery.of(context).size.height * 0.1;
+=======
+  @override
+  Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+>>>>>>> main
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
         elevation: 0,
+<<<<<<< HEAD
         toolbarHeight: appBarHeight,
+=======
+        toolbarHeight: appBarHeight, // Responsive height for the AppBar
+>>>>>>> main
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           color: Colors.white70,
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
+<<<<<<< HEAD
           widget.storeName,
+=======
+          businessName,
+>>>>>>> main
           style: const TextStyle(
               fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white70),
         ),
         centerTitle: true,
         actions: [
           IconButton(
+<<<<<<< HEAD
             icon: const Icon(Icons.sort),
             color: Colors.white70,
             onPressed: () {
@@ -412,12 +466,23 @@ class _PastryPageState extends State<PastryPage> {
               setState(() {
                 _isSearching = !_isSearching;
               });
+=======
+            icon: const Icon(Icons.favorite_border),
+            color: Colors.white70,
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content:
+                        Text('$businessName added to your favorites stores')),
+              );
+>>>>>>> main
             },
           ),
         ],
       ),
       body: Stack(
         children: [
+<<<<<<< HEAD
           Column(
             children: [
               // Show the "Make a Special Order" row if allowed
@@ -524,10 +589,69 @@ class _PastryPageState extends State<PastryPage> {
                                   ),
                                   child: Padding(
                                     padding: const EdgeInsets.all(10.0),
+=======
+          // Background image with opacity
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image:
+                      AssetImage('images/pastry.jpg'), // Background image path
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          // Main content
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: myColor),
+                  )
+                : errorMessage.isNotEmpty
+                    ? Center(
+                        child: Text(
+                          errorMessage,
+                          style:
+                              const TextStyle(fontSize: 18, color: Colors.red),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: pastries.length,
+                        itemBuilder: (context, index) {
+                          final pastry = pastries[index];
+                          return Card(
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Pastry Image
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      image: const DecorationImage(
+                                        image: AssetImage(
+                                            'images/pastry.jpg'), // Static image for now
+                                        fit: BoxFit.cover,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Pastry details
+                                  Expanded(
+>>>>>>> main
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+<<<<<<< HEAD
                                         Container(
                                           height: 110,
                                           decoration: BoxDecoration(
@@ -711,6 +835,50 @@ class FilterButton extends StatelessWidget {
             isActive ? Icons.arrow_drop_up : Icons.arrow_drop_down,
             color: isActive ? myColor : Colors.white,
             size: 18,
+=======
+                                        // Pastry title
+                                        Text(
+                                          pastry[
+                                              'name'], // Use 'name' from the backend
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        // Price
+                                        Text(
+                                          '${pastry['price'].toStringAsFixed(2)} ₪', // Format price
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Arrow button
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_forward),
+                                    color: myColor,
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => DetailPage(
+                                              product:
+                                                  pastry), // Pass the product
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+>>>>>>> main
           ),
         ],
       ),

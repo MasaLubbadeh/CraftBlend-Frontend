@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import 'package:craft_blend_project/services/authentication/auth_service.dart';
+=======
+>>>>>>> main
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'editProfile.dart';
@@ -20,11 +23,15 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? userData; // Store user data
   bool isLoading = true; // Loading state
+<<<<<<< HEAD
   bool isUser = false; // Determine if the user is not  owner nor admin
+=======
+>>>>>>> main
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _fetchUserDetails(); // Fetch user data when the screen initializes
   }
 
@@ -46,11 +53,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Fetch User Information
         final userResponse = await http.get(
           Uri.parse(getPersonalInfo), // Replace with your API endpoint
+=======
+    _fetchUserData(); // Fetch user data when the screen initializes
+    _fetchCreditCardData();
+  }
+
+  Future<void> _fetchCreditCardData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token'); // Retrieve the stored token
+
+    if (token != null) {
+      try {
+        final response = await http.get(
+          Uri.parse(getCreditCardData), // Replace with your API endpoint
+>>>>>>> main
           headers: {
             'Authorization': 'Bearer $token',
           },
         );
 
+<<<<<<< HEAD
         if (userResponse.statusCode == 200) {
           if (mounted) {
             setState(() {
@@ -97,11 +119,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Fetch Credit Card Information
       final cardResponse = await http.get(
         Uri.parse(getCreditCardData), // Replace with your API endpoint
+=======
+        if (response.statusCode == 200) {
+          final creditCardData = json.decode(response.body);
+          setState(() {
+            print("creditCardData");
+            print(creditCardData);
+
+            // Extract the 'creditCard' map from the response
+            var creditCard = creditCardData['creditCard'] ?? {};
+
+            // Handle the creditCard field properly - convert it into a string or meaningful data
+            userData?['creditCard'] = creditCard.isNotEmpty
+                ? '${creditCard['cardNumber'] ?? 'N/A'}' // Assigning cardNumber as string
+                : 'N/A';
+
+            // Constructing expiryDate from expiryMonth and expiryYear
+            var expiryDate = (creditCard['expiryMonth'] != null &&
+                    creditCard['expiryYear'] != null)
+                ? '${creditCard['expiryMonth']}/${creditCard['expiryYear']}'
+                : 'N/A';
+
+            userData?['expiryDate'] = expiryDate;
+
+            // Assigning CVV (from cardCode)
+            userData?['cvv'] = creditCard['cardCode']?.toString() ?? 'N/A';
+          });
+        } else {
+          print('Error fetching credit card data: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Exception while fetching credit card data: $e');
+      }
+    } else {
+      print('Token not found. Cannot fetch credit card data.');
+    }
+  }
+
+  Future<void> _fetchUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token'); // Retrieve the stored token
+    print('token');
+    print(token);
+    if (token != null) {
+      final response = await http.get(
+        Uri.parse(getPersonalInfo), // Replace with your API endpoint
+>>>>>>> main
         headers: {
           'Authorization': 'Bearer $token',
         },
       );
 
+<<<<<<< HEAD
       if (cardResponse.statusCode == 200) {
         setState(() {
           final creditCardData = json.decode(cardResponse.body);
@@ -145,6 +214,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
           isLoading = false; // Ensure the loading state is properly handled
         });
       }
+=======
+      if (response.statusCode == 200) {
+        setState(() {
+          userData = json.decode(response.body); // Decode the response
+          print('userData');
+          print(userData);
+          isLoading = false; // Update loading state
+        });
+      } else {
+        // Handle errors (e.g., user not found)
+        print('error in retrieving data');
+        setState(() {
+          isLoading = false; // Stop loading
+        });
+      }
+    } else {
+      print('missing token');
+      // Handle missing token
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+>>>>>>> main
     }
   }
 
@@ -155,6 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (result == true) {
+<<<<<<< HEAD
       _fetchUserDetails(); // Refresh user data after edit
     }
   }
@@ -220,6 +312,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const String tProfile = "Profile";
     const double tDefaultSize = 20.0; // Example padding size
     const Color tPrimaryColor = myColor; // Primary color
+=======
+      _fetchUserData(); // Call your method to refresh data here
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const String tProfile = "Profile";
+    const String tProfileImage =
+        "images/profilePURPLE.jpg"; // Example profile image path
+    const double tDefaultSize = 20.0; // Example padding size
+    const Color tPrimaryColor = myColor; // Pastel teal color
+>>>>>>> main
 
     // Checking the brightness for dark mode
     var isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
@@ -232,6 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       length: 2, // Two tabs for 'Your Info' and 'Your Activity'
       child: Scaffold(
         appBar: AppBar(
+<<<<<<< HEAD
           automaticallyImplyLeading: false,
           backgroundColor: myColor, // Your primary color
           title: const Text(
@@ -257,6 +363,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             IconButton(
               onPressed: () {}, // Toggle functionality
+=======
+          backgroundColor: myColor, // Change to your desired color
+          leading: IconButton(
+            onPressed: () {}, // Removed function call for now
+            icon: const Icon(LineAwesomeIcons.angle_left),
+          ),
+          title: Text(
+            tProfile,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white, // Set your desired color here
+                ),
+          ),
+          actions: [
+            IconButton(
+              onPressed: () {}, // No function for the toggle
+>>>>>>> main
               icon: Icon(isDark ? LineAwesomeIcons.sun : LineAwesomeIcons.moon),
             ),
           ],
@@ -270,6 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+<<<<<<< HEAD
         drawer: Drawer(
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
@@ -395,6 +518,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+=======
+>>>>>>> main
         body: isLoading
             ? const Center(
                 child: CircularProgressIndicator()) // Show loading indicator
@@ -405,7 +530,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(tDefaultSize),
                       decoration: const BoxDecoration(
+<<<<<<< HEAD
                         color: Colors.white,
+=======
+                        color: Colors
+                            .white, //Color.fromARGB( 255, 240, 240, 240), // Off-white background color
+
+                        /* image: DecorationImage(
+                          image: const AssetImage("images/white-teal.jpg"),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                              Color(0xff456268).withOpacity(0.9),
+                              BlendMode.dstATop),
+                        ),*/
+>>>>>>> main
                       ),
                       child: Column(
                         children: [
@@ -418,8 +556,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(100),
                                   child: const Image(
+<<<<<<< HEAD
                                       image: AssetImage(
                                           "assets/images/profilePURPLE.jpg"),
+=======
+                                      image: AssetImage(tProfileImage),
+>>>>>>> main
                                       fit: BoxFit.cover),
                                 ),
                               ),
@@ -444,7 +586,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
+<<<<<<< HEAD
                             userData?['user']['firstName'] ?? 'First Name',
+=======
+                            userData?['user']['firstName'] ??
+                                'First Name', // Display fetched first name
+>>>>>>> main
                             style: const TextStyle(
                               fontSize: 24.0,
                               fontWeight: FontWeight.bold,
@@ -452,7 +599,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           Text(
+<<<<<<< HEAD
                             userData?['user']['lastName'] ?? 'Last Name',
+=======
+                            userData?['user']['lastName'] ??
+                                'Last Name', // Display fetched last name
+>>>>>>> main
                             style: const TextStyle(
                                 fontSize: 16.0, color: Colors.grey),
                           ),
@@ -477,11 +629,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 userData?['user']['email'] ?? 'N/A',
                                 Icons.email),
                           ]),
+<<<<<<< HEAD
                           _spacing(),
 
                           // Edit Profile Button
                           SizedBox(
                             width: mediaSize.width * 0.6,
+=======
+                          _spacing(), // Space after the personal information card
+
+                          // Edit Profile Button
+                          SizedBox(
+                            width: mediaSize.width * 0.6, // 50% of screen width
+>>>>>>> main
                             child: ElevatedButton(
                               onPressed: () {
                                 _navigateToEditProfile(context);
@@ -499,6 +659,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           const SizedBox(height: 8),
 
+<<<<<<< HEAD
                           // Payment Information Card - Only show if not an owner
                           if (isUser)
                             Column(
@@ -552,6 +713,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 20),
                           ListTile(
                             onTap: () {
+=======
+                          // Payment Information Card
+                          _buildInfoCard("Payment Information", [
+                            _buildUserInfoCard(
+                                "Credit Card",
+                                userData?['creditCard'] ?? 'No Info Yet',
+                                Icons.credit_card),
+                            _buildUserInfoCard(
+                                "Expiry Date",
+                                userData?['expiryDate'] ?? 'No Info Yet',
+                                Icons.date_range),
+                            _buildUserInfoCard("CVV",
+                                userData?['cvv'] ?? 'No Info Yet', Icons.lock),
+                          ]),
+
+                          _spacing(), // Space after the payment information card
+                          SizedBox(
+                            width: mediaSize.width * 0.6, // 50% of screen width
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddCardView()),
+                                );
+                              }, // No navigation or function call
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: tPrimaryColor,
+                                shape: const StadiumBorder(),
+                              ),
+                              child: const Text(
+                                'Edit Payment information',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+/*
+                    // Logout Menu
+                    ProfileMenuWidget(
+                      title: "Logout",
+                      icon: LineAwesomeIcons.alternate_sign_out,
+                      textColor: Colors.red,
+                      endIcon: false,
+                      onPress: () {},
+                    ),
+                    */
+
+                          ListTile(
+                            onTap: () {
+                              // Handle change pass logic here
+                              //ResetPasswordPage
+>>>>>>> main
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -573,6 +788,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           ListTile(
                             onTap: () async {
+<<<<<<< HEAD
                               final _auth = AuthService();
                               _auth.signOut();
                               final prefs =
@@ -580,6 +796,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               await prefs.clear();
 
                               isLoggedIn = false;
+=======
+                              // Handle logout logic here
+                              // Clear any stored user data (like tokens)
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs
+                                  .clear(); // Clear all stored preferences
+
+                              // Navigate to the login screen
+                              isLoggedIn = false;
+                              print('');
+>>>>>>> main
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -624,7 +852,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _spacing() {
+<<<<<<< HEAD
     return const SizedBox(height: 16);
+=======
+    return const SizedBox(height: 16); // Adjust height as needed
+>>>>>>> main
   }
 
   static Widget _buildUserInfoCard(String title, String value, IconData icon) {
@@ -642,17 +874,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoCard(String title, List<Widget> children) {
+<<<<<<< HEAD
     const Color cardBackgroundColor = myColor;
     const Color titleColor = Colors.white;
 
     return Card(
       elevation: 3,
       color: cardBackgroundColor,
+=======
+    const Color cardBackgroundColor =
+        myColor; // Pastel background color of the card
+    const Color titleColor = Colors.white; // Title text color
+
+    return Card(
+      elevation: 3,
+      color: cardBackgroundColor, // Set the overall card background color
+>>>>>>> main
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
         children: [
+<<<<<<< HEAD
+=======
+          // Header
+>>>>>>> main
           Container(
             child: ListTile(
               title: Text(
@@ -660,15 +906,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
+<<<<<<< HEAD
                   color: titleColor,
+=======
+                  color: titleColor, // Set the title text color
+>>>>>>> main
                 ),
               ),
             ),
           ),
           const Divider(),
+<<<<<<< HEAD
           Column(children: children),
+=======
+          Column(children: children), // Child widgets
+>>>>>>> main
         ],
       ),
     );
   }
 }
+<<<<<<< HEAD
+=======
+
+class ProfileMenuWidget extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback onPress;
+  final Color? textColor;
+  final bool endIcon;
+
+  const ProfileMenuWidget({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.onPress,
+    this.textColor,
+    this.endIcon = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onPress,
+      leading: Icon(icon, color: Colors.black),
+      title: Text(
+        title,
+        style: TextStyle(color: textColor ?? Colors.black),
+      ),
+      trailing: endIcon
+          ? const Icon(LineAwesomeIcons.angle_right, color: Colors.black)
+          : null,
+    );
+  }
+}
+>>>>>>> main

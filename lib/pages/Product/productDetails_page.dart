@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:craft_blend_project/components/badge.dart';
 
 import '../../configuration/config.dart';
@@ -6,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+=======
+import 'package:craft_blend_project/configuration/config.dart';
+import 'package:flutter/material.dart';
+>>>>>>> main
 
 class DetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -19,14 +24,20 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   int _quantity = 1;
   final Map<String, Map<String, dynamic>?> _selectedOptions = {};
+<<<<<<< HEAD
   bool isInWishlist = false;
+=======
+>>>>>>> main
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _checkIfInWishlist();
     _trackProductVisit(); // Track the visit for this product
 
+=======
+>>>>>>> main
     // Initialize selected options with null for optional options or first value for required options
     widget.product['availableOptions']?.forEach((key, values) {
       if (values.isNotEmpty) {
@@ -37,6 +48,7 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
+<<<<<<< HEAD
   Future<String?> _fetchToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -205,6 +217,8 @@ class _DetailPageState extends State<DetailPage> {
     return "$days day${days > 1 ? 's' : ''}";
   }
 
+=======
+>>>>>>> main
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -215,13 +229,20 @@ class _DetailPageState extends State<DetailPage> {
         title: Text(
           widget.product['name'] ?? 'Product Details',
           style: TextStyle(
+<<<<<<< HEAD
               fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
+=======
+              fontWeight: FontWeight.w900, fontSize: screenWidth * .08),
+>>>>>>> main
         ),
         foregroundColor: Colors.white70,
         backgroundColor: myColor,
         elevation: 5,
         toolbarHeight: appBarHeight,
+<<<<<<< HEAD
         centerTitle: true,
+=======
+>>>>>>> main
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -229,6 +250,20 @@ class _DetailPageState extends State<DetailPage> {
       ),
       body: Stack(
         children: [
+<<<<<<< HEAD
+=======
+          Opacity(
+            opacity: 0.1,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('images/pastriesBackgroundBorder.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+>>>>>>> main
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -249,7 +284,11 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ],
                   ),
+<<<<<<< HEAD
                   const SizedBox(height: 10),
+=======
+                  const SizedBox(height: 8),
+>>>>>>> main
                   _buildProductSpecialNote(),
                   const SizedBox(height: 16),
                   _buildProductDescription(),
@@ -272,6 +311,7 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                   ),
+<<<<<<< HEAD
                   const SizedBox(height: 50),
                 ],
               ),
@@ -308,6 +348,27 @@ class _DetailPageState extends State<DetailPage> {
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.7,
                     child: _buildAddToCartButton(),
+=======
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: _buildAddToCartButton(),
+                      ),
+                    ),
+>>>>>>> main
                   ),
                 ],
               ),
@@ -322,6 +383,7 @@ class _DetailPageState extends State<DetailPage> {
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
+<<<<<<< HEAD
         child: widget.product['image'] != null &&
                 widget.product['image'].isNotEmpty
             ? Image.network(
@@ -336,11 +398,20 @@ class _DetailPageState extends State<DetailPage> {
                 height: screenWidth * 0.8,
                 fit: BoxFit.cover,
               ),
+=======
+        child: Image.asset(
+          'images/donut.jpg',
+          width: screenWidth * 0.8,
+          height: screenWidth * 0.8,
+          fit: BoxFit.cover,
+        ),
+>>>>>>> main
       ),
     );
   }
 
   Widget _buildProductTitle(double screenWidth) {
+<<<<<<< HEAD
     final double productRating =
         (widget.product['rating']?['average'] ?? 0.0).toDouble();
     final int totalRatings = widget.product['rating']?['count'] ?? 0;
@@ -359,10 +430,20 @@ class _DetailPageState extends State<DetailPage> {
         // const SizedBox(height: 2), // Space between the title and rating
         if (productRating > 0) _buildStarRating(productRating, totalRatings),
       ],
+=======
+    return Text(
+      widget.product['name'] ?? 'Product Name',
+      style: TextStyle(
+        fontSize: screenWidth * 0.09,
+        fontWeight: FontWeight.bold,
+        color: Colors.black54,
+      ),
+>>>>>>> main
     );
   }
 
   Widget _buildProductSpecialNote() {
+<<<<<<< HEAD
     if (widget.product['isUponOrder'] == true) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
@@ -394,11 +475,25 @@ class _DetailPageState extends State<DetailPage> {
         color: Colors.green,
       );
     }
+=======
+    return Text(
+      widget.product['specialNote'] ?? 'New Product',
+      style: const TextStyle(
+        fontSize: 18,
+        color: myColor,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+>>>>>>> main
   }
 
   Widget _buildProductPrice(double screenWidth) {
     return Text(
+<<<<<<< HEAD
       '${calculatePriceWithExtra().toStringAsFixed(2)} ₪',
+=======
+      '${widget.product['price']?.toStringAsFixed(2) ?? '0.00'} ₪',
+>>>>>>> main
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -407,6 +502,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
+<<<<<<< HEAD
   double calculatePriceWithExtra() {
     double basePrice = (widget.product['price'] ?? 0.0)
         .toDouble(); // Ensure basePrice is a double
@@ -430,6 +526,14 @@ class _DetailPageState extends State<DetailPage> {
         style: const TextStyle(
             fontSize: 16, color: Colors.black54, letterSpacing: 1.5),
         textAlign: TextAlign.center,
+=======
+  Widget _buildProductDescription() {
+    return Text(
+      widget.product['description'] ?? 'No description available.',
+      style: const TextStyle(
+        fontSize: 16,
+        color: Colors.black54,
+>>>>>>> main
       ),
     );
   }
@@ -562,7 +666,11 @@ class _DetailPageState extends State<DetailPage> {
                       style: const TextStyle(color: Colors.black87),
                     ),
                   );
+<<<<<<< HEAD
                 }),
+=======
+                }).toList(),
+>>>>>>> main
               ],
             )
           ],
@@ -572,6 +680,7 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildAddToCartButton() {
+<<<<<<< HEAD
     final int availableStock =
         widget.product['stock'] ?? 0; // Available stock from the product
 
@@ -701,6 +810,36 @@ class _DetailPageState extends State<DetailPage> {
           ),
         ],
       ),
+=======
+    return ElevatedButton(
+      onPressed: () {
+        // Validate required options
+        for (final key in _selectedOptions.keys) {
+          bool isOptional =
+              widget.product['availableOptionStatus']?[key] ?? false;
+          if (!isOptional && _selectedOptions[key] == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please select an option for $key.')),
+            );
+            return;
+          }
+        }
+        print('Adding to cart:');
+        print('Product: ${widget.product['name']}');
+        print('Quantity: $_quantity');
+        print('Selected Options: $_selectedOptions');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.product['name']} added to cart!')),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+        backgroundColor: myColor,
+        foregroundColor: Colors.white,
+      ),
+      child: const Text('Add to Cart'),
+>>>>>>> main
     );
   }
 }
