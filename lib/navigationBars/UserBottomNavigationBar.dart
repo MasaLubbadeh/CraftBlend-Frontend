@@ -1,6 +1,6 @@
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Home_page.dart';
-import 'package:craft_blend_project/pages/Posts/createPost.dart';
+//import 'package:craft_blend_project/pages/Posts/createPost.dart';
 import 'package:flutter/material.dart';
 import '../pages/User/profile.dart';
 import '../pages/Store/Profile/storeProfile.dart';
