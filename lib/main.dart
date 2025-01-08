@@ -171,22 +171,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
-          dialogTheme: const DialogTheme(
-            backgroundColor: Colors.white,
-            titleTextStyle: TextStyle(
-              color: myColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            contentTextStyle: TextStyle(
-              color: Colors.black38,
-              fontSize: 16,
-            ),
-          ),
         ),
-        home:
-            const WelcomePage() //MapPage(), // WelcomePage(), //MapPage(), //WelcomePage(), //MapPage(), // // Start with WelcomePage WelcomePage(), //
-        );
+        home: const WelcomePage());
   }
 }
 

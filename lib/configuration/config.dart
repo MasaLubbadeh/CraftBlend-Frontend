@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.19:3000/';
+const String url = 'http://192.168.1.22:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -82,25 +82,21 @@ const String addStoreView = '${url}userActivity/addStoreView';
 const String getRecentlyViewedProducts =
     '${url}userActivity/getRecentlyViewedProducts';
 const String getFirstLast = '${url}getFullName';
-const String createPost = '${url}posts';
+const String createUserPost = '${url}posts/userCreate';
+const String createStorePost = '${url}posts/storeCreate';
 const String fetchAllPosts = '${url}fetchAllPosts';
 const String likes = '${url}';
 const String upvotes = '${url}';
+const String downvotes = '${url}';
 const String comments = '${url}';
 
+const String profile = '${url}profile';
+const String getID = '${url}getID';
 const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
 
-const String addNewAdvertisement = '${url}advertisement/add';
-const String getAllAdvertisements = '${url}advertisement/getAll';
-const String getStoreAdvertisements = '${url}advertisement/getSoreAd';
-const String removeAdvertisement = '${url}advertisement/removeAdvertisement';
-
-const String submitNewSuggestion =
-    '${url}categorySuggestion/submitNewSuggestion';
-const String getAllSuggestions = '${url}categorySuggestion/getAllSuggestions';
-const String updateSuggestionStatus =
-    '${url}categorySuggestion/updateSuggestionStatus';
+const String fetchProfileInfo = '${url}store/fetchProfileInfo';
+const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

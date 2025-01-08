@@ -3,12 +3,12 @@ import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../User/login_page.dart'; // Import your login screen
-import '../User/resetPassword.dart';
+import '../../User/login_page.dart'; // Import your login screen
+import '../../User/resetPassword.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../../configuration/config.dart';
-import 'manageDeliveryLocations_page.dart';
+import '../../../configuration/config.dart';
+import '../manageDeliveryLocations_page.dart';
 
 class StoreProfileScreen extends StatefulWidget {
   const StoreProfileScreen({super.key});
@@ -319,14 +319,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                                             // Fallback to a default image if the logo fails to load
                                             return const Image(
                                               image: AssetImage(
-                                                  "assets/images/storeLogo.png"),
+                                                  "assets/images/logo.png"),
                                               fit: BoxFit.cover,
                                             );
                                           },
                                         )
                                       : const Image(
                                           image: AssetImage(
-                                              "assets/images/storeLogo.png"), // Default logo
+                                              "assets/images/logo.png"), // Default logo
                                           fit: BoxFit.cover,
                                         ),
                                 ),

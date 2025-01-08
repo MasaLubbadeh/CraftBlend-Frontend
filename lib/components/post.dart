@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class PostCard extends StatefulWidget {
   final String profileImageUrl;
@@ -6,11 +7,19 @@ class PostCard extends StatefulWidget {
   final String content;
   final int likes;
   final int initialUpvotes;
+  final int initialDownvotes;
   final int commentsCount;
+  final bool isLiked;
+  final bool isUpvoted;
+  final bool isDownvoted;
   final VoidCallback onLike;
   final Function(int) onUpvote;
+  final Function(int) onDownvote;
   final VoidCallback onComment;
   final List<String>? photoUrls;
+  final String creatorId; // Add isStore flag to check if it's a store
+  final VoidCallback onUsernameTap; // Add the onUsernameTap callback
+  final DateTime? createdAt;
 
   const PostCard({
     Key? key,
@@ -19,11 +28,19 @@ class PostCard extends StatefulWidget {
     required this.content,
     required this.likes,
     required this.initialUpvotes,
+    required this.initialDownvotes,
     required this.commentsCount,
+    required this.isLiked,
+    required this.isUpvoted,
+    required this.isDownvoted,
     required this.onLike,
     required this.onUpvote,
+    required this.onDownvote,
     required this.onComment,
     this.photoUrls,
+    required this.creatorId,
+    required this.onUsernameTap,
+    required this.createdAt, // Pass the callback to the constructor
   }) : super(key: key);
 
   @override
@@ -33,16 +50,23 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   int likes = 0;
   int upvotes = 0;
+  int downvotes = 0;
   bool isLiked = false;
   bool isUpvoted = false;
+  bool isDownvoted = false;
   int currentImageIndex = 0; // Tracks the current image index
   final List<Map<String, String>> comments = [];
-
+  String formattedDate = '';
   @override
   void initState() {
     super.initState();
     likes = widget.likes;
     upvotes = widget.initialUpvotes;
+    downvotes = widget.initialDownvotes;
+    isLiked = widget.isLiked;
+    isUpvoted = widget.isUpvoted;
+    isDownvoted = widget.isDownvoted;
+    formattedDate = DateFormat('EEEE, MMM d').format(widget.createdAt!);
   }
 
   void toggleLike() {
@@ -59,6 +83,14 @@ class _PostCardState extends State<PostCard> {
       upvotes += isUpvoted ? 1 : -1;
     });
     widget.onUpvote(upvotes);
+  }
+
+  void toggleDownvote() {
+    setState(() {
+      isDownvoted = !isDownvoted;
+      downvotes += isDownvoted ? 1 : -1;
+    });
+    widget.onDownvote(downvotes);
   }
 
   void addComment(String username, String comment) {
@@ -84,13 +116,51 @@ class _PostCardState extends State<PostCard> {
             leading: CircleAvatar(
               backgroundImage: NetworkImage(widget.profileImageUrl),
             ),
-            title: Text(
-              widget.username,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+            title: GestureDetector(
+              onTap: widget.onUsernameTap, // Trigger the callback on tap
+              child: Text(
+                widget.username,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
+// Date Section with Enhanced Styling
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200, // Light background color
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today, // Calendar icon
+                        size: 14,
+                        color: Colors.grey, // Subtle icon color
+                      ),
+                      const SizedBox(width: 4), // Spacing between icon and text
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          fontSize: 12, // Smaller font size for subtlety
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Content Section
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -211,6 +281,19 @@ class _PostCardState extends State<PostCard> {
                       onPressed: toggleUpvote,
                     ),
                     Text('$upvotes'),
+                  ],
+                ),
+                // Downvote Button
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(isDownvoted
+                          ? Icons.arrow_downward
+                          : Icons.arrow_downward_outlined),
+                      color: Colors.red,
+                      onPressed: toggleDownvote,
+                    ),
+                    Text('$downvotes'),
                   ],
                 ),
                 // Comment Button
