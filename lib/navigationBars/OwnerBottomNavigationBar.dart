@@ -6,7 +6,6 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Store/storeOrders_page.dart';
 import 'package:craft_blend_project/pages/User/profile.dart';
 import 'package:craft_blend_project/services/userServices.dart';
-import 'package:craft_blend_project/services/userServices.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../pages/Store/Profile/storeProfile.dart';
@@ -14,7 +13,6 @@ import '../pages/Feed/feedPage.dart';
 //import '../pages/specialOrders/specialOrder_page.dart';
 import '../pages/Product/Pastry/pastryOwner_page.dart';
 import '../pages/chatting/allChats.dart';
-import '../pages/Store/Profile/storeProfile_page.dart';
 import '../pages/Store/Profile/storeProfile_page.dart';
 
 class OwnerBottomNavigationBar extends StatefulWidget {
@@ -85,10 +83,11 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
     // List of pages with userID dynamically added
     final List<Widget> _ownerPages = [
       const PastryOwnerPage(), // Manage Store
-      FeedPage(), // Feed
+      StoreOrdersPage(), // Feed
       StoreProfilePage(userID: userID!),
+      //ProfileScreen(),
       // Profile Page
-      AllChats(), // Chat
+      FeedPage(), // Chat
     ];
 
     return Scaffold(
@@ -116,8 +115,8 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
             backgroundColor: Colors.white, // Background for this tab
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
+            icon: Icon(Icons.feed_outlined),
+            label: 'feed',
             backgroundColor: Colors.white, // Background for this tab
           ),
         ],

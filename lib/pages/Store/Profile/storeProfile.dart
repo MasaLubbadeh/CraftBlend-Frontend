@@ -3,9 +3,15 @@ import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../components/post.dart';
+import '../../User/login_page.dart';
+import '../../User/resetPassword.dart';
+import '../../specialOrders/specialOrder_page.dart';
+import '../ManageAdvertisement_Page.dart';
+import '../manageDeliveryLocations_page.dart';
 import 'dashboard.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
 
@@ -25,6 +31,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
   List<dynamic> posts = [];
   List<dynamic> feedbacks = [];
   bool isLoading = true;
+  Map<String, dynamic>? storeData; // Store data
 
   // Initialize variables with default values
   String _storeName = "Loading...";
@@ -46,6 +53,46 @@ class _StoreProfilePageState extends State<StoreProfilePage>
 
     _fetchProfileData(); // Fetch profile data when the page initializes
     fetchPosts();
+    _fetchStoreDetails();
+  }
+
+  Future<void> _fetchStoreDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token'); // Retrieve the stored token
+
+    if (token != null) {
+      try {
+        final response = await http.get(
+          Uri.parse(getStoreDetails), // Use the store details API endpoint
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+        print(response.body);
+
+        if (response.statusCode == 200) {
+          setState(() {
+            storeData = json.decode(response.body); // Decode the response
+            isLoading = false; // Stop loading
+          });
+        } else {
+          print('Error fetching store data: ${response.statusCode}');
+          setState(() {
+            isLoading = false; // Stop loading
+          });
+        }
+      } catch (e) {
+        print('Exception while fetching store data: $e');
+        setState(() {
+          isLoading = false; // Stop loading
+        });
+      }
+    } else {
+      print('Token not found. Cannot fetch data.');
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+    }
   }
 
   Future<void> fetchPosts() async {
@@ -313,13 +360,219 @@ class _StoreProfilePageState extends State<StoreProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.08;
+    var mediaSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        automaticallyImplyLeading: false,
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(LineAwesomeIcons.bars, color: Colors.white),
+              onPressed: () {
+                Scaffold.of(context).openDrawer(); // Open the drawer
+              },
+            );
+          },
+        ),
+
+        // backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        elevation: 1,
+      ),
+      drawer: Drawer(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(30),
+          ),
+        ),
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: mediaSize.height * 0.27,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/arcTest2.png'),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: mediaSize.height * 0.18,
+                  left: mediaSize.width / 4.5,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.white24,
+                        width: 7,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: mediaSize.height * 0.07,
+                      backgroundImage:
+                          AssetImage('assets/images/profilePURPLE.jpg'),
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: mediaSize.height * 0.09),
+            const Divider(),
+            // Add Your Info Tiles
+            ListTile(
+              leading: const Icon(Icons.delivery_dining, color: myColor),
+              title: const Text(
+                "Your Account",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const StoreProfileScreen()),
+                );
+              },
+            ),
+
+            const Divider(),
+            // Add Your Info Tiles
+            ListTile(
+              leading: const Icon(Icons.delivery_dining, color: myColor),
+              title: const Text(
+                "Manage your delivery locations",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          const ManageDeliveryLocationsPage()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.ad, color: myColor),
+              title: const Text(
+                "Home Page Ad Management",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ManageAdvertisementPage()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart, color: myColor),
+              title: const Text(
+                "Manage special orders",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                final category = storeData?['category'];
+                if (category != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          SpecialOrdersPage(category: category),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Category not found for this store.')),
+                  );
+                }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.key, color: myColor),
+              title: const Text(
+                "Change Password",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 1),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ResetPasswordPage(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            const Spacer(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.alternate_sign_out,
+                  color: myColor),
+              title: const Text(
+                "Logout",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 1),
+              ),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You have logged out successfully.'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -329,7 +582,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 40),
                   CircleAvatar(
                     radius: 30,
                     backgroundImage: _profilePicture.startsWith('http')
@@ -378,7 +631,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // SizedBox(width: 5),
-                        ElevatedButton(
+                        /* ElevatedButton(
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -387,7 +640,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                             );
                           },
                           child: const Text('Edit Profile'),
-                        ),
+                        ),*/
                         const SizedBox(width: 5),
                         ElevatedButton(
                           onPressed: () {

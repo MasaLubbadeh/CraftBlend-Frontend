@@ -254,12 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          actions: [
-            IconButton(
-              onPressed: () {}, // Toggle functionality
-              icon: Icon(isDark ? LineAwesomeIcons.sun : LineAwesomeIcons.moon),
-            ),
-          ],
+
           bottom: const TabBar(
             labelColor: Colors.white, // Selected tab text color
             unselectedLabelColor: Colors.white70, // Unselected tab text color
@@ -317,6 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               SizedBox(height: mediaSize.height * 0.09),
+              /* in case we need to return this
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.account_box, color: myColor),
@@ -336,6 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+              */
               const Divider(),
               ////////////////////////
               ///const Divider(),
@@ -361,6 +358,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               ///
               const Spacer(),
+              const Divider(),
+
               ListTile(
                 leading: const Icon(LineAwesomeIcons.alternate_sign_out,
                     color: myColor),
@@ -550,6 +549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
 
                           const SizedBox(height: 20),
+                          /*
                           ListTile(
                             onTap: () {
                               Navigator.push(
@@ -605,6 +605,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+                          */
                         ],
                       ),
                     ),
