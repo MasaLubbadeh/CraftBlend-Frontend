@@ -90,10 +90,21 @@ const String upvotes = '${url}';
 const String downvotes = '${url}';
 const String comments = '${url}';
 
+const String addNewAdvertisement = '${url}advertisement/add';
+const String getAllAdvertisements = '${url}advertisement/getAll';
+const String getStoreAdvertisements = '${url}advertisement/getSoreAd';
+const String removeAdvertisement = '${url}advertisement/removeAdvertisement';
+
 const String profile = '${url}profile';
 const String getID = '${url}getID';
 const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
+
+const String submitNewSuggestion =
+    '${url}categorySuggestion/submitNewSuggestion';
+const String getAllSuggestions = '${url}categorySuggestion/getAllSuggestions';
+const String updateSuggestionStatus =
+    '${url}categorySuggestion/updateSuggestionStatus';
 
 const String fetchProfileInfo = '${url}store/fetchProfileInfo';
 const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
