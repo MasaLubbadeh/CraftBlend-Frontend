@@ -55,6 +55,8 @@ const String getAllStores = '${url}store/getAllStores';
 const String checkIfAllowSpecialOrders =
     '${url}store/checkIfAllowSpecialOrders';
 const String rateStore = '${url}store/rateStore';
+const String chooseSubscription = '${url}store/chooseSubscription';
+const String getSubscriptionDetails = '${url}store/getSubscriptionDetails';
 
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
@@ -110,9 +112,12 @@ const String updateSuggestionStatus =
 const String fetchProfileInfo = '${url}store/fetchProfileInfo';
 const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 
+const String addSubscriptionPlan = '${url}subscriptionPlan/add';
+const String getSubscriptionPlans = '${url}subscriptionPlan/getPlans';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
-const myColor2 = myColor;
+const myColor2 = Color.fromARGB(171, 243, 229, 245);
 
 const Color primaryColor = Color(0xffA47551); // A warm brown color
 const Color accentColor = Color(0xffD9C4B1); // A lighter beige accent

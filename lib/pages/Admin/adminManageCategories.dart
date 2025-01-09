@@ -374,112 +374,107 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Stack(
-        children: [
-          Opacity(
-            opacity: 0.2,
-            child: Container(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [myColor.withOpacity(0.9), Colors.blueGrey.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isUploading ? null : _showAddCategoryDialog,
-                  icon: const Icon(Icons.add_circle_rounded,
-                      color: Colors.white70),
-                  label: const Text(
-                    "Add New Category",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: myColor,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 24.0),
-                  ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _isUploading ? null : _showAddCategoryDialog,
+                icon:
+                    const Icon(Icons.add_circle_rounded, color: Colors.white70),
+                label: const Text(
+                  "Add New Category",
+                  style: TextStyle(color: Colors.white),
                 ),
-                const SizedBox(height: 16),
-                ...categories.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  Map<String, dynamic> category = entry.value;
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: myColor,
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12.0, horizontal: 24.0),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...categories.asMap().entries.map((entry) {
+                int index = entry.key;
+                Map<String, dynamic> category = entry.value;
 
-                  return Card(
-                    color: const Color.fromARGB(171, 243, 229, 245),
-                    elevation: 6,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: SizedBox(
-                      height: 120, // Fixed height for consistent card size
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 5.0, horizontal: 10.0),
-                        child: Row(
-                          children: [
-                            category['image'].isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Image.network(
-                                      category['image'], // URL of the image
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.category,
-                                    size: 60,
-                                    color: Colors.grey,
+                return Card(
+                  color: const Color.fromARGB(171, 243, 229, 245),
+                  elevation: 6,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox(
+                    height: 120,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 5.0, horizontal: 10.0),
+                      child: Row(
+                        children: [
+                          category['image'].isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.network(
+                                    category['image'],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
                                   ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(
-                                    height: 20,
+                                )
+                              : const Icon(
+                                  Icons.category,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 20),
+                                Text(
+                                  category['name'],
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: myColor,
+                                      letterSpacing: 1),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  category['description'],
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
                                   ),
-                                  Text(
-                                    category['name'],
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: myColor,
-                                        letterSpacing: 1),
-                                    maxLines:
-                                        1, // Ensure only one line for the name
-                                    overflow: TextOverflow
-                                        .ellipsis, // Handle overflow with ellipsis
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    category['description'],
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black54,
-                                    ),
-                                    maxLines:
-                                        2, // Restrict to two lines for the description
-                                    overflow: TextOverflow
-                                        .ellipsis, // Handle overflow
-                                  ),
-                                ],
-                              ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _confirmDeleteCategory(index),
-                            ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _confirmDeleteCategory(index),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }),
-              ],
-            ),
+                  ),
+                );
+              }),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
