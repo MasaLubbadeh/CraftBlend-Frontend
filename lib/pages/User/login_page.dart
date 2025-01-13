@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert'; // For JSON encoding/decoding
 import 'package:shared_preferences/shared_preferences.dart';
@@ -148,6 +149,38 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 */
+  void saveTokenOnLogin(String userType) async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Get FCM Token
+    String? fcmToken = await messaging.getToken();
+    print('FCM Token: $fcmToken');
+
+    if (fcmToken != null) {
+      try {
+        final response = await http.post(
+          Uri.parse(saveFMCToken), // Backend endpoint
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization':
+                'Bearer ${prefs.getString('token')}', // Include JWT
+          },
+          body: jsonEncode({
+            'fcmToken': fcmToken,
+            'userType': userType,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          print('FCM token saved successfully');
+        } else {
+          print('Failed to save FCM token: ${response.body}');
+        }
+      } catch (error) {
+        print('Error saving FCM token: $error');
+      }
+    }
+  }
 
   void loginUserWithCredentials(String email, String password) async {
     var reqBody = {"email": email, "password": password};
@@ -188,6 +221,8 @@ class _LoginPageState extends State<LoginPage> {
         print('email:$email');
         print('userType:$userType');
 
+        // Save FCM Token for the logged-in entity
+        saveTokenOnLogin(userType);
         // Save email and password only if "remember me" is checked
         if (rememberUser) {
           prefs.setString('email', email);

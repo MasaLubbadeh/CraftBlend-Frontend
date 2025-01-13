@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../configuration/config.dart';
 import 'addCard.dart';
+import '../../services/Notifications/notification_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,6 +27,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _fetchUserDetails(); // Fetch user data when the screen initializes
+    testSendNotification();
+  }
+
+  void testSendNotification() async {
+    String deviceToken =
+        'eQ0nisM6QLKqorovctSTLw:APA91bEE1_2duYCyCP4zIszqw3X1VdpgSqj2Be6vFbQfnSLVRPXrxds8lFbfvS0pFdko3YsWP_UXcK0AonLRWaz8XlwaVWsWkRvuwsDVk_BAHkO6OvOiLhw'; // Replace with your device token
+    String title = 'Hello from CraftBlend!';
+    String body = 'This is a test notification.';
+
+    await NotificationService.sendNotification(deviceToken, title, body);
   }
 
   Future<void> _fetchUserDetails() async {

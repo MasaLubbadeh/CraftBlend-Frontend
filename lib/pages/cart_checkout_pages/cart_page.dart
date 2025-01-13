@@ -83,10 +83,12 @@ class _CartPageState extends State<CartPage>
       }
     } catch (e) {
       print('Error fetching cart data: $e');
-      setState(() {
-        cartData = [];
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          cartData = [];
+          isLoading = false;
+        });
+      }
     }
   }
 

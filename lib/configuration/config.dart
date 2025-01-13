@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.19:3000/';
+const String url = 'http://192.168.1.16:3000/';
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -114,6 +114,17 @@ const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 
 const String addSubscriptionPlan = '${url}subscriptionPlan/add';
 const String getSubscriptionPlans = '${url}subscriptionPlan/getPlans';
+
+///////////FMC TOKEN/////////////
+const String saveFMCToken = '${url}fcmToken/saveToken';
+const String deleteFMCToken = '${url}fcmToken/deleteToken';
+const String getFMCToken = '${url}fcmToken/getToken';
+const String getAllFMCTokens = '${url}fcmToken/getAllTokens';
+
+/////////notification/////////
+const String addNotification = '${url}notification/addNotification';
+const String getNotifications = '${url}notification/getNotifications';
+const String markNotificationAsRead = '${url}notification/markAsRead';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

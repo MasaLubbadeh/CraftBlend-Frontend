@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../services/Notifications/notification_helper.dart';
+
 class OrderDetailsPage extends StatefulWidget {
   final dynamic order;
 
@@ -412,6 +414,88 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
+  Future<void> sendOrderStatusNotification(
+      dynamic updatedOrder, String newStatus) async {
+    try {
+      print('updatedOrder in sendOrderStatusNotification $updatedOrder');
+
+      // Step 1: Fetch the token from SharedPreferences
+      final token = await _fetchToken();
+      if (token == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final storeName = prefs.getString('storeName');
+
+      // Step 2: Fetch the user's FCM token from the backend
+      final userId = updatedOrder['userId'];
+      final storeId =
+          updatedOrder['items']?[0]['storeId']; // Access from items array
+      print('Extracted User ID: $userId, Store ID: $storeId');
+
+      if (userId == null || storeId == null || storeName == null) {
+        print('User ID, Store ID, or Store Name not found');
+        return;
+      }
+
+      final fcmTokenUrl =
+          '$getFMCToken?userId=$userId'; // API to fetch FCM token
+      final fcmTokenResponse = await http.get(
+        Uri.parse(fcmTokenUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (fcmTokenResponse.statusCode != 200) {
+        print('Failed to fetch FCM token: ${fcmTokenResponse.body}');
+        return;
+      }
+
+      final fcmTokenData = json.decode(fcmTokenResponse.body);
+      if (fcmTokenData['tokens'] == null || fcmTokenData['tokens'].isEmpty) {
+        print('No FCM token found for the user');
+        return;
+      }
+
+      final userDeviceToken = fcmTokenData['tokens'][0]['fcmToken'];
+      print('User Device Token: $userDeviceToken');
+
+      // Step 3: Send notification to the user's device using Firebase
+      final title = "Your order from '$storeName' is now $newStatus";
+      final body =
+          "Thank you for shopping with us! Your order status has been updated to $newStatus.";
+      await NotificationService.sendNotification(userDeviceToken, title, body);
+
+      // Step 4: Add notification to the database
+      final notificationResponse = await http.post(
+        Uri.parse(addNotification),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'senderId': storeId, // Store ID as required by backend
+          'senderType': 'store',
+          'recipientId': userId,
+          'recipientType': 'user',
+          'title': title,
+          'message': body,
+          'metadata': {'orderId': updatedOrder['_id'], 'status': newStatus},
+        }),
+      );
+
+      if (notificationResponse.statusCode == 200) {
+        print('Notification added to database successfully');
+      } else {
+        print(
+            'Failed to save notification to database: ${notificationResponse.body}');
+      }
+    } catch (e) {
+      print('Error sending notification: $e');
+    }
+  }
+
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
       setState(() {
@@ -439,6 +523,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         setState(() {
           order = updatedOrder; // Refresh the current order details
         });
+        // Send a notification to the user
+        await sendOrderStatusNotification(updatedOrder, newStatus);
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
