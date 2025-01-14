@@ -126,6 +126,20 @@ const String addNotification = '${url}notification/addNotification';
 const String getNotifications = '${url}notification/getNotifications';
 const String markNotificationAsRead = '${url}notification/markAsRead';
 
+const String createStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/create';
+const String getStoreSpecialOrderOptions =
+    '${url}storeSpecialOrderOption/store';
+const String updateStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/update';
+const String deleteStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/delete';
+
+const String createSpecialOrder = '${url}specialOrder/create';
+const String getStoreSpecialOrders = '${url}specialOrder/store';
+const String getSpecialOrderById = '${url}specialOrder/getByID';
+const String updateSpecialOrderStatus = '${url}specialOrder/updateStatus';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 const myColor2 = Color.fromARGB(171, 243, 229, 245);

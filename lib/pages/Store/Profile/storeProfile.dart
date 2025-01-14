@@ -5,14 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../../components/post.dart';
 import '../../User/login_page.dart';
 import '../../User/resetPassword.dart';
-import '../../specialOrders/specialOrder_page.dart';
 import '../ManageAdvertisement_Page.dart';
 import '../manageDeliveryLocations_page.dart';
 import '../ownerManagesTheirSubscription.dart';
+import '../specialOrders/specialOrder_page.dart';
 import 'dashboard.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
 
@@ -509,6 +508,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 ),
                 onTap: () {
                   final category = storeData?['category'];
+                  print('category $category');
                   if (category != null) {
                     Navigator.push(
                       context,
