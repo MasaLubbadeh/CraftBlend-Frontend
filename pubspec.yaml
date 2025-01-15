@@ -60,6 +60,7 @@ dependencies:
   googleapis_auth: ^1.6.0
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
+  quickalert: ^1.1.0
 
 dev_dependencies:
   flutter_test:

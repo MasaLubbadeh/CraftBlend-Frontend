@@ -87,7 +87,8 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
       StoreProfilePage(userID: userID!),
       //ProfileScreen(),
       // Profile Page
-      FeedPage(), // Chat
+      AllChats(),
+      // FeedPage(), // Chat
     ];
 
     return Scaffold(

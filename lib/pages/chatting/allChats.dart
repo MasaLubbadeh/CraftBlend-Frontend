@@ -12,7 +12,7 @@ class AllChats extends StatelessWidget {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  String fullName = '';
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -51,27 +51,20 @@ class AllChats extends StatelessWidget {
       // Get user details from Firestore
       final userDoc = await _firestore.collection("Users").doc(email).get();
 
-      /*if (userDoc.exists) {
-        final user = userDoc.data()!;
-        final String firstName = user['firstName'] ?? 'Unknown';
-        final String lastName = user['lastName'] ?? 'User';
-        return '$firstName $lastName';
-      } else {
-        print('User not found in Firestore');
-      }*/
       if (userDoc.exists) {
         final user = userDoc.data()!;
-
         // Check if the document has firstName and lastName fields
         if (user.containsKey('firstName') && user.containsKey('lastName')) {
           final String firstName = user['firstName'] ?? 'Unknown';
           final String lastName = user['lastName'] ?? 'User';
-          return '$firstName $lastName';
+          fullName = '$firstName $lastName';
+          return fullName;
         }
         // Otherwise, check for storeName
         else if (user.containsKey('storeName')) {
           final String storeName = user['storeName'] ?? 'Unknown Store';
-          return storeName;
+          fullName = storeName;
+          return fullName;
         }
         // Fallback for any unexpected case
         else {
@@ -141,8 +134,8 @@ class AllChats extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        final fullName = await _fetchFullName(userData["email"]);
-        print("Full name: $fullName");
+        final fullNameFetched = await _fetchFullName(userData["email"]);
+        print("Full name fetched: $fullNameFetched");
 
         Navigator.push(
           context,
@@ -152,6 +145,7 @@ class AllChats extends StatelessWidget {
               receiverID: userData["uid"],
               firstName: userData["firstName"] ?? "Unknown",
               lastName: userData["lastName"] ?? "User",
+              fullName: userData["storeName"] ?? 'No full name',
             ),
           ),
         );
@@ -168,7 +162,7 @@ class AllChats extends StatelessWidget {
                 radius: 24,
                 backgroundImage: NetworkImage(
                   userData["profilePicture"] ??
-                      "https://via.placeholder.com/150", // Default placeholder
+                      'https://picsum.photos/400/400', // Default placeholder
                 ),
               ),
               const SizedBox(width: 16),
@@ -180,13 +174,13 @@ class AllChats extends StatelessWidget {
                             userData.containsKey("lastName")
                         ? "${userData["firstName"] ?? "Unknown"} ${userData["lastName"] ?? "User"}"
                         : userData["storeName"] ?? "Unknown Store",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     "Tap to start a conversation",
                     style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),

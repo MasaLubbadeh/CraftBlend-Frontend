@@ -1,12 +1,14 @@
-import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../pages/Feed/favoritesPage.dart';
 import '../pages/Feed/popularPosts.dart';
 
 class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
-  const MyAppBar({Key? key}) : super(key: key);
+  final Function(String) onItemSelected;
+
+  const MyAppBar({required this.onItemSelected});
 
   @override
   _MyAppBarState createState() => _MyAppBarState();
@@ -20,20 +22,31 @@ class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _MyAppBarState extends State<MyAppBar> {
-  String selectedItem = 'CraftBlend';
+  String selectedItem = 'CraftBlend'; // Default item
   bool isMenuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedItem();
+  }
+
+  void _loadSelectedItem() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedItem = prefs.getString('selectedItem') ?? 'CraftBlend';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     return AppBar(
-      backgroundColor: myColor, // Replace with your desired color
+      backgroundColor: myColor,
       elevation: 4,
-      toolbarHeight: appBarHeight, // Use the calculated height here
-      automaticallyImplyLeading:
-          false, // No back arrow initiallyyyyyy change this masa if u need
-
+      toolbarHeight: appBarHeight,
+      automaticallyImplyLeading: false,
       title: PopupMenuButton<String>(
         onSelected: (value) async {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -42,25 +55,9 @@ class _MyAppBarState extends State<MyAppBar> {
             selectedItem = value;
             prefs.setString('selectedItem', selectedItem);
           });
-          if (value == 'Profile') {
-            // Navigate to Profile
-          } else if (value == 'Settings') {
-            // Handle settings logic
-          } else if (value == 'Favorites') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => FavoritesPage()), // Adjust as needed
-            );
-            Navigator.pop(context);
-          } else if (value == 'Popular') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => PopularPostsPage()), // Adjust as needed
-            );
-            Navigator.pop(context);
-          }
+
+          // Call the parent widget's callback with the selected item
+          widget.onItemSelected(selectedItem);
         },
         onCanceled: () {
           setState(() {

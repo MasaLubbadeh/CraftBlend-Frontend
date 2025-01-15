@@ -30,7 +30,8 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
       // Home
       const ProfileScreen(), // Profile
       CartPage(onTabChange: _onItemTapped), // Cart with callback
-      FeedPage(), // Chat
+      AllChats(),
+      //FeedPage(), // Chat
     ];
   }
 

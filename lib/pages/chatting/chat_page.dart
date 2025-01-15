@@ -13,6 +13,7 @@ class ChatPage extends StatefulWidget {
   final String receiverID;
   final String firstName; // Add this parameter
   final String lastName; // Add this parameter
+  final String fullName;
 
   ChatPage({
     super.key,
@@ -20,6 +21,7 @@ class ChatPage extends StatefulWidget {
     required this.receiverID,
     required this.firstName,
     required this.lastName,
+    required this.fullName,
   });
 
   @override
@@ -62,6 +64,7 @@ class _ChatPageState extends State<ChatPage> {
   // To store the receiver's profile details
   String receiverFirstName = '';
   String receiverLastName = '';
+  String recieverFullName = '';
   String receiverProfileImage =
       'https://via.placeholder.com/150'; // Placeholder image
 
@@ -76,6 +79,8 @@ class _ChatPageState extends State<ChatPage> {
     });
     receiverFirstName = widget.firstName;
     receiverLastName = widget.lastName;
+
+    recieverFullName = widget.fullName;
   }
 
   // Fetch receiver details from Firestore
@@ -95,8 +100,9 @@ class _ChatPageState extends State<ChatPage> {
         setState(() {
           receiverFirstName = userData['firstName'] ?? 'Unknown';
           receiverLastName = userData['lastName'] ?? 'User';
+          recieverFullName = userData['fullName'] ?? 'Unknown Name';
           receiverProfileImage = userData['profilePicture'] ??
-              'https://via.placeholder.com/150'; // Default placeholder
+              'https://picsum.photos/400/400'; // Default placeholder
         });
       } else
         print("user does not exist");
@@ -259,7 +265,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(width: 8), // Adjust spacing between avatar and text
             Expanded(
               child: Text(
-                '$receiverFirstName $receiverLastName',
+                '$recieverFullName',
                 style: const TextStyle(
                   color: myColor,
                   fontSize: 16, // Slightly smaller font size

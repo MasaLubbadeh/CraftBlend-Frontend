@@ -1,5 +1,11 @@
+import 'dart:convert';
+
+import 'package:craft_blend_project/configuration/config.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+
+import 'badge.dart';
 
 class PostCard extends StatefulWidget {
   final String profileImageUrl;
@@ -17,9 +23,11 @@ class PostCard extends StatefulWidget {
   final Function(int) onDownvote;
   final VoidCallback onComment;
   final List<String>? photoUrls;
-  final String creatorId; // Add isStore flag to check if it's a store
-  final VoidCallback onUsernameTap; // Add the onUsernameTap callback
+  final String creatorId;
+  final VoidCallback onUsernameTap;
   final DateTime? createdAt;
+  final String postType;
+  final String store_id;
 
   const PostCard({
     Key? key,
@@ -40,7 +48,9 @@ class PostCard extends StatefulWidget {
     this.photoUrls,
     required this.creatorId,
     required this.onUsernameTap,
-    required this.createdAt, // Pass the callback to the constructor
+    required this.createdAt,
+    required this.postType,
+    required this.store_id,
   }) : super(key: key);
 
   @override
@@ -54,9 +64,11 @@ class _PostCardState extends State<PostCard> {
   bool isLiked = false;
   bool isUpvoted = false;
   bool isDownvoted = false;
-  int currentImageIndex = 0; // Tracks the current image index
+  int currentImageIndex = 0;
   final List<Map<String, String>> comments = [];
   String formattedDate = '';
+  String displayPostType = '';
+  String storeName = '';
   @override
   void initState() {
     super.initState();
@@ -67,6 +79,14 @@ class _PostCardState extends State<PostCard> {
     isUpvoted = widget.isUpvoted;
     isDownvoted = widget.isDownvoted;
     formattedDate = DateFormat('EEEE, MMM d').format(widget.createdAt!);
+    getStoreName(widget.store_id);
+    print('storeName:$storeName');
+    // Map postType to display value
+    displayPostType = widget.postType == 'F'
+        ? 'Feedback'
+        : widget.postType == 'P'
+            ? 'Store Post'
+            : '';
   }
 
   void toggleLike() {
@@ -100,6 +120,26 @@ class _PostCardState extends State<PostCard> {
     widget.onComment();
   }
 
+  Future<void> getStoreName(String storeID) async {
+    print('store id: $storeID');
+    try {
+      final response = await http.get(Uri.parse('$fetchProfileInfo/$storeID'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        storeName = data['storeName'];
+        print('storeName2: $storeName');
+
+        // Use setState to trigger a rebuild with the updated storeName
+        setState(() {});
+      } else {
+        print('Failed to fetch store details');
+      }
+    } catch (error) {
+      print('Error occurred: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -112,21 +152,71 @@ class _PostCardState extends State<PostCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile Section
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(widget.profileImageUrl),
-            ),
-            title: GestureDetector(
-              onTap: widget.onUsernameTap, // Trigger the callback on tap
-              child: Text(
-                widget.username,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+          // Badge Section (only visible for 'Feedback' posts)
+          if (widget.postType == 'F')
+            Align(
+              alignment:
+                  Alignment.topCenter, // Align to the top-center of the Card
+              child: Container(
+                width: double
+                    .infinity, // Makes the container the same width as the PostCard
+                margin: const EdgeInsets.all(
+                    0), // Remove any space between badge and the card edges
+                child: badge(
+                  text: 'What ${widget.username} said about $storeName',
+                  color: const Color.fromARGB(
+                      255, 169, 163, 172), // Customize color
+                  fontSize: 14,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(
+                        8), // Custom radius for the top-left corner
+                    topRight: Radius.circular(
+                        8), // Custom radius for the top-right corner
+                    bottomLeft: Radius.circular(
+                        0), // Custom radius for the bottom-left corner
+                    bottomRight: Radius.circular(
+                        15), // Custom radius for the bottom-right corner
+                  ),
                 ),
               ),
             ),
+
+          Stack(
+            children: [
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(widget.profileImageUrl),
+                ),
+                title: GestureDetector(
+                  onTap: widget.onUsernameTap,
+                  child: Text(
+                    widget.username,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              if (displayPostType.isNotEmpty)
+                Positioned(
+                  top: 10,
+                  right: 8,
+                  child: badge(
+                    text: displayPostType,
+                    color: displayPostType == "Feedback"
+                        ? const Color.fromARGB(255, 106, 98, 112)
+                        : const Color.fromARGB(255, 192, 194, 212),
+                    fontSize: 12,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+            ],
           ),
-// Date Section with Enhanced Styling
+          // Date Section
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
@@ -136,21 +226,21 @@ class _PostCardState extends State<PostCard> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8.0, vertical: 4.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200, // Light background color
-                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.calendar_today, // Calendar icon
+                        Icons.calendar_today,
                         size: 14,
-                        color: Colors.grey, // Subtle icon color
+                        color: Colors.grey,
                       ),
-                      const SizedBox(width: 4), // Spacing between icon and text
+                      const SizedBox(width: 4),
                       Text(
                         formattedDate,
                         style: const TextStyle(
-                          fontSize: 12, // Smaller font size for subtlety
+                          fontSize: 12,
                           color: Colors.black87,
                         ),
                       ),
@@ -160,7 +250,6 @@ class _PostCardState extends State<PostCard> {
               ],
             ),
           ),
-
           // Content Section
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -204,28 +293,6 @@ class _PostCardState extends State<PostCard> {
                     },
                   ),
                 ),
-                // Image count indicator at the top-right
-                if (widget.photoUrls!.length > 1)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${currentImageIndex + 1}/${widget.photoUrls!.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                // Dots indicator at the bottom
                 if (widget.photoUrls!.length > 1)
                   Positioned(
                     bottom: 8,
@@ -302,9 +369,7 @@ class _PostCardState extends State<PostCard> {
                     IconButton(
                       icon: const Icon(Icons.comment),
                       color: Colors.grey,
-                      onPressed: () {
-                        _showCommentDialog(context);
-                      },
+                      onPressed: _showCommentDialog,
                     ),
                     Text('${comments.length}'),
                   ],
@@ -312,27 +377,12 @@ class _PostCardState extends State<PostCard> {
               ],
             ),
           ),
-          // Display Comments Section
-          if (comments.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: comments.map((comment) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child:
-                        Text("- ${comment['username']}: ${comment['comment']}"),
-                  );
-                }).toList(),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  void _showCommentDialog(BuildContext context) {
+  void _showCommentDialog() {
     final TextEditingController _commentController = TextEditingController();
     final TextEditingController _usernameController = TextEditingController();
 
@@ -354,7 +404,7 @@ class _PostCardState extends State<PostCard> {
               TextField(
                 controller: _commentController,
                 decoration: const InputDecoration(
-                  hintText: 'Write your comment...',
+                  hintText: 'Your comment',
                 ),
               ),
             ],
@@ -368,13 +418,8 @@ class _PostCardState extends State<PostCard> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (_commentController.text.trim().isNotEmpty &&
-                    _usernameController.text.trim().isNotEmpty) {
-                  addComment(
-                    _usernameController.text.trim(),
-                    _commentController.text.trim(),
-                  );
-                }
+                addComment(_usernameController.text, _commentController.text);
+                _commentController.clear();
                 Navigator.pop(context);
               },
               child: const Text('Post'),

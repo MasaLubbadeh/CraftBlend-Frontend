@@ -462,6 +462,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                                   ),
                                 );
                               },
+                              postType: post['post_type'] ?? '',
+                              store_id: post['store_id'] ?? '',
                             );
                           },
                         ),
@@ -511,6 +513,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                                   ),
                                 );
                               },
+                              postType: feedback['post_type'] ?? '',
+                              store_id: feedback['store_id'] ?? '',
                             );
                           },
                         ),
