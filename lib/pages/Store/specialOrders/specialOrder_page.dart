@@ -1,7 +1,6 @@
 // lib/pages/special_orders/special_orders_page.dart
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,8 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'EditCustomFieldPage.dart';
 import 'ManageSpecialOrderOptionsPage.dart';
 
-// Define the color variable
-
 class SpecialOrdersPage extends StatefulWidget {
   final String category;
 
@@ -26,11 +23,8 @@ class SpecialOrdersPage extends StatefulWidget {
 }
 
 class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
-  //late TextEditingController _photoUploadPromptController;
   Map<String, TextEditingController> _photoUploadPromptControllers = {};
-
   Map<String, TextEditingController> _descriptionControllers = {};
-
   bool specialOrdersEnabled =
       true; // Indicates if the store allows special orders
 
@@ -38,22 +32,13 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   Map<String, List<String>> categoryDefaultOptions = {
     'Phone Accessories': ['Personalized designs', 'Large orders'],
     'Pottery': ['Custom Pottery Design', 'Bulk orders'],
-    'Gift Items': [
-      'Personalized Gift Packaging',
-      'Custom Gift Set Design',
-    ],
-    'Crochet & Knitting': [
-      'Personalized designs',
-      'Large quantities',
-    ],
+    'Gift Items': ['Personalized Gift Packaging', 'Custom Gift Set Design'],
+    'Crochet & Knitting': ['Personalized designs', 'Large quantities'],
     'Flowers': [
-      'Personalized designs',
       'Event-specific bulk arrangements',
+      'Personalized designs',
     ],
-    'Pastry & Bakery': [
-      'Custom-Made Cake',
-      'Large Orders',
-    ],
+    'Pastry & Bakery': ['Custom-Made Cake', 'Large Orders'],
   };
 
   // Function to get image path for a given option and category
@@ -110,7 +95,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   void initState() {
     super.initState();
     _initializeOrderOptions(); // Initialize options based on category
-//    _photoUploadPromptController = TextEditingController(text: '');
   }
 
   @override
@@ -124,8 +108,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     _descriptionControllers.forEach((key, controller) {
       controller.dispose();
     });
-    // Dispose of the controller when the widget is disposed
-    //  _photoUploadPromptController.dispose();
     super.dispose();
   }
 
@@ -145,7 +127,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     });
   }
 
-  // Build the list of special order options with expandable configuration cards
   // Build the list of special order options with expandable configuration cards
   Widget _buildSpecialOrderOptions() {
     if (selectedOrderOptions.isEmpty) {
@@ -245,7 +226,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                     ),
                     initiallyExpanded: true,
                     children: [
-                      Divider(),
+                      const Divider(),
                       // Description Field
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -273,6 +254,9 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                           controller: _descriptionControllers[optionTitle],
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      const Divider(),
+                      const SizedBox(height: 10),
                       // Switch to require photo upload
                       SwitchListTile(
                         activeColor: Colors.white70,
@@ -294,41 +278,50 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                       ),
                       // TextField for photo upload prompt (visible only if photo upload is required)
                       if (orderOption.requiresPhotoUpload)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextFormField(
-                            textDirection: TextDirection.ltr,
-                            style: const TextStyle(color: Colors.white70),
-                            decoration: InputDecoration(
-                              labelText: 'Photo Upload Prompt',
-                              hintText:
-                                  'e.g., Upload a similar design / your photo on the product',
-                              labelStyle:
-                                  const TextStyle(color: Colors.white70),
-                              hintStyle: const TextStyle(color: Colors.white70),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.white70),
-                              ),
-                              focusedBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.white70, width: 2.0),
+                        Column(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: TextFormField(
+                                textDirection: TextDirection.ltr,
+                                style: const TextStyle(color: Colors.white70),
+                                decoration: const InputDecoration(
+                                  labelText: 'Photo Upload Prompt',
+                                  hintText:
+                                      'e.g., Upload a similar design / your photo on the product',
+                                  labelStyle: TextStyle(color: Colors.white70),
+                                  hintStyle: TextStyle(color: Colors.white70),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.white70),
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.white70, width: 2.0),
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    orderOption.photoUploadPrompt = value;
+                                  });
+                                },
+                                controller:
+                                    _photoUploadPromptControllers[optionTitle],
                               ),
                             ),
-                            onChanged: (value) {
-                              setState(() {
-                                orderOption.photoUploadPrompt = value;
-                              });
-                            },
-                            controller:
-                                _photoUploadPromptControllers[optionTitle],
-                          ),
+                            const SizedBox(height: 10),
+                          ],
                         ),
+                      const Divider(),
                       // Dynamic Custom Fields
                       ...orderOption.customFields.map((field) {
+                        Widget fieldWidget;
                         switch (field.type) {
                           case FieldType.text:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: TextField(
                                 textDirection: TextDirection.ltr,
                                 decoration: InputDecoration(
@@ -340,11 +333,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                       const TextStyle(color: Colors.white70),
                                   hintStyle:
                                       const TextStyle(color: Colors.white70),
-                                  enabledBorder: UnderlineInputBorder(
+                                  enabledBorder: const UnderlineInputBorder(
                                     borderSide:
                                         BorderSide(color: Colors.white70),
                                   ),
-                                  focusedBorder: UnderlineInputBorder(
+                                  focusedBorder: const UnderlineInputBorder(
                                     borderSide: BorderSide(
                                         color: Colors.white70, width: 2.0),
                                   ),
@@ -355,9 +348,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                 style: const TextStyle(color: Colors.white70),
                               ),
                             );
+                            break;
                           case FieldType.number:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: TextField(
                                 decoration: InputDecoration(
                                   labelText: field.label,
@@ -368,11 +363,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                       const TextStyle(color: Colors.white70),
                                   hintStyle:
                                       const TextStyle(color: Colors.white70),
-                                  enabledBorder: UnderlineInputBorder(
+                                  enabledBorder: const UnderlineInputBorder(
                                     borderSide:
                                         BorderSide(color: Colors.white70),
                                   ),
-                                  focusedBorder: UnderlineInputBorder(
+                                  focusedBorder: const UnderlineInputBorder(
                                     borderSide: BorderSide(
                                         color: Colors.white70, width: 2.0),
                                   ),
@@ -386,9 +381,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                 style: const TextStyle(color: Colors.white70),
                               ),
                             );
+                            break;
                           case FieldType.dropdown:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: DropdownButtonFormField<String>(
                                 decoration: InputDecoration(
                                   labelText: field.label,
@@ -399,11 +396,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                       const TextStyle(color: Colors.white70),
                                   hintStyle:
                                       const TextStyle(color: Colors.white70),
-                                  enabledBorder: UnderlineInputBorder(
+                                  enabledBorder: const UnderlineInputBorder(
                                     borderSide:
                                         BorderSide(color: Colors.white70),
                                   ),
-                                  focusedBorder: UnderlineInputBorder(
+                                  focusedBorder: const UnderlineInputBorder(
                                     borderSide: BorderSide(
                                         color: Colors.white70, width: 2.0),
                                   ),
@@ -435,9 +432,11 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                 },
                               ),
                             );
+                            break;
                           case FieldType.checkbox:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: Column(
                                 children: field.options!.map((option) {
                                   return CheckboxListTile(
@@ -457,76 +456,36 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                 }).toList(),
                               ),
                             );
-                          case FieldType.imageUpload:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    field.label,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      // Implement image upload functionality
-                                    },
-                                    icon: const Icon(
-                                      Icons.upload,
-                                      color: Colors.white70,
-                                    ),
-                                    label: const Text(
-                                      'Upload Image',
-                                      style: TextStyle(color: Colors.white70),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          myColor, // Ensure `myColor` is defined
-                                      side: BorderSide(
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ),
-                                  /*
-                                // Optionally display the uploaded image
-                                if (orderOption.imageUrl != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: Image.network(
-                                      orderOption.imageUrl!,
-                                      height: 100,
-                                      width: 100,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return const Icon(
-                                          Icons.broken_image,
-                                          size: 50,
-                                          color: Colors.red,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                 */
-                                ],
-                              ),
-                            );
+                            break;
                           case FieldType.date:
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: DatePickerField(
                                 label: field.label,
                                 isRequired: field.isRequired,
                                 // Implement onDateSelected if needed
                               ),
                             );
+                            break;
                           default:
-                            return const SizedBox.shrink();
+                            fieldWidget = const SizedBox.shrink();
                         }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            fieldWidget,
+                            SizedBox(
+                              height: 10,
+                            ),
+                            const Divider(
+                              color: Colors.white70,
+                              thickness: 1,
+                              height: 20,
+                            ),
+                          ],
+                        );
                       }).toList(),
                       // Adding a new custom field dynamically
                       Padding(
@@ -618,7 +577,6 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     );
   }
 
-  // Method to save configurations to backend
   // Method to save configurations to backend
   Future<void> _saveSpecialOrderConfigurations() async {
     try {
@@ -729,13 +687,19 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
-    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+    // Obtain screen width and height for responsive design
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Determine padding based on screen size
+    final horizontalPadding = screenWidth * 0.05; // 5% of screen width
+    final verticalPadding = screenHeight * 0.02; // 2% of screen height
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
         elevation: 0,
-        toolbarHeight: appBarHeight,
+        toolbarHeight: screenHeight * 0.1, // 10% of screen height
         title: const Text(
           'Special Orders Management',
           style: TextStyle(
@@ -784,7 +748,10 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
             ),
           ),
           SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -796,13 +763,13 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                   ),
                 ),
                 _buildSpecialOrderOptions(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildAddOptionButton(),
-                ),
+                SizedBox(height: verticalPadding),
+                // Add Option Button
+                _buildAddOptionButton(),
+                SizedBox(height: verticalPadding),
                 // Save Configurations Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Container(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -816,6 +783,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                     ),
                   ),
                 ),
+                SizedBox(height: verticalPadding),
               ],
             ),
           ),

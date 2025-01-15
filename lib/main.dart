@@ -161,14 +161,6 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Craft Blend',
         initialRoute: '/welcome',
-        routes: {
-          '/welcome': (context) => const WelcomePage(),
-          '/login': (context) => const LoginPage(),
-          '/home': (context) => const HomePage(),
-          '/map': (context) => const MapPage(),
-          '/userNavBar': (context) =>
-              const UserBottomNavigationBar(), // Add this
-        },
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,

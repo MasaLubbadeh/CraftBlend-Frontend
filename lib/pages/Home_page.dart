@@ -674,7 +674,10 @@ class _HomePageState extends State<HomePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? location = prefs.getString('selectedLocation');
     if (location == null || location.isEmpty) {
-      Navigator.pushReplacementNamed(context, '/map');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MapPage()),
+      );
     }
   }
 

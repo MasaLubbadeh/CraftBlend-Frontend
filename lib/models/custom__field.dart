@@ -2,23 +2,15 @@
 
 import 'field_option.dart';
 
-enum FieldType {
-  text,
-  number,
-  dropdown,
-  checkbox,
-  imageUpload,
-  date,
-  // Add more types as needed
-}
+enum FieldType { text, number, dropdown, checkbox, date }
 
 class CustomField {
-  String id; // Unique identifier
+  String id;
   String label;
   FieldType type;
   bool isRequired;
-  List<FieldOption>? options; // For dropdowns, checkboxes
-  double? extraCost; // Applicable if the field affects pricing
+  List<FieldOption>? options;
+  double? extraCost;
 
   CustomField({
     required this.id,
@@ -33,15 +25,14 @@ class CustomField {
     return CustomField(
       id: map['id'] ?? '',
       label: map['label'] ?? '',
-      type: FieldType.values.firstWhere(
-          (e) => e.toString() == 'FieldType.${map['type']}',
-          orElse: () => FieldType.text),
+      type: FieldType.values
+          .firstWhere((e) => e.toString() == 'FieldType.' + map['type']),
       isRequired: map['isRequired'] ?? false,
       options: map['options'] != null
           ? List<FieldOption>.from(
-              map['options'].map((option) => FieldOption.fromMap(option)))
+              map['options'].map((x) => FieldOption.fromMap(x)))
           : null,
-      extraCost: map['extraCost'] != null ? map['extraCost'].toDouble() : null,
+      extraCost: map['extraCost']?.toDouble(),
     );
   }
 
@@ -49,9 +40,9 @@ class CustomField {
     return {
       'id': id,
       'label': label,
-      'type': type.toString().split('.').last,
+      'type': type.toString().split('.').last.toLowerCase(),
       'isRequired': isRequired,
-      'options': options?.map((option) => option.toMap()).toList(),
+      'options': options?.map((x) => x.toMap()).toList(),
       'extraCost': extraCost,
     };
   }

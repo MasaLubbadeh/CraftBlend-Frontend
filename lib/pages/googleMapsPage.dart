@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui; // Import dart:ui for custom drawing
+import 'package:craft_blend_project/navigationBars/UserBottomNavigationBar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
@@ -101,16 +102,25 @@ class _MapPageState extends State<MapPage> {
       },
     );
 
-    // Save selected location
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedLocation', city['name']);
-    await prefs.setString('selectedLocationID', city['id']);
+    try {
+      // Save selected location
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selectedLocation', city['name']);
+      await prefs.setString('selectedLocationID', city['id']);
+    } catch (e) {
+      _showSnackBar('Error saving location: $e');
+    } finally {
+      // Ensure the loading dialog is dismissed before navigation
+      Navigator.of(context, rootNavigator: true).pop();
 
-    // Close the loading dialog
-    Navigator.pop(context); // Close loading dialog
-
-    // Navigate to the User Navigation Bar Page
-    Navigator.pushReplacementNamed(context, '/userNavBar');
+      // Navigate to the User Bottom Navigation Bar Page using pushAndRemoveUntil
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const UserBottomNavigationBar()),
+        (Route<dynamic> route) => false, // Removes all previous routes
+      );
+    }
   }
 
   Future<BitmapDescriptor> _createCustomCircularMarker(String assetPath) async {
