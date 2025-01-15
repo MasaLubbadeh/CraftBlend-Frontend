@@ -1,18 +1,19 @@
 // lib/pages/special_orders/edit_order_option_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../../../models/custom__field.dart';
 import '../../../models/order_option.dart';
 import 'EditCustomFieldPage.dart';
-import 'ManageSpecialOrderOptionsPage.dart';
 
 class EditOrderOptionPage extends StatefulWidget {
   final OrderOption? orderOption;
   final Function(OrderOption) onSave;
 
-  const EditOrderOptionPage({Key? key, this.orderOption, required this.onSave})
-      : super(key: key);
+  const EditOrderOptionPage({
+    Key? key,
+    this.orderOption,
+    required this.onSave,
+  }) : super(key: key);
 
   @override
   _EditOrderOptionPageState createState() => _EditOrderOptionPageState();
@@ -25,6 +26,7 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
   bool requiresPhotoUpload = false;
   String photoUploadPrompt = '';
   late List<CustomField> customFields;
+  late TextEditingController _photoUploadPromptController;
 
   @override
   void initState() {
@@ -34,6 +36,14 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
     requiresPhotoUpload = widget.orderOption?.requiresPhotoUpload ?? false;
     photoUploadPrompt = widget.orderOption?.photoUploadPrompt ?? '';
     customFields = widget.orderOption?.customFields ?? [];
+    _photoUploadPromptController =
+        TextEditingController(text: photoUploadPrompt);
+  }
+
+  @override
+  void dispose() {
+    _photoUploadPromptController.dispose();
+    super.dispose();
   }
 
   void _addCustomField() {
@@ -95,6 +105,8 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
   void _saveOption() {
     if (_formKey.currentState!.validate()) {
       OrderOption updatedOption = OrderOption(
+        id: widget.orderOption?.id ??
+            '', // Preserve existing id or set to empty
         name: optionName,
         isSelected: isSelected,
         requiresPhotoUpload: requiresPhotoUpload,
@@ -151,6 +163,11 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
                     onChanged: (value) {
                       setState(() {
                         isSelected = value;
+                        if (!isSelected) {
+                          // Optionally clear description and photo instructions when deselected
+                          photoUploadPrompt = '';
+                          _photoUploadPromptController.text = '';
+                        }
                       });
                     },
                   ),
@@ -160,11 +177,16 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
                     onChanged: (value) {
                       setState(() {
                         requiresPhotoUpload = value;
+                        if (!requiresPhotoUpload) {
+                          photoUploadPrompt = '';
+                          _photoUploadPromptController.text = '';
+                        }
                       });
                     },
                   ),
                   if (requiresPhotoUpload)
                     TextFormField(
+                      controller: _photoUploadPromptController,
                       decoration: const InputDecoration(
                         labelText: 'Photo Upload Prompt',
                         hintText:
@@ -175,8 +197,6 @@ class _EditOrderOptionPageState extends State<EditOrderOptionPage> {
                           photoUploadPrompt = value;
                         });
                       },
-                      controller:
-                          TextEditingController(text: photoUploadPrompt),
                     ),
                   const SizedBox(height: 20),
                   Row(

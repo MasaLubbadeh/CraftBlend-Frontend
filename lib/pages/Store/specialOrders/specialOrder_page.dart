@@ -91,10 +91,12 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   // Define the selectedOrderOptions map
   Map<String, OrderOption> selectedOrderOptions = {};
 
+  bool isLoading = true; // Indicates if data is being loaded
+
   @override
   void initState() {
     super.initState();
-    _initializeOrderOptions(); // Initialize options based on category
+    _fetchStoreSpecialOrderOptions(); // Fetch existing options from backend
   }
 
   @override
@@ -111,11 +113,86 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     super.dispose();
   }
 
-  void _initializeOrderOptions() {
+  // Method to fetch existing Special Order Options from backend
+  Future<void> _fetchStoreSpecialOrderOptions() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final token = await getToken();
+      if (token == null) {
+        _showSnackBar("Authentication token not found.");
+        _initializeWithDefaults();
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(getStoreSpecialOrderOptions), // Ensure this URL is correct
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List && data.isNotEmpty) {
+          // Assuming the response is a list of configurations
+          List<OrderOption> fetchedOptions =
+              List<OrderOption>.from(data.map((x) => OrderOption.fromMap(x)));
+          // Flag each fetched option as selected
+          for (var option in fetchedOptions) {
+            option.isSelected = true;
+            print(
+                'Fetched Option: ${option.name}, isSelected: ${option.isSelected}');
+          }
+          setState(() {
+            selectedOrderOptions.clear(); // Clear previous entries
+            for (var option in fetchedOptions) {
+              selectedOrderOptions[option.name] = option;
+              // Initialize controllers
+              _photoUploadPromptControllers[option.name] =
+                  TextEditingController(text: option.photoUploadPrompt);
+              _descriptionControllers[option.name] =
+                  TextEditingController(text: option.description);
+            }
+            isLoading = false;
+          });
+        } else {
+          // No existing configurations, initialize with defaults
+          _initializeWithDefaults();
+        }
+      } else {
+        // Handle server error
+        _showSnackBar("Failed to fetch previous configurations.");
+        _initializeWithDefaults();
+      }
+    } on http.ClientException catch (e) {
+      _showSnackBar("Client error: ${e.message}");
+      _initializeWithDefaults();
+    } on TimeoutException {
+      _showSnackBar("Request timed out. Please try again.");
+      _initializeWithDefaults();
+    } catch (e) {
+      _showSnackBar("An unexpected error occurred: $e");
+      _initializeWithDefaults();
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Initialize with default options if no existing configurations are found
+  void _initializeWithDefaults() {
     final defaultOptions = categoryDefaultOptions[widget.category] ?? [];
     setState(() {
       selectedOrderOptions = {
-        for (var option in defaultOptions) option: OrderOption(name: option),
+        for (var option in defaultOptions)
+          option: OrderOption(
+            id: '', name: option, isSelected: true, // Flag as selected
+          ),
       };
       // Initialize controllers for each option
       selectedOrderOptions.forEach((key, option) {
@@ -124,13 +201,57 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
         _descriptionControllers[key] =
             TextEditingController(text: option.description);
       });
+      isLoading = false;
     });
+  }
+
+  // Method to show SnackBars
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Method to confirm and remove an option
+  void _confirmRemoveOption(String optionTitle) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Option'),
+        content: Text('Are you sure you want to remove "$optionTitle"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                // Remove the option from selectedOrderOptions
+                selectedOrderOptions.remove(optionTitle);
+                // Dispose and remove controllers
+                _descriptionControllers[optionTitle]?.dispose();
+                _descriptionControllers.remove(optionTitle);
+                _photoUploadPromptControllers[optionTitle]?.dispose();
+                _photoUploadPromptControllers.remove(optionTitle);
+              });
+              Navigator.pop(context); // Close the dialog
+              _showSnackBar('"$optionTitle" has been removed.');
+            },
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   // Build the list of special order options with expandable configuration cards
   Widget _buildSpecialOrderOptions() {
     if (selectedOrderOptions.isEmpty) {
-      return const Center(child: Text('No special order options available.'));
+      return const Center(
+        child: Text('No special order options available.'),
+      );
     }
 
     return ListView.builder(
@@ -145,7 +266,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
 
         return Column(
           children: [
-            // Option Card with Checkbox
+            // Option Card with Checkbox and Delete Button
             Card(
               elevation: 3,
               margin: const EdgeInsets.symmetric(vertical: 15),
@@ -176,27 +297,44 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                   title: Text(
                     optionTitle,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: myColor),
+                      fontWeight: FontWeight.bold,
+                      color:
+                          myColor, // Ensure `myColor` is defined in your code
+                    ),
                   ),
-                  trailing: Checkbox(
-                    value: isSelected,
-                    activeColor: myColor, // Replace with your desired color
-                    onChanged: (value) {
-                      setState(() {
-                        orderOption.isSelected = value ?? false;
-                        if (!orderOption.isSelected) {
-                          // Optionally clear description and photo prompt when deselected
-                          _descriptionControllers[optionTitle]?.text = '';
-                          _photoUploadPromptControllers[optionTitle]?.text = '';
-                        }
-                      });
-                    },
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Checkbox
+                      Checkbox(
+                        value: isSelected,
+                        activeColor: myColor, // Replace with your desired color
+                        onChanged: (value) {
+                          setState(() {
+                            orderOption.isSelected = value ?? false;
+                            if (!orderOption.isSelected) {
+                              // Optionally clear description and photo instructions when deselected
+                              _descriptionControllers[optionTitle]?.text = '';
+                              _photoUploadPromptControllers[optionTitle]?.text =
+                                  '';
+                            }
+                          });
+                        },
+                      ),
+                      // Delete Button
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmRemoveOption(optionTitle);
+                        },
+                      ),
+                    ],
                   ),
                   onTap: () {
                     setState(() {
                       orderOption.isSelected = !orderOption.isSelected;
                       if (!orderOption.isSelected) {
-                        // Optionally clear description and photo prompt when deselected
+                        // Optionally clear description and photo instructions when deselected
                         _descriptionControllers[optionTitle]?.text = '';
                         _photoUploadPromptControllers[optionTitle]?.text = '';
                       }
@@ -205,6 +343,21 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                 ),
               ),
             ),
+            // Explanatory Text Between Option and Configuration
+            if (isSelected)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Text(
+                  "Configure the details for this option below. Here, you can add specific choices, questions, and any important information you need from your customers to fulfill their orders effectively.",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    letterSpacing: 1,
+                  ),
+                  textAlign: TextAlign.justify,
+                ),
+              ),
             // Configuration Card (visible only when selected)
             if (isSelected)
               Padding(
@@ -276,43 +429,37 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                           });
                         },
                       ),
-                      // TextField for photo upload prompt (visible only if photo upload is required)
+                      // TextField for photo upload prompt (simplified statement)
                       if (orderOption.requiresPhotoUpload)
-                        Column(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: TextFormField(
-                                textDirection: TextDirection.ltr,
-                                style: const TextStyle(color: Colors.white70),
-                                decoration: const InputDecoration(
-                                  labelText: 'Photo Upload Prompt',
-                                  hintText:
-                                      'e.g., Upload a similar design / your photo on the product',
-                                  labelStyle: TextStyle(color: Colors.white70),
-                                  hintStyle: TextStyle(color: Colors.white70),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.white70),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.white70, width: 2.0),
-                                  ),
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    orderOption.photoUploadPrompt = value;
-                                  });
-                                },
-                                controller:
-                                    _photoUploadPromptControllers[optionTitle],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: TextFormField(
+                            textDirection: TextDirection.ltr,
+                            style: const TextStyle(color: Colors.white70),
+                            decoration: const InputDecoration(
+                              labelText: 'Photo Instructions',
+                              hintText:
+                                  'e.g., Upload a similar design or your photo on the product',
+                              labelStyle: TextStyle(color: Colors.white70),
+                              hintStyle: TextStyle(color: Colors.white70),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white70),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.white70, width: 2.0),
                               ),
                             ),
-                            const SizedBox(height: 10),
-                          ],
+                            onChanged: (value) {
+                              setState(() {
+                                orderOption.photoUploadPrompt = value;
+                              });
+                            },
+                            controller:
+                                _photoUploadPromptControllers[optionTitle],
+                          ),
                         ),
+                      const SizedBox(height: 10),
                       const Divider(),
                       // Dynamic Custom Fields
                       ...orderOption.customFields.map((field) {
@@ -412,14 +559,16 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                                   color: Colors.white70,
                                 ),
                                 items: field.options!
-                                    .map((option) => DropdownMenuItem(
-                                          value: option.value,
-                                          child: Text(
-                                            '${option.value} (+\$${option.extraCost.toStringAsFixed(2)})',
-                                            style: const TextStyle(
-                                                color: Colors.white70),
-                                          ),
-                                        ))
+                                    .map(
+                                      (option) => DropdownMenuItem(
+                                        value: option.value,
+                                        child: Text(
+                                          '${option.value} (+\$${option.extraCost.toStringAsFixed(2)})',
+                                          style: const TextStyle(
+                                              color: Colors.white70),
+                                        ),
+                                      ),
+                                    )
                                     .toList(),
                                 onChanged: (value) {
                                   // Handle dropdown selection
@@ -476,9 +625,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             fieldWidget,
-                            SizedBox(
-                              height: 10,
-                            ),
+                            const SizedBox(height: 10),
                             const Divider(
                               color: Colors.white70,
                               thickness: 1,
@@ -528,6 +675,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     );
   }
 
+  // Build the "Add Option" button
   Widget _buildAddOptionButton() {
     final TextEditingController _newOptionController = TextEditingController();
 
@@ -549,17 +697,89 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    final newOption = _newOptionController.text.trim();
-                    if (newOption.isNotEmpty) {
-                      setState(() {
-                        selectedOrderOptions[newOption] =
-                            OrderOption(name: newOption);
-                        // Optionally, add the new option to categoryDefaultOptions
-                        categoryDefaultOptions[widget.category]?.add(newOption);
-                      });
+                  onPressed: () async {
+                    final newOptionName = _newOptionController.text.trim();
+                    if (newOptionName.isNotEmpty) {
+                      final token = await getToken();
+                      if (token == null) {
+                        _showSnackBar("Authentication token not found.");
+                        return;
+                      }
+
+                      // Show a loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      // Prepare the payload
+                      Map<String, dynamic> payload = {
+                        'name': newOptionName,
+                        'description': '',
+                        'requiresPhotoUpload': false,
+                        'photoUploadPrompt': '',
+                        'customFields': [],
+                      };
+
+                      try {
+                        final response = await http
+                            .post(
+                              Uri.parse(createStoreSpecialOrderOption),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer $token',
+                              },
+                              body: json.encode(payload),
+                            )
+                            .timeout(const Duration(seconds: 10));
+
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+
+                        if (response.statusCode == 201) {
+                          final data = json.decode(response.body);
+                          final createdOption = OrderOption.fromMap(data);
+                          createdOption.isSelected =
+                              true; // Ensure it's selected
+                          setState(() {
+                            selectedOrderOptions[createdOption.name] =
+                                createdOption;
+                            _photoUploadPromptControllers[createdOption.name] =
+                                TextEditingController(
+                                    text: createdOption.photoUploadPrompt);
+                            _descriptionControllers[createdOption.name] =
+                                TextEditingController(
+                                    text: createdOption.description);
+                            // Optionally, add the new option to categoryDefaultOptions
+                            categoryDefaultOptions[widget.category]
+                                ?.add(createdOption.name);
+                          });
+
+                          _showSnackBar("New option added successfully!");
+                          _newOptionController.clear(); // Clear the input field
+
+                          // Refresh the list by re-fetching from backend
+                          await _fetchStoreSpecialOrderOptions();
+                        } else {
+                          _showSnackBar("Failed to add new option.");
+                        }
+                      } on http.ClientException catch (e) {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("Client error: ${e.message}");
+                      } on TimeoutException {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("Request timed out. Please try again.");
+                      } catch (e) {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("An unexpected error occurred: $e");
+                      }
                     }
-                    Navigator.pop(context);
+                    Navigator.pop(context); // Close the dialog
                   },
                   child: const Text('Add'),
                 ),
@@ -606,10 +826,12 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
         Map<String, dynamic> payload = {
           'name': orderOption.name,
           'description': _descriptionControllers[optionTitle]?.text ?? '',
+          'requiresPhotoUpload': orderOption.requiresPhotoUpload,
+          'photoUploadPrompt':
+              _photoUploadPromptControllers[optionTitle]?.text ?? '',
           'customFields': orderOption.customFields.map((field) {
             return {
-              'id': field
-                  .id, // Ensure that 'id' is required or handled in the backend
+              'id': field.id, // Ensure that 'id' is handled by the backend
               'label': field.label,
               'type': field.type
                   .toString()
@@ -626,59 +848,91 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
               'extraCost': field.extraCost,
             };
           }).toList(),
-          'requiresPhotoUpload': orderOption.requiresPhotoUpload,
-          'photoUploadPrompt':
-              _photoUploadPromptControllers[optionTitle]?.text ?? '',
         };
         print('payload $payload');
 
-        // Send POST request for each special order option
-        final response = await http
-            .post(
-              Uri.parse(createStoreSpecialOrderOption),
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $token',
-              },
-              body: json.encode(payload),
-            )
-            .timeout(const Duration(seconds: 10));
+        // Determine if the option is new or existing
+        bool isNewOption = orderOption.id.isEmpty;
+
+        Uri uri;
+        if (isNewOption) {
+          // Endpoint to create a new option
+          uri = Uri.parse(createStoreSpecialOrderOption);
+        } else {
+          // Endpoint to update an existing option
+          uri = Uri.parse('$updateStoreSpecialOrderOption/${orderOption.id}');
+          // Ensure that 'updateStoreSpecialOrderOption' is a base URL without trailing slash
+        }
+
+        // Choose POST for creating new options and PUT for updating existing ones
+        http.Response response;
+        if (isNewOption) {
+          response = await http
+              .post(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: json.encode(payload),
+              )
+              .timeout(const Duration(seconds: 10));
+        } else {
+          response = await http
+              .put(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: json.encode(payload),
+              )
+              .timeout(const Duration(seconds: 10));
+        }
+
         print('response ${response.body}');
-        if (response.statusCode == 201) {
-          // Option created successfully
-          final createdOption = json.decode(response.body);
-          print('Created Option: $createdOption');
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Option created or updated successfully
+          final updatedOption = OrderOption.fromMap(json.decode(response.body));
+          updatedOption.isSelected = true; // Ensure it's selected
+          setState(() {
+            selectedOrderOptions[updatedOption.name] = updatedOption;
+            _photoUploadPromptControllers[updatedOption.name]?.text =
+                updatedOption.photoUploadPrompt;
+            _descriptionControllers[updatedOption.name]?.text =
+                updatedOption.description;
+          });
         } else {
           // Handle failure
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                "Failed to save option '$optionTitle': ${response.reasonPhrase}",
+                "Failed to save option '${orderOption.name}': ${response.reasonPhrase}",
               ),
             ),
           );
-          print('Failed to save option $optionTitle: ${response.body}');
+          print('Failed to save option ${orderOption.name}: ${response.body}');
         }
       }
 
       // Dismiss the loading indicator
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Configurations saved successfully!")),
       );
     } on http.ClientException catch (e) {
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Client error: ${e.message}")),
       );
     } on TimeoutException {
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Request timed out. Please try again.")),
       );
     } catch (e) {
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("An unexpected error occurred: $e")),
       );
@@ -722,7 +976,10 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                 MaterialPageRoute(
                   builder: (context) => const ManageSpecialOrderOptionsPage(),
                 ),
-              );
+              ).then((_) {
+                // Refresh the page after returning from ManageSpecialOrderOptionsPage
+                _fetchStoreSpecialOrderOptions();
+              });
             },
             tooltip: 'Manage Special Order Options',
           ),
@@ -762,7 +1019,9 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
-                _buildSpecialOrderOptions(),
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildSpecialOrderOptions(),
                 SizedBox(height: verticalPadding),
                 // Add Option Button
                 _buildAddOptionButton(),

@@ -129,7 +129,7 @@ const String markNotificationAsRead = '${url}notification/markAsRead';
 const String createStoreSpecialOrderOption =
     '${url}storeSpecialOrderOption/create';
 const String getStoreSpecialOrderOptions =
-    '${url}storeSpecialOrderOption/store';
+    '${url}storeSpecialOrderOption/getStoreOptions';
 const String updateStoreSpecialOrderOption =
     '${url}storeSpecialOrderOption/update';
 const String deleteStoreSpecialOrderOption =
