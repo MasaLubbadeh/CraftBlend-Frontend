@@ -55,7 +55,7 @@ class AllChats extends StatelessWidget {
         final user = userDoc.data()!;
         // Check if the document has firstName and lastName fields
         if (user.containsKey('firstName') && user.containsKey('lastName')) {
-          final String firstName = user['firstName'] ?? 'Unknown';
+          final String firstName = user['firstName'] ?? 'NO';
           final String lastName = user['lastName'] ?? 'User';
           fullName = '$firstName $lastName';
           return fullName;
@@ -84,7 +84,9 @@ class AllChats extends StatelessWidget {
     return StreamBuilder(
       stream: _chatService.getUsersStream(),
       builder: (context, snapshot) {
+        print("Stream connection state: ${snapshot.connectionState}");
         if (snapshot.hasError) {
+          print("Stream error: ${snapshot.error}");
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -101,10 +103,12 @@ class AllChats extends StatelessWidget {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print("Waiting for stream data...");
           return const Center(child: CircularProgressIndicator());
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          print("Stream has no data or is empty.");
           return const Center(
             child: Text(
               "No users found.",
@@ -113,11 +117,18 @@ class AllChats extends StatelessWidget {
           );
         }
 
+        final userList = snapshot.data!;
+
+        print("Stream data received: ${userList.length} users found.");
+        for (var user in userList) {
+          print("User data: $user");
+        }
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          itemCount: snapshot.data!.length,
+          itemCount: userList.length,
           itemBuilder: (context, index) {
-            final userData = snapshot.data![index];
+            final userData = userList[index];
             return _buildUserListItem(userData, context);
           },
         );
@@ -129,13 +140,17 @@ class AllChats extends StatelessWidget {
       Map<String, dynamic> userData, BuildContext context) {
     final currentUser = _authService.getCurrentUser();
     if (currentUser == null || userData["email"] == currentUser.email) {
+      print("Skipping current user: ${userData["email"]}");
+
       return const SizedBox(); // Skip displaying the current user
     }
+    print("Building list item for user: ${userData["email"]}");
 
     return GestureDetector(
       onTap: () async {
-        final fullNameFetched = await _fetchFullName(userData["email"]);
-        print("Full name fetched: $fullNameFetched");
+        // final fullNameFetched = await _fetchFullName(userData["email"]);
+        // print("Full name fetched: $fullNameFetched");
+//fullName=
 
         Navigator.push(
           context,
@@ -143,9 +158,10 @@ class AllChats extends StatelessWidget {
             builder: (context) => ChatPage(
               recieverEmail: userData["email"],
               receiverID: userData["uid"],
-              firstName: userData["firstName"] ?? "Unknown",
-              lastName: userData["lastName"] ?? "User",
-              fullName: userData["storeName"] ?? 'No full name',
+              firstName: userData["firstName"] ?? "NO",
+              lastName: userData["lastName"] ?? "NAME",
+              fullName: userData["storeName"] ?? "NAME",
+              userType: userData["userType"] ?? "NOTYPE",
             ),
           ),
         );

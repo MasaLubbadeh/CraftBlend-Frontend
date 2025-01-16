@@ -370,8 +370,11 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
         print(signUpData.password);
         print(signUpData.storeName);
 
-        auth.signUpStoreWithEmailPassword(signUpData.contactEmail!,
-            signUpData.password!, signUpData.storeName!);
+        auth.signUpStoreWithEmailPassword(
+            signUpData.contactEmail!,
+            signUpData.password!,
+            signUpData.storeName!,
+            signUpData.accountType!);
         print("this is after calling function");
         final jsonResponse = jsonDecode(response.body);
         print("this is the json response:");

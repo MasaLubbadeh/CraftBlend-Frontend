@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Add this package for date formatting
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/authentication/auth_service.dart';
 import '../../services/chat/chat_service.dart';
 import '../../components/message_bubble.dart';
+import '../User/login_page.dart';
 
 class ChatPage extends StatefulWidget {
   final String recieverEmail;
@@ -14,6 +16,7 @@ class ChatPage extends StatefulWidget {
   final String firstName; // Add this parameter
   final String lastName; // Add this parameter
   final String fullName;
+  final String userType;
 
   ChatPage({
     super.key,
@@ -22,6 +25,7 @@ class ChatPage extends StatefulWidget {
     required this.firstName,
     required this.lastName,
     required this.fullName,
+    required this.userType,
   });
 
   @override
@@ -79,8 +83,12 @@ class _ChatPageState extends State<ChatPage> {
     });
     receiverFirstName = widget.firstName;
     receiverLastName = widget.lastName;
-
-    recieverFullName = widget.fullName;
+    print(widget.userType);
+    if (widget.userType == 'S') {
+      recieverFullName = widget.fullName;
+    } else {
+      recieverFullName = '$receiverFirstName $receiverLastName';
+    }
   }
 
   // Fetch receiver details from Firestore
@@ -100,7 +108,7 @@ class _ChatPageState extends State<ChatPage> {
         setState(() {
           receiverFirstName = userData['firstName'] ?? 'Unknown';
           receiverLastName = userData['lastName'] ?? 'User';
-          recieverFullName = userData['fullName'] ?? 'Unknown Name';
+          recieverFullName = widget.fullName;
           receiverProfileImage = userData['profilePicture'] ??
               'https://picsum.photos/400/400'; // Default placeholder
         });
@@ -143,7 +151,12 @@ class _ChatPageState extends State<ChatPage> {
   // Build message list
 // Build message list
   Widget _buildMessageList() {
-    String senderID = _authService.getCurrentUser()!.uid;
+    // String senderID = _authService.getCurrentUser()!.uid;
+    final currentUser = _authService.getCurrentUser();
+    if (currentUser == null) {
+      print("Error: No authenticated user found.");
+    }
+    String senderID = currentUser!.uid;
 
     return StreamBuilder(
       stream: _chatService.getMessages(senderID, widget.receiverID),

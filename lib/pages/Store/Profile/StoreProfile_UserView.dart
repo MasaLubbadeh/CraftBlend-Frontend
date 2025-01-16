@@ -398,6 +398,16 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           },
                           child: const Text('View Products'),
                         ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => StoreProfileScreen()),
+                            );
+                          },
+                          child: const Text('Message'),
+                        ),
                       ],
                     ),
                   ),

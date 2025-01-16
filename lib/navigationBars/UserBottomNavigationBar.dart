@@ -26,7 +26,8 @@ class _UserBottomNavigationBarState extends State<UserBottomNavigationBar> {
   void initState() {
     super.initState();
     _userPages = [
-      HomePage(),
+      const ProfileScreen(), // Profile
+
       // Home
       const ProfileScreen(), // Profile
       CartPage(onTabChange: _onItemTapped), // Cart with callback
