@@ -57,6 +57,7 @@ const String checkIfAllowSpecialOrders =
 const String rateStore = '${url}store/rateStore';
 const String chooseSubscription = '${url}store/chooseSubscription';
 const String getSubscriptionDetails = '${url}store/getSubscriptionDetails';
+const String getStoreCategory = '${url}store/getStoreCategory';
 
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
@@ -136,9 +137,10 @@ const String deleteStoreSpecialOrderOption =
     '${url}storeSpecialOrderOption/delete';
 
 const String createSpecialOrder = '${url}specialOrder/create';
-const String getStoreSpecialOrders = '${url}specialOrder/store';
+const String getStoreSpecialOrders = '${url}specialOrder/getStoreSpecialOrders';
 const String getSpecialOrderById = '${url}specialOrder/getByID';
 const String updateSpecialOrderStatus = '${url}specialOrder/updateStatus';
+const String getUserSpecialOrders = '${url}specialOrder/getUserSpecialOrders';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

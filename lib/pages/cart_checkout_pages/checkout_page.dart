@@ -117,22 +117,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
     Set<String> failingStores = {}; // Track stores that don't deliver
 
     for (var item in widget.cartItems) {
-      print('Processing item: $item'); // Print the entire cart item
+      //print('Processing item: $item'); // Print the entire cart item
 
       final storeId = item['storeId']['_id']; // Get the store ID
-      print('Store ID: $storeId'); // Print the store ID
+      /// print('Store ID: $storeId'); // Print the store ID
 
       final storeCities =
           storeDeliveryCities[storeId] ?? []; // Get cities for the store
-      print(
-          'Delivery cities for store $storeId: $storeCities'); // Print cities for the store
+      // print(
+      //      'Delivery cities for store $storeId: $storeCities'); // Print cities for the store
 
       // Check if the selected city exists in the delivery cities for the store
       final deliversToCity =
           storeCities.any((city) => city['cityName'] == selectedCity);
       if (!deliversToCity) {
-        print("failingStores.add(item['storeId']['storeName'])");
-        print(item['storeId']['storeName']);
+        // print("failingStores.add(item['storeId']['storeName'])");
+        //print(item['storeId']['storeName']);
         failingStores.add(item['storeId']['storeName']);
       }
     }
