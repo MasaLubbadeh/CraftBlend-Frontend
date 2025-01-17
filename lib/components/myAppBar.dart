@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:craft_blend_project/configuration/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:craft_blend_project/pages/chatting/allChats.dart';
+import 'package:craft_blend_project/configuration/config.dart';
 
 import '../pages/Feed/favoritesPage.dart';
 import '../pages/Feed/popularPosts.dart';
+import '../pages/Posts/createStorePost.dart';
+import '../pages/chatting/chat_page.dart'; // Import your ChatPage
 
 class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function(String) onItemSelected;
@@ -24,17 +27,26 @@ class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _MyAppBarState extends State<MyAppBar> {
   String selectedItem = 'CraftBlend'; // Default item
   bool isMenuOpen = false;
+  String userType = ''; // Variable to store the user type
 
   @override
   void initState() {
     super.initState();
     _loadSelectedItem();
+    _loadUserType(); // Fetch user type
   }
 
   void _loadSelectedItem() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       selectedItem = prefs.getString('selectedItem') ?? 'CraftBlend';
+    });
+  }
+
+  void _loadUserType() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userType = prefs.getString('userType') ?? ''; // Fetch user type
     });
   }
 
@@ -165,11 +177,27 @@ class _MyAppBarState extends State<MyAppBar> {
         ],
       ),
       actions: [
+        if (userType == 'store') // Show the + icon only for user type S
+          IconButton(
+            color: Colors.white70,
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              // Navigate to CreatePostPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateStorePostPage()),
+              );
+            },
+          ),
         IconButton(
           color: Colors.white70,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.chat),
           onPressed: () {
-            // Handle button press
+            // Navigate to ChatPage
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AllChats()),
+            );
           },
         ),
       ],
