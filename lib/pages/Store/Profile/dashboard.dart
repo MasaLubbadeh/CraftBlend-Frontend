@@ -44,12 +44,12 @@ class DashboardPage extends StatelessWidget {
             _buildPostTile(
               title: 'Post 1',
               subtitle: 'Engagement: 12%',
-              imageUrl: 'https://via.placeholder.com/150',
+              imageUrl: 'https://picsum.photos/400/400',
             ),
             _buildPostTile(
               title: 'Post 2',
               subtitle: 'Engagement: 8%',
-              imageUrl: 'https://via.placeholder.com/150',
+              imageUrl: 'https://picsum.photos/400/400',
             ),
           ],
         ),
