@@ -4,14 +4,16 @@ class Message {
   final String senderID;
   final String senderEmail;
   final String receiverID;
-  final String message;
+  final String? message;
   final Timestamp timestamp;
+  final String? imageUrl;
 
   Message({
     required this.senderID,
     required this.senderEmail,
     required this.receiverID,
-    required this.message,
+    this.message,
+    this.imageUrl,
     required this.timestamp,
   });
 
@@ -23,6 +25,7 @@ class Message {
       receiverID: map['receiverID'] ?? '',
       message: map['message'] ?? '',
       timestamp: map['timestamp'] ?? Timestamp.now(),
+      imageUrl: map['imageUrl'] ?? '',
     );
   }
 
@@ -34,6 +37,7 @@ class Message {
       'receiverID': receiverID,
       'message': message,
       'timestamp': timestamp,
+      'imageUrl': imageUrl,
     };
   }
 }

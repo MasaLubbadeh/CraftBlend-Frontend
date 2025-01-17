@@ -20,34 +20,65 @@ class ChatService {
     });
   }
 
-  //send message
+  /* Stream<List<Map<String, dynamic>>> fetchChatRooms() {
+    return _firestore.collection("chat_rooms").snapshots().map((snapshot) {
+      print("Snapshot data: ${snapshot.docs.length} chat rooms found");
+      return snapshot.docs.map((doc) {
+        final chatRoom = doc.data();
+        print("Chat Room data: $chatRoom");
+        return chatRoom;
+      }).toList();
+    });
+  }*/
+  Stream<List<Map<String, dynamic>>> getUserChatRooms(String currentUserId) {
+    return _firestore
+        .collection("chat_rooms")
+        .where("users", arrayContains: currentUserId)
+        .snapshots()
+        .map((snapshot) {
+      print("Snapshot data: ${snapshot.docs.length} chat rooms found");
+      return snapshot.docs.map((doc) {
+        final chatRoom = doc.data();
+        print("Chat Room data: $chatRoom");
+        return chatRoom;
+      }).toList();
+    });
+  }
+
+// Send message
   Future<void> sendMessage(
     String receiverID,
-    message,
-  ) async {
-    //get current user info
+    String content, {
+    bool isImage = false,
+  }) async {
+    // Get current user info
     final String currentUserID = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;
     final Timestamp timestamp = Timestamp.now();
-    //create a new message
+
+    // Create a new message
     Message newMessage = Message(
-        senderID: currentUserID,
-        senderEmail: currentUserEmail,
-        receiverID: receiverID,
-        message: message,
-        timestamp: timestamp);
-    //construct chat room ID for the two users (sorted to ensure uniqueness)
+      senderID: currentUserID,
+      senderEmail: currentUserEmail,
+      receiverID: receiverID,
+      message: isImage ? null : content,
+      imageUrl: isImage ? content : null,
+      timestamp: timestamp,
+    );
+
+    // Construct chat room ID for the two users (sorted to ensure uniqueness)
     List<String> ids = [currentUserID, receiverID];
     ids.sort(); // Sort the IDs (this ensures that the chat room id is the same for any 2 people)
     String chatRoomID = ids.join("_"); // Combine with an underscore
-    //add message to database
+
+    // Add message to the database
     await _firestore
         .collection("chat_rooms")
         .doc(chatRoomID)
         .collection("messages")
         .add(newMessage.toMap());
 
-    print("Message sent to chat room $chatRoomID.");
+    print("${isImage ? "Image" : "Message"} sent to chat room $chatRoomID.");
   }
 
   //get message

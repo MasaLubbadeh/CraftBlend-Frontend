@@ -13,23 +13,30 @@ class AllChats extends StatelessWidget {
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String fullName = '';
+  int userNumber = 0;
+  int counter = 1;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     return Scaffold(
       appBar: AppBar(
+        //automaticallyImplyLeading: false,
+        backgroundColor: myColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
         title: const Text(
-          'Chats',
+          'C H A T S',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Colors.white70,
           ),
         ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -111,7 +118,7 @@ class AllChats extends StatelessWidget {
           print("Stream has no data or is empty.");
           return const Center(
             child: Text(
-              "No users found.",
+              "No messages yet.",
               style: TextStyle(fontSize: 18, color: Colors.black54),
             ),
           );
@@ -123,7 +130,7 @@ class AllChats extends StatelessWidget {
         for (var user in userList) {
           print("User data: $user");
         }
-
+        userNumber = userList.length;
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           itemCount: userList.length,
@@ -141,71 +148,116 @@ class AllChats extends StatelessWidget {
     final currentUser = _authService.getCurrentUser();
     if (currentUser == null || userData["email"] == currentUser.email) {
       print("Skipping current user: ${userData["email"]}");
-
       return const SizedBox(); // Skip displaying the current user
     }
-    print("Building list item for user: ${userData["email"]}");
+    // Use a FutureBuilder to check if the chat has messages
+    return FutureBuilder(
+      future: _hasMessages(currentUser.uid, userData["uid"]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // While loading, show a placeholder or nothing
+          return const SizedBox();
+        }
 
-    return GestureDetector(
-      onTap: () async {
-        // final fullNameFetched = await _fetchFullName(userData["email"]);
-        // print("Full name fetched: $fullNameFetched");
-//fullName=
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(
-              recieverEmail: userData["email"],
-              receiverID: userData["uid"],
-              firstName: userData["firstName"] ?? "NO",
-              lastName: userData["lastName"] ?? "NAME",
-              fullName: userData["storeName"] ?? "NAME",
-              userType: userData["userType"] ?? "NOTYPE",
-            ),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 2,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: NetworkImage(
-                  userData["profilePicture"] ??
-                      'https://picsum.photos/400/400', // Default placeholder
+        if (snapshot.hasData && snapshot.data == true) {
+          print("Building list item for user: ${userData["email"]}");
+          //userNumber--;
+          // Only show the user if there are messages
+          return GestureDetector(
+            onTap: () async {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    recieverEmail: userData["email"],
+                    receiverID: userData["uid"],
+                    firstName: userData["firstName"] ?? "NO",
+                    lastName: userData["lastName"] ?? "NAME",
+                    fullName: userData["storeName"] ?? "NAME",
+                    userType: userData["userType"] ?? "NOTYPE",
+                  ),
+                ),
+              );
+            },
+            child: Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: NetworkImage(
+                        userData["profilePicture"] ??
+                            'https://picsum.photos/400/400', // Default placeholder
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userData.containsKey("firstName") &&
+                                  userData.containsKey("lastName")
+                              ? "${userData["firstName"] ?? "Unknown"} ${userData["lastName"] ?? "User"}"
+                              : userData["storeName"] ?? "Unknown Store",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Tap to start a conversation",
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userData.containsKey("firstName") &&
-                            userData.containsKey("lastName")
-                        ? "${userData["firstName"] ?? "Unknown"} ${userData["lastName"] ?? "User"}"
-                        : userData["storeName"] ?? "Unknown Store",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    "Tap to start a conversation",
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
-                  ),
-                ],
+            ),
+          );
+        } else {
+          counter++;
+          print('counter value:$counter');
+          print('number of users:$userNumber');
+
+          if (counter == userNumber) {
+            return SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height * .8,
+              child: const Center(
+                child: Text(
+                  "No messages",
+                  style: TextStyle(fontSize: 18, color: Colors.black54),
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          }
+
+          // Skip displaying the user if there are no messages
+          else
+            return const SizedBox();
+        }
+      },
     );
+  }
+
+// Helper function to check if a chat has messages
+  Future<bool> _hasMessages(String userID, String receiverID) async {
+    try {
+      final querySnapshot = await _chatService
+          .getMessages(userID, receiverID)
+          .first; // Get the first snapshot of the stream
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e) {
+      print("Error checking messages: $e");
+      return false;
+    }
   }
 }

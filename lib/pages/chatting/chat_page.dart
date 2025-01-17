@@ -10,6 +10,10 @@ import '../../services/chat/chat_service.dart';
 import '../../components/message_bubble.dart';
 import '../User/login_page.dart';
 
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as path;
+
 class ChatPage extends StatefulWidget {
   final String recieverEmail;
   final String receiverID;
@@ -43,10 +47,27 @@ class _ChatPageState extends State<ChatPage> {
       );
 
       if (pickedFile != null) {
-        print("Image selected: ${pickedFile.path}"); // Debug log
+        print("Image selected: ${pickedFile.path}");
 
-        // TODO: Send the selected image to the chat
-        // Example: Upload the image to your server or Firebase and send the URL
+        // Upload image to Firebase Storage
+        File file = File(pickedFile.path);
+        String fileName = path.basename(pickedFile.path);
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('chat_images/${widget.receiverID}/$fileName');
+
+        final uploadTask = storageRef.putFile(file);
+
+        // Get the image URL after upload
+        final snapshot = await uploadTask.whenComplete(() {});
+        String imageUrl = await snapshot.ref.getDownloadURL();
+
+        print("Image uploaded: $imageUrl");
+
+        // Save image URL as a chat message
+        await _chatService.sendMessage(widget.receiverID, imageUrl,
+            isImage: true);
+        _scrollToBottom(); // Scroll to the bottom
       } else {
         print("No image selected.");
       }
@@ -70,7 +91,7 @@ class _ChatPageState extends State<ChatPage> {
   String receiverLastName = '';
   String recieverFullName = '';
   String receiverProfileImage =
-      'https://via.placeholder.com/150'; // Placeholder image
+      'https://picsum.photos/400/400'; // Default placeholder
 
   @override
   void initState() {
@@ -88,6 +109,42 @@ class _ChatPageState extends State<ChatPage> {
       recieverFullName = widget.fullName;
     } else {
       recieverFullName = '$receiverFirstName $receiverLastName';
+    }
+  }
+
+  Future<void> _captureImage() async {
+    try {
+      final XFile? capturedFile = await _picker.pickImage(
+        source: ImageSource.camera,
+      );
+
+      if (capturedFile != null) {
+        print("Image captured: ${capturedFile.path}");
+
+        // Upload image to Firebase Storage
+        File file = File(capturedFile.path);
+        String fileName = path.basename(capturedFile.path);
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('chat_images/${widget.receiverID}/$fileName');
+
+        final uploadTask = storageRef.putFile(file);
+
+        // Get the image URL after upload
+        final snapshot = await uploadTask.whenComplete(() {});
+        String imageUrl = await snapshot.ref.getDownloadURL();
+
+        print("Image uploaded: $imageUrl");
+
+        // Save image URL as a chat message
+        await _chatService.sendMessage(widget.receiverID, imageUrl,
+            isImage: true);
+        _scrollToBottom(); // Scroll to the bottom
+      } else {
+        print("No image captured.");
+      }
+    } catch (e) {
+      print("Failed to capture an image: $e");
     }
   }
 
@@ -246,12 +303,17 @@ class _ChatPageState extends State<ChatPage> {
           DateFormat('hh:mm a').format(dateTime); // Format as 12-hour time
     }
 
+    // Handle cases where message or imageUrl might be null
+    String? message = data['message'] as String?;
+    String? imageUrl = data['imageUrl'] as String?;
+
     return MessageBubble(
-      message: data['message'],
+      message: message ?? '', // Use an empty string if the message is null
       isSent: isCurrentUser,
       senderID: data['senderID'],
       currentUserID: _authService.getCurrentUser()!.uid,
       timestamp: formattedTime, // Pass the formatted timestamp to MessageBubble
+      imageUrl: imageUrl, // Pass the image URL if available
     );
   }
 
@@ -364,7 +426,7 @@ class _ChatPageState extends State<ChatPage> {
                   IconButton(
                     icon: Icon(Icons.camera_alt, color: Colors.grey[700]),
                     onPressed: () {
-                      // Handle image sending
+                      _captureImage();
                     },
                   ),
                   IconButton(
