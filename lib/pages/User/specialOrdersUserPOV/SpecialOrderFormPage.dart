@@ -119,12 +119,52 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
       _isSubmitting = true;
     });
 
-    // Prepare payload with estimated price
+    // Prepare `selectedCustomFields` including labels
+    List<Map<String, dynamic>> selectedCustomFields =
+        widget.option.customFields.map((field) {
+      String fieldId = field.id;
+      String label = field.label;
+      dynamic value = _formData[field.id];
+
+      // Handle different field types for value
+      List<String> selectedOptions = [];
+      String customValue = '';
+
+      switch (field.type) {
+        case FieldType.dropdown:
+          if (value != null) selectedOptions.add(value);
+          break;
+        case FieldType.checkbox:
+          selectedOptions = List<String>.from(value);
+          break;
+        case FieldType.text:
+        case FieldType.date:
+        case FieldType.number:
+          customValue = value?.toString() ?? '';
+          break;
+      }
+
+      return {
+        "fieldId": fieldId,
+        "label": label,
+        "selectedOptions": selectedOptions,
+        "customValue": customValue,
+        "extraCost": field.options
+                ?.firstWhere(
+                  (option) => selectedOptions.contains(option.value),
+                  orElse: () => FieldOption(value: '', extraCost: 0.0),
+                )
+                .extraCost ??
+            0.0,
+      };
+    }).toList();
+
+    // Prepare payload with user inputs and estimated price
     Map<String, dynamic> payload = {
       'optionId': widget.option.id,
-      'formData': _formData,
+      'selectedCustomFields': selectedCustomFields,
       'estimatedPrice': _estimatedPrice,
-      'status': 'Pending', // Indicate that the order is pending confirmation
+      'status': 'Pending',
     };
 
     // Handle photo upload if required
@@ -132,7 +172,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
       String? imageUrl =
           await _uploadImageToFirebase(_selectedImage!, widget.option.name);
       if (imageUrl != null) {
-        payload['formData']['photoUpload'] = imageUrl;
+        payload['photoUpload'] = imageUrl;
       } else {
         _showSnackBar('Failed to upload photo.');
         setState(() {
@@ -145,7 +185,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
     try {
       // Replace with your backend's endpoint
       final String url =
-          createSpecialOrder; // Ensure createSpecialOrder is defined in config.dart
+          createSpecialOrder; // Ensure `createSpecialOrder` is defined in config.dart
 
       String? token = await _getToken();
       if (token == null) {
@@ -155,19 +195,17 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
         });
         return;
       }
-      print('payload $payload');
 
-      final response = await http
-          .post(
-            Uri.parse(url),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: json.encode(payload),
-          )
-          .timeout(Duration(seconds: 10));
+      print('Submitting Payload: $payload'); // Debug log to verify payload
 
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(payload),
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Show a stylized confirmation dialog
         showDialog(
@@ -270,7 +308,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
         );
       } else {
         _showSnackBar(
-            'Failed to submit order. Status Code: ${response.statusCode}');
+            'Failed to submit order. Status Code: ${response.statusCode} , ${response.body}  ');
       }
     } catch (e) {
       _showSnackBar('An error occurred: $e');

@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import '../../services/Notifications/notification_helper.dart';
 import '../../pages/Store/storeDetailedOrder_page.dart';
+import 'storeDetailedSpecialOrders_page.dart';
 
 class StoreOrdersPage extends StatefulWidget {
   const StoreOrdersPage({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
   @override
   void initState() {
     super.initState();
-    _regularOrders = fetchRegularOrders(); // Fetch from /getReceivedOrders
+    _regularOrders = fetchRegularOrders(); // Fetch from /getOrdersByStoreId
     _specialOrders = fetchSpecialOrders(); // Fetch from /getStoreSpecialOrders
   }
 
@@ -229,138 +230,152 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
   Widget _buildFilteredRegularOrdersList(
       Future<List<dynamic>> ordersFuture, String status, String deliveryType) {
     return FutureBuilder<List<dynamic>>(
-      future: ordersFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No $status orders available."));
-        } else {
-          // Filter orders by storeStatus and orderDeliveryType (case-insensitive)
-          final orders = snapshot.data!.where((order) {
-            // Retrieve and normalize deliveryType
-            final orderDeliveryType =
-                order['orderDeliveryType']?.toString().toLowerCase() ?? '';
-            final desiredDeliveryType = deliveryType.toLowerCase();
+        future: ordersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text("No $status orders available."));
+          } else {
+            // Filter orders by storeStatus and orderDeliveryType (case-insensitive)
+            final orders = snapshot.data!.where((order) {
+              // Retrieve and normalize deliveryType
+              final orderDeliveryType =
+                  order['orderDeliveryType']?.toString().toLowerCase() ?? '';
+              final desiredDeliveryType = deliveryType.toLowerCase();
 
-            if (desiredDeliveryType.isNotEmpty &&
-                orderDeliveryType != desiredDeliveryType) {
-              return false; // Skip if the type doesn't match
+              if (desiredDeliveryType.isNotEmpty &&
+                  orderDeliveryType != desiredDeliveryType) {
+                return false; // Skip if the type doesn't match
+              }
+
+              // Retrieve and normalize storeStatus
+              final items = order['items'] as List<dynamic>;
+              if (items.isEmpty) return false; // Skip empty orders
+              final itemStatus =
+                  items[0]['storeStatus']?.toString().toLowerCase() ?? '';
+              final desiredStatus = status.toLowerCase();
+
+              return itemStatus == desiredStatus;
+            }).toList();
+
+            if (orders.isEmpty) {
+              return Center(child: Text("No $status orders available."));
             }
 
-            // Retrieve and normalize storeStatus
-            final items = order['items'] as List<dynamic>;
-            if (items.isEmpty) return false; // Skip empty orders
-            final itemStatus =
-                items[0]['storeStatus']?.toString().toLowerCase() ?? '';
-            final desiredStatus = status.toLowerCase();
+            return ListView.builder(
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
 
-            return itemStatus == desiredStatus;
-          }).toList();
+                // Extract storeTotal and storeDeliveryCost from the first item
+                final items = order['items'] as List<dynamic>;
+                final double storeTotal = items.isNotEmpty
+                    ? (items[0]['storeTotal'] ?? 0.0).toDouble()
+                    : 0.0;
+                final double storeDeliveryCost = items.isNotEmpty
+                    ? (items[0]['storeDeliveryCost'] ?? 0.0).toDouble()
+                    : 0.0;
 
-          if (orders.isEmpty) {
-            return Center(child: Text("No $status orders available."));
-          }
+                // Extract user's first and last name
+                final firstName = order['userId']['firstName'] ?? '';
+                final lastName = order['userId']['lastName'] ?? '';
+                final userName = "$firstName $lastName".trim();
 
-          return ListView.builder(
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-
-              // Extract storeTotal and storeDeliveryCost from the first item
-              final items = order['items'] as List<dynamic>;
-              final double storeTotal = items.isNotEmpty
-                  ? (items[0]['storeTotal'] ?? 0.0).toDouble()
-                  : 0.0;
-              final double storeDeliveryCost = items.isNotEmpty
-                  ? (items[0]['storeDeliveryCost'] ?? 0.0).toDouble()
-                  : 0.0;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 8,
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  leading: CircleAvatar(
-                    backgroundColor: myColor.withOpacity(0.2),
-                    child: const Icon(
-                      Icons.receipt_long,
-                      color: myColor,
-                      size: 28,
-                    ),
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  title: Text(
-                    "Order #: ${order['orderNumber'] ?? 'N/A'}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                  elevation: 8,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    leading: CircleAvatar(
+                      backgroundColor: myColor.withOpacity(0.2),
+                      child: const Icon(
+                        Icons.receipt_long,
+                        color: myColor,
+                        size: 28,
+                      ),
                     ),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 5.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Store Status: ${items[0]['storeStatus']}",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Store Total: ${storeTotal.toStringAsFixed(2)} ₪",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Delivery Cost: ${storeDeliveryCost.toStringAsFixed(2)} ₪",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        if (order['paymentDetails'] != null &&
-                            order['paymentDetails']['method'] != null)
+                    title: Text(
+                      userName.isNotEmpty ? userName : "N/A",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18, // Slightly smaller than before
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 5.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Order Number in smaller font
                           Text(
-                            "Payment Method: ${order['paymentDetails']['method']}",
+                            "Order #: ${order['orderNumber'] ?? 'N/A'}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Store Status: ${items[0]['storeStatus']}",
                             style: const TextStyle(fontSize: 14),
                           ),
-                      ],
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: myColor.withOpacity(0.7),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderDetailsPage(order: order),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Store Total: ${storeTotal.toStringAsFixed(2)} ₪",
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Delivery Cost: ${storeDeliveryCost.toStringAsFixed(2)} ₪",
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(
+                            height: 4,
+                          ),
+                          if (order['paymentDetails'] != null &&
+                              order['paymentDetails']['method'] != null)
+                            Text(
+                              "Payment Method: ${order['paymentDetails']['method']}",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                        ],
                       ),
-                    ).then((result) {
-                      if (result == true) {
-                        setState(() {
-                          _regularOrders =
-                              fetchRegularOrders(); // Refresh Regular Orders
-                          _specialOrders =
-                              fetchSpecialOrders(); // Refresh Special Orders
-                        });
-                      }
-                    });
-                  },
-                ),
-              );
-            },
-          );
-        }
-      },
-    );
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: myColor.withOpacity(0.7),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderDetailsPage(order: order),
+                        ),
+                      ).then((result) {
+                        if (result == true) {
+                          setState(() {
+                            _regularOrders =
+                                fetchRegularOrders(); // Refresh Regular Orders
+                            _specialOrders =
+                                fetchSpecialOrders(); // Refresh Special Orders
+                          });
+                        }
+                      });
+                    },
+                  ),
+                );
+              },
+            );
+          }
+        });
   }
 
   /// Builds a filtered list of Special Orders based on status.
@@ -397,6 +412,11 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
               final double estimatedPrice =
                   (order['estimatedPrice'] ?? 0.0).toDouble();
 
+              // Extract customer's first and last name
+              final firstName = order['customerId']['firstName'] ?? '';
+              final lastName = order['customerId']['lastName'] ?? '';
+              final customerName = "$firstName $lastName".trim();
+
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -415,10 +435,10 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                     ),
                   ),
                   title: Text(
-                    "Order #: ${order['orderNumber'] ?? 'N/A'}",
+                    customerName.isNotEmpty ? customerName : "N/A",
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                      fontSize: 18, // Slightly smaller than before
                     ),
                   ),
                   subtitle: Padding(
@@ -458,7 +478,9 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OrderDetailsPage(order: order),
+                        builder: (context) => DetailedSpecialOrderPage(
+                          specialOrder: order,
+                        ),
                       ),
                     ).then((result) {
                       if (result == true) {
