@@ -91,6 +91,7 @@ class _HomePageState extends State<HomePage> {
       }
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userType = prefs.getString('userType');
+      print('fetching notificationss');
       final response = await http.get(
         Uri.parse('$getNotifications?userType=$userType'), // Your API endpoint
         headers: {
