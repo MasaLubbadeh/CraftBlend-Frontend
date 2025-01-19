@@ -113,6 +113,8 @@ const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
 const String fetchStorePosts = '${url}posts/fetchStorePosts';
 const String getStoreName = '${url}store/fetchProfileInfo';
 
+const String createSale = '${url}sale/createSale';
+const String saleUpdate = '${url}product/saleUpdate';
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
 const myColor2 = myColor;
