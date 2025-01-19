@@ -110,7 +110,7 @@ class _CartPageState extends State<CartPage>
           await http.get(Uri.parse(getUserSpecialOrders), headers: {
         'Authorization': 'Bearer $token',
       });
-
+      print(response.body);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['orders'] != null) {
@@ -136,6 +136,15 @@ class _CartPageState extends State<CartPage>
 
   void _mergeSpecialOrdersIntoCart() {
     for (var order in specialOrders) {
+      String specialName = '';
+
+      // Extract names from all orderItems
+      if (order['orderItems'] != null && order['orderItems'] is List) {
+        List<dynamic> orderItems = order['orderItems'];
+        specialName = orderItems
+            .map((item) => item['optionId']?['name'] ?? 'Unknown')
+            .join(', '); // Combine names if there are multiple
+      }
       // Create a cart-like map for consistency
       Map<String, dynamic> specialOrderItem = {
         'isSpecialOrder': true, // Flag to identify special orders
@@ -143,17 +152,25 @@ class _CartPageState extends State<CartPage>
         'storeId':
             order['storeId'], // Already populated with storeName and icon
         'productId': null, // Not applicable for special orders
-        'name': 'Special Order', // Identifier
+        'specialName': specialName, // Identifier
         'image': order['photoUrl'] ??
             'assets/images/specialicon.png', // Placeholder image
-        'pricePerUnitWithOptionsCost':
-            (order['estimatedPrice'] ?? 0).toDouble(),
-        'totalPriceWithQuantity': (order['estimatedPrice'] ?? 0).toDouble(),
+        'pricePerUnitWithOptionsCost': (order['status'] == 'Confirmed'
+                ? (order['totalPrice'] ?? 0)
+                : (order['estimatedPrice'] ?? 0))
+            .toDouble(),
+        'totalPriceWithQuantity': (order['status'] == 'Confirmed'
+                ? (order['totalPrice'] ?? 0)
+                : (order['estimatedPrice'] ?? 0))
+            .toDouble(),
+
         'quantity': 1, // Typically, special orders have a quantity of 1
         'selectedOptions': {}, // Or any relevant data
         'status': order['status'] ?? 'Pending', // 'Pending' or 'Confirmed'
       };
-      cartData.add(specialOrderItem);
+      if (specialOrderItem['status'] == 'Pending' ||
+          specialOrderItem['status'] == 'Confirmed')
+        cartData.add(specialOrderItem);
     }
   }
 
@@ -440,6 +457,9 @@ class _CartPageState extends State<CartPage>
       final String storeName = item['storeId']['storeName'] ?? 'Unnamed Store';
       final String? storeIcon = item['storeId']['icon'];
       final String status = item['status'] ?? 'Pending';
+      final String specialName = item['specialName'] ?? 'Special Order';
+      print('itemspecialName ');
+      print(item['storeId']['specialName']);
       final double estimatedPrice =
           (item['pricePerUnitWithOptionsCost'] ?? 0).toDouble();
 
@@ -517,15 +537,15 @@ class _CartPageState extends State<CartPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Special Order',
+                        Text(
+                          specialName,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 7),
-                        Text(
+                        /*  Text(
                           'Status: $status',
                           style: TextStyle(
                             fontSize: 14,
@@ -533,7 +553,7 @@ class _CartPageState extends State<CartPage>
                                 ? Colors.orange
                                 : Colors.green,
                           ),
-                        ),
+                        ),*/
                         const SizedBox(height: 15),
                         // Display Estimated Price if Pending
                         if (status == 'Pending')
@@ -542,7 +562,7 @@ class _CartPageState extends State<CartPage>
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.black54,
                             ),
                           ),
                       ],
@@ -569,16 +589,6 @@ class _CartPageState extends State<CartPage>
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${item['pricePerUnitWithOptionsCost'].toStringAsFixed(2)}₪',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.black54,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
                           ],
                         ),
                       ),
@@ -588,150 +598,23 @@ class _CartPageState extends State<CartPage>
 
               // Disable actions if Pending
               if (status == 'Confirmed')
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Quantity Selector
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Quantity:',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                          ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Quantity Selector
+                      // Remove Button
+                      Text(
+                        'To remove this order, please contact the store owner.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
                         ),
-                        const SizedBox(width: 10),
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                if (item['quantity'] > 1) {
-                                  setState(() {
-                                    item['quantity'] -= 1;
-                                    updateCart(item);
-                                  });
-                                } else {
-                                  // Confirm deletion before removing the item
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text("Remove Item"),
-                                        content: const Text(
-                                            "Do you want to remove this item from your cart?"),
-                                        actions: [
-                                          TextButton(
-                                            child: const Text("Cancel"),
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                          ),
-                                          TextButton(
-                                            child: const Text("Remove"),
-                                            onPressed: () {
-                                              setState(() {
-                                                cartData.remove(item);
-                                                updateCart(item);
-                                              });
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                }
-                              },
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: item['quantity'] > 1
-                                      ? Colors.grey[300]
-                                      : Colors.grey,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: Icon(
-                                  item['quantity'] > 1
-                                      ? Icons.remove
-                                      : Icons.delete,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 35,
-                              height: 25,
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
-                              child: Center(
-                                child: Text(
-                                  '${item['quantity']}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => setState(() {
-                                item['quantity'] += 1;
-                                updateCart(item);
-                              }),
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: myColor.withOpacity(.7),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: const Icon(
-                                  Icons.add,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    // Remove Button
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        // Confirm deletion
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text("Remove Special Order"),
-                              content: const Text(
-                                  "Do you want to remove this special order from your cart?"),
-                              actions: [
-                                TextButton(
-                                  child: const Text("Cancel"),
-                                  onPressed: () => Navigator.of(context).pop(),
-                                ),
-                                TextButton(
-                                  child: const Text("Remove"),
-                                  onPressed: () {
-                                    setState(() {
-                                      cartData.remove(item);
-                                      updateCart(item);
-                                    });
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
             ],
           ),

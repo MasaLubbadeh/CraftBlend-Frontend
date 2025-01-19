@@ -228,6 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
     const String tProfile = "Profile";
     const double tDefaultSize = 20.0; // Example padding size
     const Color tPrimaryColor = myColor; // Primary color
@@ -243,6 +245,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       length: 2, // Two tabs for 'Your Info' and 'Your Activity'
       child: Scaffold(
         appBar: AppBar(
+          toolbarHeight: appBarHeight,
+
           automaticallyImplyLeading: false,
           backgroundColor: myColor, // Your primary color
           title: const Text(
@@ -264,16 +268,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               );
             },
-          ),
-
-          bottom: const TabBar(
-            labelColor: Colors.white, // Selected tab text color
-            unselectedLabelColor: Colors.white70, // Unselected tab text color
-            indicatorColor: Colors.white, // Indicator color under the tab
-            tabs: [
-              Tab(text: "Your Info"),
-              Tab(text: "Your Activity"),
-            ],
           ),
         ),
         drawer: Drawer(
@@ -408,159 +402,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
         body: isLoading
             ? const Center(
                 child: CircularProgressIndicator()) // Show loading indicator
-            : TabBarView(
-                children: [
-                  // First tab for 'Your Info'
-                  SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.all(tDefaultSize),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                      ),
-                      child: Column(
+            : // First tab for 'Your Info'
+            SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(tDefaultSize),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    children: [
+                      /// -- IMAGE
+                      Stack(
                         children: [
-                          /// -- IMAGE
-                          Stack(
-                            children: [
-                              SizedBox(
-                                width: profileImageSize,
-                                height: profileImageSize,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(100),
-                                  child: const Image(
-                                      image: AssetImage(
-                                          "assets/images/profilePURPLE.jpg"),
-                                      fit: BoxFit.cover),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(100),
-                                    color: tPrimaryColor,
-                                  ),
-                                  child: const Icon(
-                                    LineAwesomeIcons.alternate_pencil,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            userData?['user']['firstName'] ?? 'First Name',
-                            style: const TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          Text(
-                            userData?['user']['lastName'] ?? 'Last Name',
-                            style: const TextStyle(
-                                fontSize: 16.0, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Personal Information Card
-                          _buildInfoCard("Personal Information", [
-                            _buildUserInfoCard(
-                                "First Name",
-                                userData?['user']['firstName'] ?? 'N/A',
-                                Icons.person),
-                            _buildUserInfoCard(
-                                "Last Name",
-                                userData?['user']['lastName'] ?? 'N/A',
-                                Icons.person),
-                            _buildUserInfoCard(
-                                "Phone Number",
-                                userData?['user']['phoneNumber'] ?? 'N/A',
-                                Icons.phone),
-                            _buildUserInfoCard(
-                                "Email",
-                                userData?['user']['email'] ?? 'N/A',
-                                Icons.email),
-                          ]),
-                          _spacing(),
-
-                          // Edit Profile Button
                           SizedBox(
-                            width: mediaSize.width * 0.6,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _navigateToEditProfile(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: tPrimaryColor,
-                                shape: const StadiumBorder(),
+                            width: profileImageSize,
+                            height: profileImageSize,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: const Image(
+                                  image: AssetImage(
+                                      "assets/images/profilePURPLE.jpg"),
+                                  fit: BoxFit.cover),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(100),
+                                color: tPrimaryColor,
                               ),
-                              child: const Text(
-                                'Edit Personal Information',
-                                style: TextStyle(color: Colors.white),
+                              child: const Icon(
+                                LineAwesomeIcons.alternate_pencil,
+                                color: Colors.white,
+                                size: 20,
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${userData?['user']['firstName'] ?? 'First Name'} ${userData?['user']['lastName'] ?? 'Last Name'}',
+                        style: const TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            letterSpacing: 1),
+                      ),
+                      const SizedBox(height: 10),
 
-                          const SizedBox(height: 8),
-
-                          // Payment Information Card - Only show if not an owner
-                          if (isUser)
-                            Column(
-                              children: [
-                                _buildInfoCard("Payment Information", [
-                                  _buildUserInfoCard(
-                                      "Credit Card",
-                                      userData?['creditCard'] ?? 'No Info Yet',
-                                      Icons.credit_card),
-                                  _buildUserInfoCard(
-                                      "Expiry Date",
-                                      userData?['expiryDate'] ?? 'No Info Yet',
-                                      Icons.date_range),
-                                  _buildUserInfoCard(
-                                      "CVV",
-                                      userData?['cvv'] ?? 'No Info Yet',
-                                      Icons.lock),
-                                ]),
-                                _spacing(),
-                                SizedBox(
-                                  width: mediaSize.width * 0.6,
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const AddCardView(),
-                                        ),
-                                      );
-                                      if (result == true) {
-                                        _fetchUserDetails(); // Refresh data if the card was updated
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: tPrimaryColor,
-                                      shape: const StadiumBorder(),
-                                    ),
-                                    child: Text(
-                                      userData?['creditCard'] != 'No Info Yet'
-                                          ? 'Edit Payment Information'
-                                          : 'Add Payment Information',
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      Align(
+                        // alignment: Alignment.centerRight,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            // await _updateRate(shekelPerPoint);
+                          },
+                          icon: const Icon(Icons.emoji_events,
+                              color: Colors.white),
+                          label: const Text(
+                            'Check Your Points',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: myColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical:
+                                  8, // Reduced vertical padding for a thinner button
+                            ),
+                          ),
+                        ),
+                      ),
 
-                          const SizedBox(height: 20),
-                          /*
+                      const SizedBox(height: 15),
+
+                      // Personal Information Card
+                      _buildInfoCard("Personal Information", [
+                        _buildUserInfoCard(
+                            "First Name",
+                            userData?['user']['firstName'] ?? 'N/A',
+                            Icons.person),
+                        _buildUserInfoCard(
+                            "Last Name",
+                            userData?['user']['lastName'] ?? 'N/A',
+                            Icons.person),
+                        _buildUserInfoCard(
+                            "Phone Number",
+                            userData?['user']['phoneNumber'] ?? 'N/A',
+                            Icons.phone),
+                        _buildUserInfoCard("Email",
+                            userData?['user']['email'] ?? 'N/A', Icons.email),
+                      ]),
+                      _spacing(),
+
+                      // Edit Profile Button
+                      SizedBox(
+                        width: mediaSize.width * 0.6,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _navigateToEditProfile(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: tPrimaryColor,
+                            shape: const StadiumBorder(),
+                          ),
+                          child: const Text(
+                            'Edit Personal Information',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Payment Information Card - Only show if not an owner
+                      if (isUser)
+                        Column(
+                          children: [
+                            _buildInfoCard("Payment Information", [
+                              _buildUserInfoCard(
+                                  "Credit Card",
+                                  userData?['creditCard'] ?? 'No Info Yet',
+                                  Icons.credit_card),
+                              _buildUserInfoCard(
+                                  "Expiry Date",
+                                  userData?['expiryDate'] ?? 'No Info Yet',
+                                  Icons.date_range),
+                              _buildUserInfoCard(
+                                  "CVV",
+                                  userData?['cvv'] ?? 'No Info Yet',
+                                  Icons.lock),
+                            ]),
+                            _spacing(),
+                            SizedBox(
+                              width: mediaSize.width * 0.6,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const AddCardView(),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _fetchUserDetails(); // Refresh data if the card was updated
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: tPrimaryColor,
+                                  shape: const StadiumBorder(),
+                                ),
+                                child: Text(
+                                  userData?['creditCard'] != 'No Info Yet'
+                                      ? 'Edit Payment Information'
+                                      : 'Add Payment Information',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 20),
+                      /*
                           ListTile(
                             onTap: () {
                               Navigator.push(
@@ -617,19 +628,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           */
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-
-                  // Second tab for 'Your Activity'
-                  Center(
-                    child: Text(
-                      'Your Activity Data Here', // Placeholder for activity data
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
+                ),
               ),
       ),
     );

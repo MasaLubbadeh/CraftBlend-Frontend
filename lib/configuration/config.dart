@@ -58,7 +58,15 @@ const String rateStore = '${url}store/rateStore';
 const String chooseSubscription = '${url}store/chooseSubscription';
 const String getSubscriptionDetails = '${url}store/getSubscriptionDetails';
 const String getStoreCategory = '${url}store/getStoreCategory';
-
+const String getIfSpecialOrdersAllowed =
+    '${url}store/getIfSpecialOrdersAllowed';
+const String updateIfAllowSpecialOrder =
+    '${url}store/updateIfAllowSpecialOrder';
+/////
+const String getShekelPerPoint = '${url}store/getShekelPerPoint';
+const String updateShekelPerPoint = '${url}store/updateShekelPerPoint';
+////
+///
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
@@ -141,6 +149,7 @@ const String getStoreSpecialOrders = '${url}specialOrder/getStoreSpecialOrders';
 const String getSpecialOrderById = '${url}specialOrder/getByID';
 const String updateSpecialOrderStatus = '${url}specialOrder/updateStatus';
 const String getUserSpecialOrders = '${url}specialOrder/getUserSpecialOrders';
+const String checkoutSpecialOrder = '${url}specialOrder';
 
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);

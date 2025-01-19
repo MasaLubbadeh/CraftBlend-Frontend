@@ -27,6 +27,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   Map<String, TextEditingController> _descriptionControllers = {};
   bool specialOrdersEnabled =
       true; // Indicates if the store allows special orders
+  bool isSpecialOrderEnabled = false;
 
   // Define the categories and their default options
   Map<String, List<String>> categoryDefaultOptions = {
@@ -96,6 +97,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
   @override
   void initState() {
     super.initState();
+    _checkIfAllowSpecialOrders();
     _fetchStoreSpecialOrderOptions(); // Fetch existing options from backend
   }
 
@@ -111,6 +113,41 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
       controller.dispose();
     });
     super.dispose();
+  }
+
+  Future<void> _checkIfAllowSpecialOrders() async {
+    try {
+      final token = await getToken(); // Fetch the authentication token
+      if (token == null) {
+        _showSnackBar("Authentication token not found.");
+        return;
+      }
+
+      // Call the API to get the current special order status
+      final response = await http.get(
+        Uri.parse(getIfSpecialOrdersAllowed), // Replace with your API endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the response to get the current status
+        final data = json.decode(response.body);
+        final bool status = data['allowSpecialOrders'] ?? false;
+
+        // Update the switch's state
+        setState(() {
+          isSpecialOrderEnabled = status;
+        });
+      } else {
+        _showSnackBar("Failed to fetch special order status.");
+      }
+    } catch (e) {
+      print("Error fetching special order status: $e");
+      _showSnackBar("An error occurred while fetching special order status.");
+    }
   }
 
   // Method to fetch existing Special Order Options from backend
@@ -374,7 +411,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
                     collapsedIconColor: Colors.white70,
                     backgroundColor: myColor,
                     title: const Text(
-                      'Configure Option',
+                      'Configure Order Form',
                       style: TextStyle(color: Colors.white70, letterSpacing: 2),
                     ),
                     initiallyExpanded: true,
@@ -939,6 +976,62 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     }
   }
 
+  Future<bool> _updateSpecialOrderState(bool isEnabled) async {
+    final token = await getToken(); // Get the authentication token
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Authentication token not found.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse(updateIfAllowSpecialOrder), // Replace with your API URL
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'allowSpecialOrders': isEnabled}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEnabled
+                  ? 'Special orders enabled successfully!'
+                  : 'Special orders disabled successfully!',
+            ),
+            //  backgroundColor: Colors.green,
+          ),
+        );
+        return true; // API call succeeded
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to update special order status: ${response.body}',
+            ),
+            // backgroundColor: Colors.red,
+          ),
+        );
+        return false; // API call failed
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating special order status: $e'),
+          //  backgroundColor: Colors.red,
+        ),
+      );
+      return false; // API call failed
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Obtain screen width and height for responsive design
@@ -1012,11 +1105,69 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  color: myColor2, // Background color for the switch tile
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile(
+                        title: const Text(
+                          'Enable Special Order',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        activeColor: myColor, // Switch active color
+                        value: isSpecialOrderEnabled, // State of the switch
+                        onChanged: (bool value) async {
+                          // Update the state of the switch
+                          setState(() {
+                            isSpecialOrderEnabled = value;
+                          });
+
+                          // Call API to update the state
+                          final success = await _updateSpecialOrderState(value);
+                          if (!success) {
+                            // Revert the state if the API call fails
+                            setState(() {
+                              isSpecialOrderEnabled = !value;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Failed to update special order status. Please try again.'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: Text(
+                          'Note: Disabling special orders will prevent customers from making new special orders. '
+                          'Your previous configurations will remain saved, if any.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54, // Adjust color as needed
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
                 const Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.only(top: 10.0),
                   child: Text(
                     'Special Order Options',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5),
                   ),
                 ),
                 isLoading

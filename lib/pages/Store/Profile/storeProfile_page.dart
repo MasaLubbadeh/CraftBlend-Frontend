@@ -68,6 +68,8 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+
     const String tStoreProfile = "Your Account";
     const double tDefaultSize = 20.0;
     const Color tPrimaryColor = myColor;
@@ -76,448 +78,260 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     var mediaSize = MediaQuery.of(context).size;
     double profileImageSize = mediaSize.width * 0.28; // 28% of screen width
 
-    return DefaultTabController(
-      length: 2, // Two tabs for 'Your Info' and 'Your Activity'
-      child: Scaffold(
-        appBar: AppBar(
-          //automaticallyImplyLeading: false,
-          backgroundColor: myColor,
-          title: const Text(
-            tStoreProfile,
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.w700,
-              color: Colors.white70,
-            ),
-            textAlign: TextAlign.center,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: myColor,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          tStoreProfile,
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
+            color: Colors.white70,
           ),
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          /*   leading: Builder(
-            builder: (BuildContext context) {
-              return IconButton(
-                icon: const Icon(LineAwesomeIcons.bars, color: Colors.white),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer(); // Open the drawer
-                },
-              );
-            },
-          ),*/
-          bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(text: "Your Info"),
-              Tab(text: "Your Activity"),
-            ],
+          textAlign: TextAlign.center,
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      drawer: Drawer(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(30),
           ),
         ),
-        drawer: Drawer(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(30),
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: mediaSize.height * 0.27,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/arcTest2.png'),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: mediaSize.height * 0.18,
+                  left: mediaSize.width / 4.5,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.white24,
+                        width: 7,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: mediaSize.height * 0.07,
+                      backgroundImage:
+                          AssetImage('assets/images/profilePURPLE.jpg'),
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: mediaSize.height * 0.27,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/arcTest2.png'),
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: mediaSize.height * 0.18,
-                    left: mediaSize.width / 4.5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white24,
-                          width: 7,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: mediaSize.height * 0.07,
-                        backgroundImage:
-                            AssetImage('assets/images/profilePURPLE.jpg'),
-                        backgroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: mediaSize.height * 0.09),
-              const Divider(),
-              // Add Your Info Tiles
-              ListTile(
-                leading: const Icon(Icons.delivery_dining, color: myColor),
-                title: const Text(
-                  "Manage your delivery locations",
-                  style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
+            SizedBox(height: mediaSize.height * 0.09),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.delivery_dining, color: myColor),
+              title: const Text(
+                "Manage your delivery locations",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
                 ),
-                onTap: () {
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          const ManageDeliveryLocationsPage()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.ad, color: myColor),
+              title: const Text(
+                "Home Page Ad Management",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ManageAdvertisementPage()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart, color: myColor),
+              title: const Text(
+                "Manage special orders",
+                style: TextStyle(
+                  color: myColor,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onTap: () {
+                final category = storeData?['category'];
+                if (category != null) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            const ManageDeliveryLocationsPage()),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(LineAwesomeIcons.ad, color: myColor),
-                title: const Text(
-                  "Home Page Ad Management",
-                  style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ManageAdvertisementPage()),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.shopping_cart, color: myColor),
-                title: const Text(
-                  "Manage special orders",
-                  style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                onTap: () {
-                  final category = storeData?['category'];
-                  if (category != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SpecialOrdersPage(category: category),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Category not found for this store.')),
-                    );
-                  }
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(LineAwesomeIcons.key, color: myColor),
-                title: const Text(
-                  "Change Password",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: myColor,
-                      letterSpacing: 1),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ResetPasswordPage(),
+                      builder: (context) =>
+                          SpecialOrdersPage(category: category),
                     ),
                   );
-                },
-              ),
-              const Divider(),
-              const Spacer(),
-              ListTile(
-                leading: const Icon(LineAwesomeIcons.alternate_sign_out,
-                    color: myColor),
-                title: const Text(
-                  "Logout",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: myColor,
-                      letterSpacing: 1),
-                ),
-                onTap: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.clear();
-
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
-                  );
-
+                } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('You have logged out successfully.'),
-                    ),
+                        content: Text('Category not found for this store.')),
                   );
-                },
+                }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.key, color: myColor),
+              title: const Text(
+                "Change Password",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 1),
               ),
-            ],
-          ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ResetPasswordPage(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            const Spacer(),
+            ListTile(
+              leading: const Icon(LineAwesomeIcons.alternate_sign_out,
+                  color: myColor),
+              title: const Text(
+                "Logout",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: myColor,
+                    letterSpacing: 1),
+              ),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You have logged out successfully.'),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  // First tab for 'Your Info'
-                  SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.all(tDefaultSize),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        children: [
-                          /// -- IMAGE
-                          Stack(
-                            alignment: Alignment
-                                .center, // Center the image in the container
-                            children: [
-                              // Outer frame with `myColor`
-                              Container(
-                                width: profileImageSize +
-                                    5, // Slightly larger than the image
-                                height: profileImageSize + 5,
-                                decoration: BoxDecoration(
-                                  color: myColor.withOpacity(.5), // Frame color
-                                  shape: BoxShape.circle, // Circular frame
-                                ),
-                              ),
-                              // Inner circular image
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    100), // Ensure circular clipping
-                                child: SizedBox(
-                                  width: profileImageSize, // Exact image size
-                                  height: profileImageSize,
-                                  child: storeData?['logo'] != null
-                                      ? Image.network(
-                                          storeData![
-                                              'logo'], // Fetch logo URL dynamically
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            // Fallback to a default image if the logo fails to load
-                                            return const Image(
-                                              image: AssetImage(
-                                                  "assets/images/logo.png"),
-                                              fit: BoxFit.cover,
-                                            );
-                                          },
-                                        )
-                                      : const Image(
-                                          image: AssetImage(
-                                              "assets/images/logo.png"), // Default logo
-                                          fit: BoxFit.cover,
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Store Name and Category/Rating
-                          Text(
-                            storeData?['storeName'] ?? 'Store Name',
-                            style: const TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          Text(
-                            storeData?['category'] ??
-                                storeData?['rating'] ??
-                                'N/A', // Show category or rating
-                            style: const TextStyle(
-                                fontSize: 16.0, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Store Info Card
-                          _buildInfoCard("Store Information", [
-                            _buildStoreInfoCard(
-                                "Email",
-                                storeData?['contactEmail'] ?? 'N/A',
-                                Icons.email),
-                            _buildStoreInfoCard(
-                                "Phone Number",
-                                storeData?['phoneNumber'] ?? 'N/A',
-                                Icons.phone),
-                            _buildStoreInfoCard(
-                                "City",
-                                storeData?['city'] ?? 'N/A',
-                                Icons.location_city),
-                          ]),
-                          const SizedBox(height: 20),
-/*
-                          ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ManageDeliveryLocationsPage()),
-                              );
-                            },
-                            leading: const Icon(Icons.delivery_dining,
-                                color: myColor),
-                            title: const Text(
-                              "Manage your delivery locations",
-                              style: TextStyle(
-                                color: myColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            trailing: const Icon(LineAwesomeIcons.angle_right,
-                                color: myColor),
-                          ),
-                          ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ManageAdvertisementPage()),
-                              );
-                            },
-                            leading:
-                                const Icon(LineAwesomeIcons.ad, color: myColor),
-                            title: const Text(
-                              "Home Page Ad Management",
-                              style: TextStyle(
-                                color: myColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            trailing: const Icon(LineAwesomeIcons.angle_right,
-                                color: myColor),
-                          ),
-                          ListTile(
-                            onTap: () {
-                              final category = storeData?['category'];
-                              if (category != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        SpecialOrdersPage(category: category),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Category not found for this store.')),
-                                );
-                              }
-                            },
-                            leading:
-                                const Icon(Icons.shopping_cart, color: myColor),
-                            title: const Text(
-                              "Manage special orders",
-                              style: TextStyle(
-                                color: myColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            trailing: const Icon(LineAwesomeIcons.angle_right,
-                                color: myColor),
-                          ),
-                          // Change Password Button
-                          ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ResetPasswordPage()),
-                              );
-                            },
-                            leading: const Icon(LineAwesomeIcons.key,
-                                color: myColor),
-                            title: const Text(
-                              "Change Password",
-                              style: TextStyle(
-                                color: myColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            trailing: const Icon(LineAwesomeIcons.angle_right,
-                                color: myColor),
-                          ),
-
-                          // Logout Button
-                          ListTile(
-                            onTap: () async {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.clear();
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('You have logged out successfully.'),
-                                ),
-                              );
-                            },
-                            leading: const Icon(
-                                LineAwesomeIcons.alternate_sign_out,
-                                color: myColor),
-                            title: const Text(
-                              "Logout",
-                              style: TextStyle(
-                                color: myColor,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),*/
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Second tab for 'Your Activity'
-                  Center(
-                    child: Text(
-                      'Your Activity Data Here', // Placeholder for activity data
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
       ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(tDefaultSize),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: profileImageSize + 5,
+                          height: profileImageSize + 5,
+                          decoration: BoxDecoration(
+                            color: myColor.withOpacity(.5),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(100),
+                          child: SizedBox(
+                            width: profileImageSize,
+                            height: profileImageSize,
+                            child: storeData?['logo'] != null
+                                ? Image.network(
+                                    storeData!['logo'],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Image(
+                                        image: AssetImage(
+                                            "assets/images/logo.png"),
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  )
+                                : const Image(
+                                    image: AssetImage("assets/images/logo.png"),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      storeData?['storeName'] ?? 'Store Name',
+                      style: const TextStyle(
+                        fontSize: 24.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      storeData?['category'] ?? storeData?['rating'] ?? 'N/A',
+                      style:
+                          const TextStyle(fontSize: 16.0, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInfoCard("Store Information", [
+                      _buildStoreInfoCard("Email",
+                          storeData?['contactEmail'] ?? 'N/A', Icons.email),
+                      _buildStoreInfoCard("Phone Number",
+                          storeData?['phoneNumber'] ?? 'N/A', Icons.phone),
+                      _buildStoreInfoCard("City", storeData?['city'] ?? 'N/A',
+                          Icons.location_city),
+                    ]),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 

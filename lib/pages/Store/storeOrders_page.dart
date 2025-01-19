@@ -32,6 +32,16 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
     return prefs.getString('token');
   }
 
+  String _formatDateTime(String isoDateTime) {
+    try {
+      final dateTime = DateTime.parse(isoDateTime); // Parse the ISO date string
+      return "${dateTime.toLocal()}"
+          .split('.')[0]; // Format as local time without milliseconds
+    } catch (e) {
+      return "Invalid date"; // Fallback if parsing fails
+    }
+  }
+
   /// Fetches Regular Orders from the API.
   Future<List<dynamic>> fetchRegularOrders() async {
     String? token = await _getToken();
@@ -74,7 +84,8 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
         "Content-Type": "application/json",
       },
     );
-
+    print('special order response');
+    print(response.body);
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
 
@@ -346,6 +357,14 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                               "Payment Method: ${order['paymentDetails']['method']}",
                               style: const TextStyle(fontSize: 14),
                             ),
+                          const SizedBox(
+                            height: 4,
+                          ),
+                          if (order['createdAt'] != null)
+                            Text(
+                              "Ordered at: ${_formatDateTime(order['createdAt'])}",
+                              style: const TextStyle(fontSize: 14),
+                            ),
                         ],
                       ),
                     ),
@@ -393,7 +412,14 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
         } else {
           // Filter Special Orders by status (case-insensitive)
           final orders = snapshot.data!.where((order) {
-            final orderStatus = order['status']?.toString().toLowerCase() ?? '';
+            String orderStatus =
+                order['status']?.toString().toLowerCase() ?? '';
+
+            // Treat 'afterCheckout' as 'Confirmed'
+            if (orderStatus == 'aftercheckout') {
+              orderStatus = 'confirmed';
+            }
+
             final desiredStatus = status.toLowerCase();
             return orderStatus == desiredStatus;
           }).toList();
@@ -446,9 +472,24 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Status: ${order['status']}",
-                          style: const TextStyle(fontSize: 14),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: order['ifPaid']
+                                ? const Color.fromARGB(255, 117, 103, 127)
+                                : Colors.red
+                                    .withOpacity(.6), // Color based on status
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            order['ifPaid'] ? 'Paid' : 'Not Paid',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -465,6 +506,12 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                             order['paymentDetails']['method'] != null)
                           Text(
                             "Payment Method: ${order['paymentDetails']['method']}",
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        const SizedBox(height: 4),
+                        if (order['createdAt'] != null)
+                          Text(
+                            "Ordered at: ${_formatDateTime(order['createdAt'])}",
                             style: const TextStyle(fontSize: 14),
                           ),
                       ],

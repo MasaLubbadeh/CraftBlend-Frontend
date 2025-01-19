@@ -12,6 +12,7 @@ import '../ManageAdvertisement_Page.dart';
 import '../manageDeliveryLocations_page.dart';
 import '../ownerManagesTheirSubscription.dart';
 import '../specialOrders/specialOrder_page.dart';
+import '../storeManagesPointSystem.dart';
 import 'dashboard.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
 
@@ -523,6 +524,24 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                           content: Text('Category not found for this store.')),
                     );
                   }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.emoji_events, color: myColor),
+                title: const Text(
+                  "Manage Store's point system",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManagePointsPage()),
+                  );
                 },
               ),
               const Divider(),

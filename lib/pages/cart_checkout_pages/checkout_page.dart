@@ -493,11 +493,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _buildTimePickerSection() {
     // Filter cart items to include only "upon order" items
-    final uponOrderItems = widget.cartItems
+    /* final uponOrderItems = widget.cartItems
         .where((item) =>
             item['productId']['allowDeliveryDateSelection'] == true &&
             item['productId']['deliveryType'] == 'scheduled')
         .toList();
+*/
+    final uponOrderItems = widget.cartItems.where((item) {
+      // Check if the item is not a special order and has required properties
+      return item['productId'] != null &&
+          item['productId']['allowDeliveryDateSelection'] == true &&
+          item['productId']['deliveryType'] == 'scheduled';
+    }).toList();
 
     if (uponOrderItems.isEmpty) {
       return SizedBox.shrink(); // Returns an empty widget
@@ -1191,7 +1198,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   bool _isPlaceOrderButtonEnabled() {
     bool allScheduledItemsValid = widget.cartItems.every((item) {
-      if (item['productId']['allowDeliveryDateSelection'] == true &&
+      if (item['productId'] != null &&
+          item['productId']['allowDeliveryDateSelection'] == true &&
           item['productId']['deliveryType'] == 'scheduled') {
         return item['selectedDate'] != null && item['selectedTime'] != null;
       }
@@ -1254,17 +1262,92 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Future<bool> _processSpecialOrders(
+      List<Map<String, dynamic>> specialOrders, String token) async {
+    try {
+      for (var order in specialOrders) {
+        final specialOrderId =
+            order['orderId']; // Assuming `orderId` maps to the special order
+        final response = await http.put(
+          Uri.parse('$checkoutSpecialOrder/$specialOrderId/markAsPaid'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'status': 'afterCheckout',
+            'isPaid': true,
+            "paymentDetails": {
+              "method": selectedPaymentMethod == 'Cash on Delivery'
+                  ? 'Cash on Delivery'
+                  : selectedPaymentMethod == 'Apple Pay'
+                      ? 'Apple Pay'
+                      : 'Visa',
+              if (selectedPaymentMethod != 'Cash on Delivery') ...{
+                "cardNumber": creditCards.isNotEmpty
+                    ? creditCards[0]
+                        .replaceAll('*', '0')
+                        .trim() // Masked card number
+                    : null,
+              },
+            },
+            "deliveryDetails": {
+              "city": selectedCity,
+              "street": streetController.text,
+              "contactNumber": contactNumber,
+            },
+          }),
+        );
+
+        if (response.statusCode != 200) {
+          print('Failed to update special order: ${response.body}');
+          return false; // Exit if any special order fails
+        }
+      }
+      return true;
+    } catch (e) {
+      print('Error processing special orders: $e');
+      return false;
+    }
+  }
+
   Future<bool> _placeOrder() async {
     final token = await _fetchToken(); // Fetch authentication token
     if (token == null) return false;
 
+    // Separate regular orders and special orders
+    List<Map<String, dynamic>> regularOrders = [];
+    List<Map<String, dynamic>> specialOrders = [];
+
+    for (var item in widget.cartItems) {
+      if (item['isSpecialOrder'] == true) {
+        specialOrders.add(item);
+      } else {
+        regularOrders.add(item);
+      }
+    }
+
+    // Process special orders
+    if (specialOrders.isNotEmpty) {
+      bool success = await _processSpecialOrders(specialOrders, token);
+      if (!success) return false; // Stop if special order processing fails
+    }
+
+    // If there are no regular orders, skip regular order processing
+    if (regularOrders.isEmpty) {
+      // Show thank-you modal for special orders only
+      _showThankYouModal(context);
+      return true;
+    }
+
+    // Continue processing regular orders
     Map<String, double> deliveryCostsByStore =
         selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
 
     // Group items by store and calculate totals
     Map<String, Map<String, dynamic>> groupedStores = {};
 
-    for (var item in widget.cartItems) {
+    for (var item in regularOrders) {
       final storeId = item['storeId']['_id'];
       final storeName = item['storeId']['storeName'];
       final productTotal = item['totalPriceWithQuantity'] ?? 0.0;
@@ -1334,13 +1417,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 : 'Visa',
         if (selectedPaymentMethod != 'Cash on Delivery') ...{
           "cardNumber": creditCards.isNotEmpty
-              ? creditCards[0].replaceAll('*', '').trim() // Masked card number
+              ? creditCards[0].replaceAll('*', '0').trim() // Masked card number
               : null,
         },
       },
       "status": "Pending",
       "deliveryPreference": _deliveryPreference,
     };
+
     try {
       final response = await http.post(
         Uri.parse(placeOrder), // Replace with your API URL
@@ -1355,7 +1439,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         print('Order placed successfully.');
         await _reduceProductQuantities();
         await _refreshCart();
-        // _showThankYouModal(context);
+        _showThankYouModal(
+            context); // Show thank-you modal after successful order
         return true;
       } else {
         print('Failed to place order: ${response.body}');
