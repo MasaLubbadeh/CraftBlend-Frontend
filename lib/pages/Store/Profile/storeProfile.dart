@@ -11,6 +11,7 @@ import '../../User/login_page.dart';
 import '../../User/resetPassword.dart';
 import '../../specialOrders/specialOrder_page.dart';
 import '../ManageAdvertisement_Page.dart';
+import '../Sales/productSelection.dart';
 import '../manageDeliveryLocations_page.dart';
 import 'dashboard.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
@@ -522,6 +523,25 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                     context,
                     MaterialPageRoute(
                       builder: (context) => const ResetPasswordPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.tag, color: myColor),
+                title: const Text(
+                  "Sales Management",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductSelectionPage(),
                     ),
                   );
                 },
