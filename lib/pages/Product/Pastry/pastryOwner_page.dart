@@ -336,20 +336,48 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              height: 120, // Fixed height for the image
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: pastry['image'] != null &&
-                                          pastry['image'].isNotEmpty
-                                      ? NetworkImage(pastry['image'])
-                                          as ImageProvider
-                                      : const AssetImage(
-                                          'assets/images/pastry.jpg'),
-                                  fit: BoxFit.cover,
+                            Stack(
+                              children: [
+                                Container(
+                                  height: 120, // Fixed height for the image
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(
+                                      image: pastry['image'] != null &&
+                                              pastry['image'].isNotEmpty
+                                          ? NetworkImage(pastry['image'])
+                                              as ImageProvider
+                                          : const AssetImage(
+                                              'assets/images/pastry.jpg'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (pastry['onSale'] ==
+                                    true) // Check if the product is on sale
+                                  Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'SALE',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -362,13 +390,39 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                            if (pastry['onSale'] == true) ...[
+                              Row(
+                                children: [
+                                  Text(
+                                    '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration
+                                          .lineThrough, // Strike-through
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${pastry['salePrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red, // Highlight sale price
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ] else ...[
+                              Text(
+                                '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                             const Spacer(), // Pushes icons to the bottom
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
