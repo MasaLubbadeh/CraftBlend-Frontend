@@ -114,6 +114,7 @@ class _GenreSelectionScreenState extends State<GenreSelectionScreen> {
             widget.signUpData.password!,
             widget.signUpData.firstName!,
             widget.signUpData.lastName!,
+            widget.signUpData.accountType!,
           );
           // Save token and user type to SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();

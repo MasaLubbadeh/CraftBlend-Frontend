@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -23,12 +25,128 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   bool _isAddingProduct = false;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  late Timer _timer;
+  String _remainingTime = '';
+  /* @override
+  void initState() {
+    super.initState();
+    _fetchStoreDetails();
+    fetchPastries();
+    // Initialize remaining time
+    /* _updateRemainingTime();
+    // Set up the timer to update the remaining time every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _updateRemainingTime();
+        // print(_remainingTime);
+      });
+    });*/
+    // Set up the timer to update the remaining time every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        // Update the remaining time for each pastry based on its endDate
+        for (var pastry in pastries) {
+          // Ensure 'onSale' is not null and true
+          if (pastry['onSale'] == true) {
+            // Check if endDate is null and assign a static date if necessary
+            DateTime endDate;
+            if (pastry['endDate'] != null) {
+              try {
+                // Parse the endDate string to DateTime
+                endDate = DateTime.parse(pastry['endDate']);
+              } catch (e) {
+                // If endDate is not a valid date string, handle the error (optional logging or fallback)
+                print("Invalid date format for pastry: ${pastry['endDate']}");
+                // Assign a static fallback date if parsing fails
+                endDate =
+                    DateTime(2025, 12, 31); // Static date example (future date)
+              }
+            } else {
+              // Assign a static fallback date if endDate is null
+              endDate =
+                  DateTime(2025, 12, 31); // Static date example (future date)
+            }
 
+            // Update remaining time based on endDate (static or real)
+            _updateRemainingTime(endDate);
+          }
+        }
+      });
+    });
+  }
+*/
   @override
   void initState() {
     super.initState();
     _fetchStoreDetails();
     fetchPastries();
+    // Set up the timer to update the remaining time for each pastry every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        for (var pastry in pastries) {
+          if (pastry['onSale'] == true && pastry['endDate'] != null) {
+            try {
+              DateTime endDate = DateTime.parse(pastry['endDate']);
+              pastry['remainingTime'] = _calculateRemainingTime(endDate);
+            } catch (e) {
+              print("Invalid endDate format for pastry: ${pastry['endDate']}");
+              pastry['remainingTime'] = 'Invalid Date';
+            }
+          } else {
+            pastry['remainingTime'] = 'Not on Sale';
+          }
+        }
+      });
+    });
+  }
+
+  String _calculateRemainingTime(DateTime endDate) {
+    DateTime currentDate = DateTime.now();
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      return 'Sale Ended';
+    } else {
+      return '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m ${difference.inSeconds % 60}s';
+    }
+  }
+
+  @override
+  void dispose() {
+    // Cancel the timer when the widget is disposed
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _updateRemainingTime(DateTime endDate) {
+    // Define your static sale end date
+    DateTime currentDate = DateTime.now();
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _remainingTime = 'Sale Ended';
+          });
+        }
+      });
+
+      return _remainingTime;
+    } else {
+      // Format the remaining time
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _remainingTime =
+                '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m ${difference.inSeconds % 60}s';
+          });
+        }
+      });
+
+      return _remainingTime;
+    }
+    return _remainingTime;
   }
 
   Future<void> _fetchStoreDetails() async {
@@ -297,6 +415,47 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     );
   }
 
+  String _getRemainingTime(String saleEndDate) {
+    // Define a static sale end date for the example
+    DateTime staticSaleEndDate = DateTime(2025, 2, 1, 23, 59, 59);
+    DateTime endDate = DateTime.parse(saleEndDate);
+
+    // Current date and time
+    DateTime currentDate = DateTime.now();
+
+    // Calculate the difference in time
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      return 'Sale Ended';
+    }
+
+    // Format the remaining time
+    String formattedTime =
+        '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m';
+
+    return formattedTime;
+  }
+
+// Helper function to calculate remaining time until the sale ends
+  /* String _getRemainingTime(String saleEndDate) {
+    DateTime now = DateTime.now();
+    DateTime endDate = DateTime.parse(
+        saleEndDate); // Assuming it's a string in ISO 8601 format
+
+    Duration difference = endDate.difference(now);
+
+    if (difference.isNegative) {
+      return "Sale Ended";
+    } else {
+      int days = difference.inDays;
+      int hours = difference.inHours % 24;
+      int minutes = difference.inMinutes % 60;
+
+      return '${days}d ${hours}h ${minutes}m';
+    }
+  }
+*/
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -379,7 +538,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                     crossAxisCount: 2, // 2 items per row
                     crossAxisSpacing: 10, // Space between columns
                     mainAxisSpacing: 10, // Space between rows
-                    childAspectRatio: 3 / 4, // Adjust for item shape
+                    childAspectRatio: .65, // Adjust for item shape
                   ),
                   itemCount: filteredPastries.length +
                       1, // Include "Add Product" button
@@ -437,20 +596,72 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              height: 120, // Fixed height for the image
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: pastry['image'] != null &&
-                                          pastry['image'].isNotEmpty
-                                      ? NetworkImage(pastry['image'])
-                                          as ImageProvider
-                                      : const AssetImage(
-                                          'assets/images/pastry.jpg'),
-                                  fit: BoxFit.cover,
+                            Stack(
+                              children: [
+                                Container(
+                                  height: 120, // Fixed height for the image
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: DecorationImage(
+                                      image: pastry['image'] != null &&
+                                              pastry['image'].isNotEmpty
+                                          ? NetworkImage(pastry['image'])
+                                              as ImageProvider
+                                          : const AssetImage(
+                                              'assets/images/pastry.jpg'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (pastry['onSale'] ==
+                                    true) // Check if the product is on sale
+                                  Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Color.fromARGB(180, 255, 0,
+                                            0), // Fully transparent
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${pastry['saleAmount']}% SALE ',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (pastry['onSale'] == true)
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 0),
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                            200, 164, 159, 168),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        pastry['remainingTime'] ??
+                                            'Loading...', // Display remaining time
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -463,13 +674,39 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                            if (pastry['onSale'] == true) ...[
+                              Row(
+                                children: [
+                                  Text(
+                                    '${pastry['oldPrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration
+                                          .lineThrough, // Strike-through
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${pastry['salePrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red, // Highlight sale price
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ] else ...[
+                              Text(
+                                '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                             const Spacer(), // Pushes icons to the bottom
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

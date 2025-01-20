@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:craft_blend_project/pages/Store/specialOrders/specialOrder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../configuration/config.dart';
+
 import '../../User/specialOrdersUserPOV/AvailableSpecialOrderOptionsPage.dart';
+
 import '../productDetails_page.dart';
 import '../../../components/badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,13 +36,50 @@ class _PastryPageState extends State<PastryPage> {
   final TextEditingController _searchController = TextEditingController();
   late double appBarHeight;
 
+  late Timer _timer;
+
   @override
   void initState() {
     super.initState();
     _checkIfFavorite();
     _fetchPastries();
     _fetchAllowSpecialOrders();
-    _addUserViewingStore(); // Log the store view when the page is opened
+    _addUserViewingStore();
+
+    // Set up a timer to update the remaining time for sales
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        for (var pastry in pastries) {
+          if (pastry['onSale'] == true && pastry['endDate'] != null) {
+            try {
+              DateTime endDate = DateTime.parse(pastry['endDate']);
+              pastry['remainingTime'] = _calculateRemainingTime(endDate);
+            } catch (e) {
+              pastry['remainingTime'] = 'Invalid Date';
+            }
+          } else {
+            pastry['remainingTime'] = 'Not on Sale';
+          }
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer when the page is disposed
+    super.dispose();
+  }
+
+  String _calculateRemainingTime(DateTime endDate) {
+    DateTime currentDate = DateTime.now();
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      return 'Sale Ended';
+    } else {
+      return '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m ${difference.inSeconds % 60}s';
+    }
   }
 
   Future<String?> _fetchToken() async {
@@ -500,7 +541,7 @@ class _PastryPageState extends State<PastryPage> {
                               crossAxisCount: 2,
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
-                              childAspectRatio: 0.7,
+                              childAspectRatio: 0.6,
                             ),
                             itemCount: filteredPastries.length,
                             itemBuilder: (context, index) {
@@ -528,22 +569,91 @@ class _PastryPageState extends State<PastryPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          height: 110,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            image: DecorationImage(
-                                              image: pastry['image'] != null &&
-                                                      pastry['image'].isNotEmpty
-                                                  ? NetworkImage(
-                                                          pastry['image'])
-                                                      as ImageProvider
-                                                  : const AssetImage(
-                                                      'assets/images/pastry.jpg'),
-                                              fit: BoxFit.cover,
+                                        Stack(
+                                          children: [
+                                            Container(
+                                              height:
+                                                  120, // Fixed height for the image
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                image: DecorationImage(
+                                                  image: pastry['image'] !=
+                                                              null &&
+                                                          pastry['image']
+                                                              .isNotEmpty
+                                                      ? NetworkImage(
+                                                              pastry['image'])
+                                                          as ImageProvider
+                                                      : const AssetImage(
+                                                          'assets/images/pastry.jpg'),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
                                             ),
-                                          ),
+                                            if (pastry['onSale'] == true &&
+                                                pastry['inStock'] ==
+                                                    true) // Check if the product is on sale
+                                              Positioned(
+                                                top: 8,
+                                                left: 8,
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Color.fromARGB(
+                                                        180,
+                                                        255,
+                                                        0,
+                                                        0), // Fully transparent
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
+                                                  ),
+                                                  child: Text(
+                                                    '${pastry['saleAmount']}% SALE ',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            if (pastry['onSale'] == true &&
+                                                pastry['inStock'] == true)
+                                              Positioned(
+                                                bottom: 0,
+                                                left: 0,
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 0),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color.fromARGB(
+                                                        200, 164, 159, 168),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
+                                                  ),
+                                                  child: Text(
+                                                    pastry['remainingTime'] ??
+                                                        'Loading...', // Display remaining time
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                         const SizedBox(height: 8),
                                         Row(
@@ -567,13 +677,48 @@ class _PastryPageState extends State<PastryPage> {
                                           ],
                                         ),
                                         const SizedBox(height: 4),
-                                        Text(
+                                        if (pastry['onSale'] == true &&
+                                            pastry['inStock'] == true) ...[
+                                          Row(
+                                            children: [
+                                              Text(
+                                                '${pastry['oldPrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  decoration: TextDecoration
+                                                      .lineThrough, // Strike-through
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '${pastry['salePrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors
+                                                      .red, // Highlight sale price
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ] else ...[
+                                          Text(
+                                            '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                        /*  Text(
                                           '${pastry['price']?.toStringAsFixed(2) ?? '0.00'}₪',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                           ),
-                                        ),
+                                        ),*/
                                         const Spacer(),
                                         Row(
                                           mainAxisAlignment:

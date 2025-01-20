@@ -87,6 +87,7 @@ class _OwnerBottomNavigationBarState extends State<OwnerBottomNavigationBar> {
       StoreProfilePage(userID: userID!),
       //ProfileScreen(),
       // Profile Page
+      //AllChats(),
       FeedPage(), // Chat
     ];
 

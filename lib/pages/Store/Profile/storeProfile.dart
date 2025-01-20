@@ -548,6 +548,25 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               ),
               const Divider(),
               ListTile(
+                leading: const Icon(LineAwesomeIcons.tag, color: myColor),
+                title: const Text(
+                  "Sales Management",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductSelectionPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
                 leading: const Icon(Icons.subscriptions, color: myColor),
                 title: const Text(
                   "Manage your subscription",
@@ -594,10 +613,10 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                   ),
                 ),
                 onTap: () {
-                  /* Navigator.push(
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => VideoButtonPage()),
-                  );*/
+                    MaterialPageRoute(builder: (context) => VideoPage()),
+                  );
                 },
               ),
               const Divider(),

@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.16:3000/';
+const String url = 'http://192.168.1.34:3000/';
+
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -18,6 +19,7 @@ const String addFavoriteStore = '${url}favoriteStores';
 const String removeFavoriteStore = '${url}favoriteStores';
 const String checkIfFavoriteStore = '${url}favoriteStores/checkIfFav';
 const String getFavStoresProducts = '${url}favoriteStores/getStoresProducts';
+const String getFavoriteStoress = '${url}favoriteStores/get';
 
 const String addToWishlist = '${url}wishlist';
 const String removeFromWishlist = '${url}wishlist';
@@ -126,6 +128,11 @@ const String updateSuggestionStatus =
 
 const String fetchProfileInfo = '${url}store/fetchProfileInfo';
 const String fetchAccountPosts = '${url}posts/fetchAccountPosts';
+const String fetchStorePosts = '${url}posts/fetchStorePosts';
+const String getStoreName = '${url}store/fetchProfileInfo';
+
+const String createSale = '${url}sale/createSale';
+const String saleUpdate = '${url}product/saleUpdate';
 
 const String addSubscriptionPlan = '${url}subscriptionPlan/add';
 const String getSubscriptionPlans = '${url}subscriptionPlan/getPlans';

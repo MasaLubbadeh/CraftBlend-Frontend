@@ -263,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
     //auth service
     final authService = AuthService();
     try {
-      await authService.signInWithEmainPassword(email, pass);
+      await authService.signInWithEmailPassword(email, pass);
     } catch (err) {
       print("Firebase Login Error: $err"); // Log the exact error for debugging
       showDialog(
@@ -287,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-    // firebse_login(email, password, context);
+    firebse_login(email, password, context);
     loginUserWithCredentials(email, password);
   }
 

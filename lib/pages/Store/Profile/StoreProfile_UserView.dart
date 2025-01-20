@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'package:craft_blend_project/configuration/config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../components/post.dart';
+import '../../../services/authentication/auth_service.dart';
+import '../../../services/chat/chat_service.dart';
 import '../../Posts/createUserPost.dart';
+import '../../chatting/chat_page.dart';
 import 'dashboard.dart';
 import 'storeProfile.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
@@ -30,11 +34,14 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
   bool isLoading = true;
 
   late DateTime createdAt;
+  final ChatService _chatService = ChatService();
+  final AuthService _authService = AuthService();
 
   // Initialize variables with default values
   String _storeName = "Loading...";
+  String _contactEmail = '';
   String _bio = "Loading...";
-  String _profilePicture = 'https://via.placeholder.com/100';
+  String _profilePicture = 'https://picsum.photos/400/400';
   int _posts = 0;
   int _upvotes = 0;
   int _feedbacks = 0;
@@ -50,6 +57,55 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
     _loadUserDetails();
     _fetchProfileData(); // Fetch profile data when the page initializes
     fetchPosts();
+  }
+
+  Stream<List<Object>> _fetchUserStream() {
+    try {
+      print("inside fetch user stream");
+
+      final userStream = _chatService.getUsersStream();
+
+      userStream.listen((userList) {
+        // Ensure the list isn't empty
+        if (userList.isEmpty) {
+          print("No users found.");
+        } else {
+          print("Fetched ${userList.length} users.");
+          print('USERID:${widget.userID}');
+
+          // Loop through the user data and look for the match
+          for (var user in userList) {
+            print("User data: ${user['email']}");
+
+            // If a match for the userID is found, navigate
+            if (user['email'] == _contactEmail) {
+              // Ensure the context is valid and the widget is still mounted
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(
+                      recieverEmail: user["email"],
+                      receiverID: user["uid"],
+                      firstName: user["firstName"] ?? "NO",
+                      lastName: user["lastName"] ?? "NAME",
+                      fullName: user["storeName"] ?? "NAME",
+                      userType: user["userType"] ?? "NOTYPE",
+                    ),
+                  ),
+                );
+              }
+            }
+          }
+        }
+      });
+
+      // Return the stream to be used elsewhere
+      return userStream;
+    } catch (e) {
+      print("Error fetching users: $e");
+      return Stream.value([]); // Return an empty stream in case of error
+    }
   }
 
   Future<void> _loadUserDetails() async {
@@ -131,9 +187,10 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
 
       setState(() {
         _storeName = data['storeName'] ?? "No Name";
+        _contactEmail = data['contactEmail'] ?? "No Email";
         _bio = data['bio'] ?? "No Bio";
         _profilePicture =
-            data['profilePicture'] ?? 'https://via.placeholder.com/100';
+            data['profilePicture'] ?? 'https://picsum.photos/400/400';
         _posts = data['posts'] ?? 0;
         _upvotes = data['upvotes'] ?? 0;
         _feedbacks = data['feedbacks'] ?? 0;
@@ -343,8 +400,9 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                   CircleAvatar(
                     radius: 30,
                     backgroundImage: _profilePicture.startsWith('http')
-                        ? NetworkImage(_profilePicture) as ImageProvider
-                        : AssetImage(_profilePicture),
+                        ? NetworkImage('https://picsum.photos/400/400')
+                            as ImageProvider
+                        : AssetImage('https://picsum.photos/400/400'),
                   ),
                   const SizedBox(height: 5),
                   Text(
@@ -398,6 +456,15 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           },
                           child: const Text('View Products'),
                         ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            _fetchUserStream();
+                          },
+                          child: const Text('Message'),
+                        ),
                       ],
                     ),
                   ),
@@ -423,8 +490,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           itemBuilder: (context, index) {
                             final post = posts[index];
                             return PostCard(
-                              profileImageUrl:
-                                  'https://via.placeholder.com/100',
+                              profileImageUrl: 'https://picsum.photos/400/400',
                               username: '${post['fullName']}',
                               content: post['content'],
                               likes: post['likes'] ?? 0,
@@ -462,6 +528,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                                   ),
                                 );
                               },
+                              postType: post['post_type'] ?? '',
+                              store_id: post['store_id'] ?? '',
                             );
                           },
                         ),
@@ -473,8 +541,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           itemBuilder: (context, index) {
                             final feedback = feedbacks[index];
                             return PostCard(
-                              profileImageUrl:
-                                  'https://via.placeholder.com/100',
+                              profileImageUrl: 'https://picsum.photos/400/400',
                               username: '${feedback['fullName']}',
                               content: feedback['content'],
                               likes: feedback['likes'] ?? 0,
@@ -511,6 +578,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                                   ),
                                 );
                               },
+                              postType: feedback['post_type'] ?? '',
+                              store_id: feedback['store_id'] ?? '',
                             );
                           },
                         ),
