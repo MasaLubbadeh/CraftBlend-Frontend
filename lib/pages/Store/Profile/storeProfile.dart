@@ -9,6 +9,7 @@ import '../../../components/post.dart';
 import '../../User/login_page.dart';
 import '../../User/resetPassword.dart';
 import '../ManageAdvertisement_Page.dart';
+import '../Sales/productSelection.dart';
 import '../manageDeliveryLocations_page.dart';
 import '../ownerManagesTheirSubscription.dart';
 import '../specialOrders/specialOrder_page.dart';
@@ -105,20 +106,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
       final response = await http.get(Uri.parse('$fetchAccountPosts/$userID'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-
-        /*   setState(() {
-          posts = data.map((post) {
-            final storeId = post['store_id']; // Ensure this field exists
-            return {
-              ...post,
-              'isLiked': false,
-              'isUpvoted': false,
-              'storeId': storeId,
-            };
-          }).toList();
-          isLoading = false;
-        });*/
-
         setState(() {
           data.forEach((post) {
             final storeId = post['store_id']; // Ensure this field exists
@@ -401,6 +388,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
           ),
         ),
         child: SingleChildScrollView(
+          // Added to make the Drawer scrollable
           child: Column(
             children: [
               Stack(
@@ -430,12 +418,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       ),
                       child: CircleAvatar(
                         radius: mediaSize.height * 0.07,
-                        backgroundImage: (storeData?['logo'] != null &&
-                                storeData!['logo'].isNotEmpty)
-                            ? NetworkImage(storeData!['logo'])
-                            : const AssetImage(
-                                    'assets/images/profilePURPLE.jpg')
-                                as ImageProvider,
+                        backgroundImage:
+                            const AssetImage('assets/images/profilePURPLE.jpg'),
                         backgroundColor: Colors.white,
                       ),
                     ),
@@ -445,7 +429,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               SizedBox(height: mediaSize.height * 0.09),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.account_box_outlined, color: myColor),
+                leading: const Icon(Icons.delivery_dining, color: myColor),
                 title: const Text(
                   "Your Account",
                   style: TextStyle(
@@ -462,7 +446,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 },
               ),
               const Divider(),
-
               ListTile(
                 leading: const Icon(Icons.delivery_dining, color: myColor),
                 title: const Text(
@@ -511,7 +494,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 ),
                 onTap: () {
                   final category = storeData?['category'];
-                  print('category $category');
                   if (category != null) {
                     Navigator.push(
                       context,
@@ -526,61 +508,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                           content: Text('Category not found for this store.')),
                     );
                   }
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.emoji_events, color: myColor),
-                title: const Text(
-                  "Manage Store's point system",
-                  style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ManagePointsPage()),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(LineAwesomeIcons.tag, color: myColor),
-                title: const Text(
-                  "Sales Management",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: myColor,
-                      letterSpacing: 1),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductSelectionPage(),
-                    ),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.subscriptions, color: myColor),
-                title: const Text(
-                  "Manage your subscription",
-                  style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ManageSubscriptionPage()),
-                  );
                 },
               ),
               const Divider(),
@@ -604,23 +531,25 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.lightbulb, color: myColor),
+                leading: const Icon(LineAwesomeIcons.tag, color: myColor),
                 title: const Text(
-                  "Tutorial",
+                  "Sales Management",
                   style: TextStyle(
-                    color: myColor,
-                    fontWeight: FontWeight.w800,
-                  ),
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
                 ),
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => VideoPage()),
+                    MaterialPageRoute(
+                      builder: (context) => ProductSelectionPage(),
+                    ),
                   );
                 },
               ),
               const Divider(),
-              // const SizedBox(height: 20), // Optional spacing
+              const SizedBox(height: 20), // Optional spacing
               ListTile(
                 leading: const Icon(LineAwesomeIcons.alternate_sign_out,
                     color: myColor),
@@ -794,6 +723,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                                   ),
                                 );
                               },
+                              postType: post['post_type'] ?? '',
+                              store_id: post['store_id'] ?? '',
                             );
                           },
                         ),
@@ -843,6 +774,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                                   ),
                                 );
                               },
+                              postType: feedback['post_type'] ?? '',
+                              store_id: feedback['store_id'] ?? '',
                             );
                           },
                         ),
