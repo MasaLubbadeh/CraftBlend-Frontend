@@ -15,6 +15,7 @@ import '../specialOrders/specialOrder_page.dart';
 import '../storeManagesPointSystem.dart';
 import 'dashboard.dart';
 import 'storeProfile_page.dart'; // Import the intl package for date formatting
+import '../tutorial_page.dart';
 
 class StoreProfilePage extends StatefulWidget {
   final String userID;
@@ -444,7 +445,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               SizedBox(height: mediaSize.height * 0.09),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.delivery_dining, color: myColor),
+                leading: const Icon(Icons.account_box_outlined, color: myColor),
                 title: const Text(
                   "Your Account",
                   style: TextStyle(
@@ -461,6 +462,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 },
               ),
               const Divider(),
+
               ListTile(
                 leading: const Icon(Icons.delivery_dining, color: myColor),
                 title: const Text(
@@ -582,7 +584,24 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 },
               ),
               const Divider(),
-              const SizedBox(height: 20), // Optional spacing
+              ListTile(
+                leading: const Icon(Icons.lightbulb, color: myColor),
+                title: const Text(
+                  "Tutorial",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  /* Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => VideoButtonPage()),
+                  );*/
+                },
+              ),
+              const Divider(),
+              // const SizedBox(height: 20), // Optional spacing
               ListTile(
                 leading: const Icon(LineAwesomeIcons.alternate_sign_out,
                     color: myColor),

@@ -24,7 +24,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   void initState() {
     super.initState();
     order = widget.order;
-    print("Received order id: ${order['orderId']}"); // Debug print
+    print("Received orderrrrrrrrrrr id: ${order}"); // Debug print
   }
 
   Future<String?> _fetchToken() async {
@@ -138,11 +138,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   Widget _buildOrderSummary() {
+    final items = order['items'] ?? [];
+    print(items.runtimeType); // Debug: Check if it's a List
+    print(order);
     // Group items by store to calculate totals
     Map<String, Map<String, dynamic>> storeTotals = {};
     // Extract customer's first and last name
     final firstName = order['userId']['firstName'] ?? '';
+    print(firstName);
+
     final lastName = order['userId']['lastName'] ?? '';
+    print(lastName);
+
     final customerName = "$firstName $lastName".trim();
 
     for (var item in order['items'] ?? []) {
@@ -585,13 +592,19 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         },
         body: jsonEncode({"newStatus": newStatus}),
       );
-
+      print("Raw response status: ${response.statusCode}");
+      print("Raw response body: ${response.body}");
       if (response.statusCode == 200) {
         // Update the order status in the UI
         final updatedOrder = json.decode(response.body)['order'];
         setState(() {
           order = updatedOrder; // Refresh the current order details
         });
+
+        final responseData = json.decode(response.body);
+        print("responseData: $responseData");
+
+        print("updatedOrder: $updatedOrder");
         // Send a notification to the user
         await sendOrderStatusNotification(updatedOrder, newStatus);
 

@@ -27,6 +27,12 @@ const String getWishlistProducts = '${url}wishlist/getList';
 const String getRecommendedStoresByCategory =
     '${url}getRecommendedStoresByCategory';
 
+///user points////
+const String addPoints = '${url}addPoints';
+const String removePoints = '${url}removePoints';
+const String getAllPoints = '${url}getAllPoints';
+const String getPointsForStore = '${url}getPointsForStore';
+
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
 const String updateProductInfo = '${url}product/updateProductInfo';

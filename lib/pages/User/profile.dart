@@ -1,6 +1,7 @@
 import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'PointsPage.dart';
 import 'editProfile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart'; // Make sure to import your login screen
@@ -460,6 +461,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             // await _updateRate(shekelPerPoint);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PointsPage(),
+                              ),
+                            );
                           },
                           icon: const Icon(Icons.emoji_events,
                               color: Colors.white),

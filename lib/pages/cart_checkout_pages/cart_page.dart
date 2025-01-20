@@ -698,7 +698,7 @@ class _CartPageState extends State<CartPage>
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '${entry.key}: ${entry.value}',
+                            '${entry.key}: ${entry.value ?? 'None'}',
                             style: const TextStyle(fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),

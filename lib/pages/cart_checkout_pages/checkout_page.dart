@@ -32,6 +32,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final TextEditingController streetController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   Map<String, List<Map<String, dynamic>>> storeDeliveryCities = {};
+  Map<String, int> storeUserPoints = {}; // Map to hold user's points per store
+
 // Store delivery cities by storeId
   bool isEditingPhoneNumber = false; // Add this at the class level
   bool isScheduleSectionExpanded = true;
@@ -53,6 +55,75 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _fetchContactNumber();
     _fetchCreditCards();
     _loadSavedCity();
+    _fetchUserPoints();
+    _fetchShekelPerPoint();
+  }
+
+  Future<Map<String, int>> _fetchShekelPerPoint() async {
+    print('in fetch shekel...');
+    final token = await _fetchToken();
+    if (token == null) return {};
+
+    Map<String, int> shekelPerPointByStore = {};
+    try {
+      final storeIds =
+          widget.cartItems.map((item) => item['storeId']['_id']).toSet();
+      for (var storeId in storeIds) {
+        final response = await http.get(
+          Uri.parse('$getShekelPerPoint?storeId=$storeId'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+
+          print('_fetchShekelPerPoint $data  ...:');
+          print(data['shekelPerPoint']);
+
+          shekelPerPointByStore[storeId] =
+              data['shekelPerPoint'] ?? 20; // Default to 1 if missing
+        }
+      }
+    } catch (e) {
+      print('Error fetching ShekelPerPoint: $e');
+    }
+    return shekelPerPointByStore;
+  }
+
+  Future<void> _fetchUserPoints() async {
+    final token = await _fetchToken();
+    if (token == null) return;
+
+    try {
+      for (var item in widget.cartItems) {
+        final storeId = item['storeId']['_id'];
+        if (!storeUserPoints.containsKey(storeId)) {
+          final response = await http.get(
+            Uri.parse(
+                '$getPointsForStore/$storeId'), // Update with your endpoint
+            headers: {'Authorization': 'Bearer $token'},
+          );
+
+          if (response.statusCode == 200) {
+            final data = json.decode(response.body);
+            print('User points response for store $storeId: $data');
+            // Ensure the points field is extracted correctly
+            final points = data['points'] is int
+                ? data['points']
+                : data['points']?['totalPoints'] ??
+                    0; // Adjust based on API response
+            setState(() {
+              storeUserPoints[storeId] = points;
+            });
+          } else {
+            setState(() {
+              storeUserPoints[storeId] = 0; // Default to 0 if API call fails
+            });
+          }
+        }
+      }
+    } catch (error) {
+      print('Error fetching user points: $error');
+    }
   }
 
   Future<void> _loadSavedCity() async {
@@ -1032,6 +1103,83 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Future<Map<String, int>> _addPoints(Map<String, double> storeTotals) async {
+    final token = await _fetchToken();
+    if (token == null) return {};
+
+    final shekelPerPointByStore = await _fetchShekelPerPoint();
+    Map<String, int> pointsAddedByStore = {};
+
+    try {
+      for (var storeId in storeTotals.keys) {
+        final grandTotal = storeTotals[storeId] ?? 0.0;
+        final shekelPerPoint = shekelPerPointByStore[storeId] ?? 1;
+
+        if (grandTotal >= shekelPerPoint) {
+          final pointsToAdd = (grandTotal / shekelPerPoint).floor();
+          final response = await http.post(
+            Uri.parse(addPoints), // Replace with your endpoint
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode({
+              'storeId': storeId,
+              'points': pointsToAdd,
+            }),
+          );
+
+          if (response.statusCode == 200) {
+            final storeName = widget.cartItems.firstWhere(
+                    (item) => item['storeId']['_id'] == storeId)['storeId']
+                ['storeName'];
+            pointsAddedByStore[storeName] = pointsToAdd;
+          } else {
+            print('Failed to add points for store $storeId: ${response.body}');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error adding points: $e');
+    }
+
+    return pointsAddedByStore;
+  }
+
+  Future<void> _reducePoints() async {
+    final token = await _fetchToken();
+    if (token == null) return;
+
+    try {
+      for (var storeId in storeUserPoints.keys) {
+        final pointsToDeduct = storeUserPoints[storeId] ?? 0;
+        if (pointsToDeduct > 0) {
+          final response = await http.patch(
+            Uri.parse(removePoints), // Replace with your endpoint
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: json.encode({
+              'storeId': storeId,
+              'points': pointsToDeduct,
+            }),
+          );
+
+          if (response.statusCode != 200) {
+            print(
+                'Failed to reduce points for store $storeId: ${response.body}');
+          } else {
+            print(
+                'Points reduced successfully for store $storeId by $pointsToDeduct');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error reducing points: $e');
+    }
+  }
+
   Widget _buildSummarySection() {
     deliveryCost =
         selectedCity != null ? _calculateDeliveryCosts(selectedCity!) : 0.0;
@@ -1071,8 +1219,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       storeTotals[storeId]!["grandTotal"] =
           (storeTotals[storeId]!["productsTotal"] ?? 0) +
-              (storeTotals[storeId]!["deliveryCost"] ?? 0);
+              (storeTotals[storeId]!["deliveryCost"] ?? 0) -
+              (storeUserPoints[storeId]?.toDouble() ??
+                  0); // Deduct pointssssssssss
+      ;
     }
+    double overallPointsUsed = storeUserPoints.values
+        .fold(0, (sum, points) => sum + points.toDouble());
+    double overallTotal = (widget.total + deliveryCost) - overallPointsUsed;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1106,6 +1260,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _buildSummaryRow('Delivery Cost',
                         '${totals["deliveryCost"]!.toStringAsFixed(2)}₪',
                         isLight: true),
+                    if (storeUserPoints[storeId] != null)
+                      //&&
+                      //    storeUserPoints[storeId]! > 0)
+                      _buildSummaryRow(
+                          'Points Discount', '-${storeUserPoints[storeId]}₪',
+                          isLight: true),
                     _buildSummaryRow('Grand Total',
                         '${totals["grandTotal"]!.toStringAsFixed(2)}₪',
                         isBold: true),
@@ -1118,7 +1278,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         }),
         _buildSummaryRow(
           'Overall Total',
-          '${(widget.total + deliveryCost).toStringAsFixed(2)}₪',
+          '${overallTotal.toStringAsFixed(2)}₪',
           isBold: true,
         ),
       ],
@@ -1224,7 +1384,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 print('Placing Order...');
                 try {
                   final success = await _placeOrder(); // Check if successful
-                  if (success) {
+                  /*if (success) {
                     // Show success modal on successful order placement
                     _showThankYouModal(context);
                   } else {
@@ -1234,7 +1394,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           content:
                               Text('Failed to place order. Please try again.')),
                     );
-                  }
+                  }*/
                 } catch (e) {
                   // Handle errors gracefully
                   print('Error placing order: $e');
@@ -1326,6 +1486,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         regularOrders.add(item);
       }
     }
+    Map<String, int> pointsAddedByStore = {};
 
     // Process special orders
     if (specialOrders.isNotEmpty) {
@@ -1333,123 +1494,128 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (!success) return false; // Stop if special order processing fails
     }
 
-    // If there are no regular orders, skip regular order processing
-    if (regularOrders.isEmpty) {
-      // Show thank-you modal for special orders only
-      _showThankYouModal(context);
-      return true;
-    }
+    // Process regular orders if they exist
+    if (regularOrders.isNotEmpty) {
+      Map<String, double> deliveryCostsByStore =
+          selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
 
-    // Continue processing regular orders
-    Map<String, double> deliveryCostsByStore =
-        selectedCity != null ? _getDeliveryCostsByStore(selectedCity!) : {};
+      // Group items by store and calculate totals
+      Map<String, Map<String, dynamic>> groupedStores = {};
 
-    // Group items by store and calculate totals
-    Map<String, Map<String, dynamic>> groupedStores = {};
+      for (var item in regularOrders) {
+        final storeId = item['storeId']['_id'];
+        final storeName = item['storeId']['storeName'];
+        final productTotal = item['totalPriceWithQuantity'] ?? 0.0;
+        final deliveryCost = deliveryCostsByStore[storeId] ?? 0.0;
 
-    for (var item in regularOrders) {
-      final storeId = item['storeId']['_id'];
-      final storeName = item['storeId']['storeName'];
-      final productTotal = item['totalPriceWithQuantity'] ?? 0.0;
-      final deliveryCost = deliveryCostsByStore[storeId] ?? 0.0;
+        if (!groupedStores.containsKey(storeId)) {
+          groupedStores[storeId] = {
+            "storeName": storeName,
+            "items": [],
+            "productsTotal": 0.0,
+            "deliveryCost": deliveryCost,
+            "grandTotal": 0.0,
+          };
+        }
 
-      if (!groupedStores.containsKey(storeId)) {
-        groupedStores[storeId] = {
-          "storeName": storeName,
-          "items": [],
-          "productsTotal": 0.0,
-          "deliveryCost": deliveryCost,
-          "grandTotal": 0.0,
-        };
+        groupedStores[storeId]!["items"].add(item);
+        groupedStores[storeId]!["productsTotal"] += productTotal;
       }
 
-      // Add the item to the store's list
-      groupedStores[storeId]!["items"].add(item);
+      // Calculate grand totals for each store
+      groupedStores.forEach((storeId, storeData) {
+        storeData["grandTotal"] =
+            storeData["productsTotal"] + storeData["deliveryCost"];
+      });
 
-      // Accumulate the products' totals
-      groupedStores[storeId]!["productsTotal"] += productTotal;
-    }
+      // Prepare items for the backend
+      List<Map<String, dynamic>> items = [];
+      groupedStores.forEach((storeId, storeData) {
+        for (var item in storeData["items"]) {
+          items.add({
+            "productId": item["productId"]["_id"],
+            "storeId": storeId,
+            "quantity": item["quantity"],
+            "pricePerUnitWithOptionsCost": item["pricePerUnitWithOptionsCost"],
+            "totalPriceWithQuantity": item["totalPriceWithQuantity"],
+            "selectedOptions": item["selectedOptions"],
+            "deliveryType": item["productId"]["deliveryType"],
+            if (item["productId"]["allowDeliveryDateSelection"] == true) ...{
+              "timePickingAllowed": true,
+              "selectedDate":
+                  (item["selectedDate"] as DateTime?)?.toIso8601String(),
+              "selectedTime": item["selectedTime"]?.format(context),
+            },
+            "storeTotal": storeData["productsTotal"],
+            "storeDeliveryCost": storeData["deliveryCost"],
+          });
+        }
+      });
 
-    // Calculate grand totals for each store
-    groupedStores.forEach((storeId, storeData) {
-      storeData["grandTotal"] =
-          storeData["productsTotal"] + storeData["deliveryCost"];
-    });
-
-    // Prepare the items for the backend
-    List<Map<String, dynamic>> items = [];
-    groupedStores.forEach((storeId, storeData) {
-      for (var item in storeData["items"]) {
-        items.add({
-          "productId": item["productId"]["_id"],
-          "storeId": storeId,
-          "quantity": item["quantity"],
-          "pricePerUnitWithOptionsCost": item["pricePerUnitWithOptionsCost"],
-          "totalPriceWithQuantity": item["totalPriceWithQuantity"],
-          "selectedOptions": item["selectedOptions"],
-          "deliveryType": item["productId"]["deliveryType"],
-          if (item["productId"]["allowDeliveryDateSelection"] == true) ...{
-            "timePickingAllowed": true,
-            "selectedDate": (item["selectedDate"] as DateTime?)
-                ?.toIso8601String(), // Convert DateTime to ISO string
-            "selectedTime": item["selectedTime"]
-                ?.format(context), // Use TimeOfDay's format method
+      Map<String, dynamic> orderData = {
+        "items": items,
+        "totalPrice": widget.total + deliveryCost,
+        "deliveryDetails": {
+          "city": selectedCity,
+          "street": streetController.text,
+          "contactNumber": contactNumber,
+        },
+        "paymentDetails": {
+          "method": selectedPaymentMethod == 'Cash on Delivery'
+              ? 'Cash on Delivery'
+              : selectedPaymentMethod == 'Apple Pay'
+                  ? 'Apple Pay'
+                  : 'Visa',
+          if (selectedPaymentMethod != 'Cash on Delivery') ...{
+            "cardNumber": creditCards.isNotEmpty
+                ? creditCards[0].replaceAll('*', '0').trim()
+                : null,
           },
-          "storeTotal": storeData["productsTotal"],
-          "storeDeliveryCost": storeData["deliveryCost"],
-        });
-      }
-    });
-
-    Map<String, dynamic> orderData = {
-      "items": items,
-      "totalPrice": widget.total + deliveryCost, // Overall total
-      "deliveryDetails": {
-        "city": selectedCity,
-        "street": streetController.text,
-        "contactNumber": contactNumber,
-      },
-      "paymentDetails": {
-        "method": selectedPaymentMethod == 'Cash on Delivery'
-            ? 'Cash on Delivery'
-            : selectedPaymentMethod == 'Apple Pay'
-                ? 'Apple Pay'
-                : 'Visa',
-        if (selectedPaymentMethod != 'Cash on Delivery') ...{
-          "cardNumber": creditCards.isNotEmpty
-              ? creditCards[0].replaceAll('*', '0').trim() // Masked card number
-              : null,
         },
-      },
-      "status": "Pending",
-      "deliveryPreference": _deliveryPreference,
-    };
+        "status": "Pending",
+        "deliveryPreference": _deliveryPreference,
+      };
 
-    try {
-      final response = await http.post(
-        Uri.parse(placeOrder), // Replace with your API URL
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(orderData),
-      );
+      try {
+        final response = await http.post(
+          Uri.parse(placeOrder),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(orderData),
+        );
 
-      if (response.statusCode == 201) {
-        print('Order placed successfully.');
-        await _reduceProductQuantities();
-        await _refreshCart();
-        _showThankYouModal(
-            context); // Show thank-you modal after successful order
-        return true;
-      } else {
-        print('Failed to place order: ${response.body}');
-        return false; // Indicate failure
+        if (response.statusCode == 201) {
+          await _reduceProductQuantities();
+          await _refreshCart();
+          await _reducePoints();
+
+          Map<String, double> storeTotals = {};
+          groupedStores.forEach((storeId, storeData) {
+            storeTotals[storeId] = storeData["grandTotal"] ?? 0.0;
+          });
+
+          pointsAddedByStore = await _addPoints(storeTotals);
+        } else {
+          print('Failed to place order: ${response.body}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Failed to place order. Please try again.')),
+          );
+          return false;
+        }
+      } catch (e) {
+        print('Error placing order: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Failed to place order. Please try again.')),
+        );
+        return false;
       }
-    } catch (e) {
-      print('Error placing order: $e');
-      return false;
     }
+    await _showThankYouModal(context, pointsAddedByStore);
+    return true;
   }
 
   Future<void> _refreshCart() async {
@@ -1480,7 +1646,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  Future<void> _showThankYouModal(BuildContext context) async {
+  Future<void> _showThankYouModal(
+      BuildContext context, Map<String, int> pointsAddedByStore) async {
+    String pointsMessage = pointsAddedByStore.isNotEmpty
+        ? pointsAddedByStore.entries
+            .map((entry) =>
+                'You earned ${entry.value} points from ${entry.key}!')
+            .join('\n')
+        : 'No points were added for this order.';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1503,74 +1677,89 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4, // Upper half
-                child: Image.asset(
-                  'assets/images/ThankYouCard.jpg', // Add your custom image
-                  fit: BoxFit.cover,
+              child: Container(
+                height:
+                    MediaQuery.of(context).size.height * 0.3, // Adjust height
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/ThankYouCard.jpg'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Subtext
-                    const Text(
-                      'Your order is now being processed.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      'Thank you for shopping with us!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.black54,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Back to Home Button
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const UserBottomNavigationBar(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: myColor.withOpacity(.7),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 50, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Back To Home',
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Subtext
+                      const Text(
+                        'Your order is now being processed.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.black54,
+                          height: 1.5,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 5),
+                      Text(
+                        pointsMessage,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.green,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Thank you for shopping with us!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: Colors.black54,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Back to Home Button
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context)
+                              .popUntil((route) => route.isFirst);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const UserBottomNavigationBar(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: myColor.withOpacity(.7),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text(
+                          'Back To Home',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

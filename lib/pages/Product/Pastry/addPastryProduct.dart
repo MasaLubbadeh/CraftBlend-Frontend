@@ -34,9 +34,13 @@ class _AddPastryProductState extends State<AddPastryProduct> {
   File? _selectedImage;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
+// Initially empty; we will fill them after we know the store’s category.
+  Map<String, List<Map<String, dynamic>>> predefinedOptions = {};
+  Map<String, bool> availableOptionStatus = {};
+  String? storeCategory;
 
   // Predefined Options
-  final Map<String, List<Map<String, dynamic>>> predefinedOptions = {
+  /*final Map<String, List<Map<String, dynamic>>> predefinedOptions = {
     'Topping': [
       {'name': 'White Chocolate', 'extraCost': 0},
       {'name': 'Milk Chocolate', 'extraCost': 0},
@@ -54,7 +58,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     'Topping': false,
     'Filling': false,
     'Flavor': false, // Example: 'Flavor' is optional by default
-  };
+  };*/
 
   // Selected Options
   final Map<String, List<Map<String, dynamic>>> selectedOptions = {
@@ -62,6 +66,98 @@ class _AddPastryProductState extends State<AddPastryProduct> {
     'Filling': [],
     'Flavor': [],
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStoreCategory();
+  }
+
+  Future<void> _fetchStoreCategory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        // handle missing auth or storeId
+        return;
+      }
+
+      // Call your getStoreCategory?storeId=xxx endpoint
+      final response = await http.get(
+        Uri.parse(getStoreCategory),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print(data);
+        // Suppose your backend returns {"category": "Pastry"} or so
+        final categoryName = data['category'];
+        setState(() {
+          storeCategory = categoryName;
+        });
+
+        // Now set options based on that category
+        _setupPredefinedOptions();
+      } else {
+        // handle server error
+        print('Failed to fetch store category: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching store category: $e');
+    }
+  }
+
+  void _setupPredefinedOptions() {
+    // If the store’s category is "Pastry", use the pastry defaults:
+    if (storeCategory == 'Pastry & Bakery') {
+      predefinedOptions = {
+        'Topping': [
+          {'name': 'White Chocolate', 'extraCost': 0},
+          {'name': 'Milk Chocolate', 'extraCost': 0},
+        ],
+        'Filling': [
+          {'name': 'Chocolate', 'extraCost': 0},
+        ],
+        'Flavor': [
+          {'name': 'Chocolate', 'extraCost': 0},
+        ],
+      };
+
+      availableOptionStatus = {
+        'Topping': false,
+        'Filling': false,
+        'Flavor': false,
+      };
+    }
+    // Otherwise, for ANY other category, create a minimal "Customization" group:
+    else {
+      // You can name this group anything you like (“Customization”, “Option1” etc.)
+      // Provide exactly 1 default choice
+      predefinedOptions = {
+        'Available Sizes': [
+          {'name': 'Basic', 'extraCost': 0},
+        ],
+      };
+
+      availableOptionStatus = {
+        'Customization': false,
+      };
+    }
+
+    // Also make sure that "selectedOptions" is in sync:
+    // (Re-initialize the selectedOptions to match your new keys)
+    selectedOptions.clear();
+    for (String optionGroup in predefinedOptions.keys) {
+      selectedOptions[optionGroup] = [];
+    }
+
+    // Force a rebuild:
+    setState(() {});
+  }
 
   Future<void> _pickImage() async {
     final XFile? pickedFile =
@@ -334,7 +430,7 @@ class _AddPastryProductState extends State<AddPastryProduct> {
         elevation: 0,
         toolbarHeight: appBarHeight,
         title: const Text(
-          'Add Pastry Product',
+          'Add New Product',
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.bold,
