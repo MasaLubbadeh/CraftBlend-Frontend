@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:craft_blend_project/components/addressWidget.dart';
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Product/Pastry/pastryUser_page.dart';
@@ -53,6 +55,10 @@ class _HomePageState extends State<HomePage> {
   bool isLoadingFavorites = true;
   bool isLoadingWishlist = true;
   bool isLoadingMostSearched = true;
+
+  List<Map<String, dynamic>> pastries = [];
+  late Timer _timer;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +73,36 @@ class _HomePageState extends State<HomePage> {
     _fetchRecommendedStores();
     _fetchSuggestedProducts();
     _fetchNotifications();
+
+    // Set up the timer to update the remaining time for each pastry every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        for (var pastry in pastries) {
+          if (pastry['onSale'] == true && pastry['endDate'] != null) {
+            try {
+              DateTime endDate = DateTime.parse(pastry['endDate']);
+              pastry['remainingTime'] = _calculateRemainingTime(endDate);
+            } catch (e) {
+              print("Invalid endDate format for pastry: ${pastry['endDate']}");
+              pastry['remainingTime'] = 'Invalid Date';
+            }
+          } else {
+            pastry['remainingTime'] = 'Not on Sale';
+          }
+        }
+      });
+    });
+  }
+
+  String _calculateRemainingTime(DateTime endDate) {
+    DateTime currentDate = DateTime.now();
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      return 'Sale Ended';
+    } else {
+      return '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m ${difference.inSeconds % 60}s';
+    }
   }
 
   Future<String?> _getToken() async {
@@ -377,6 +413,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProductCard(Map<String, dynamic> product) {
+    // pastries = product as List<Map<String, dynamic>>;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -398,7 +436,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Product image with badge overlay
               AspectRatio(
-                aspectRatio: 1.09, // Square aspect ratio
+                aspectRatio: 1.5, // Square aspect ratio
                 child: Stack(
                   children: [
                     // Product Image
@@ -463,6 +501,33 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
+
+                    if (product['onSale'] ==
+                        true) // Check if the product is on sale
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color.fromARGB(
+                                180, 255, 0, 0), // Fully transparent
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${product['saleAmount']}% SALE ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     if (product['inStock'] == true)
                       Positioned(
                         top: 8,
@@ -498,13 +563,43 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               // Product price
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  '${product['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                  style: const TextStyle(color: Colors.grey),
+              if (product['onSale'] == true) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${product['oldPrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          decoration:
+                              TextDecoration.lineThrough, // Strike-through
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${product['salePrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.red, // Highlight sale price
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ] else ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    '${product['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               // Store information
               if (product['store'] != null && product['store'] is Map)
