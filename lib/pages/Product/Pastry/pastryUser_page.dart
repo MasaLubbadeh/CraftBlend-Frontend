@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../configuration/config.dart';
-//import '../../User/specialOrdersUserPOV/AvailableSpecialOrderOptionsPage.dart';
+
+import '../../User/specialOrdersUserPOV/AvailableSpecialOrderOptionsPage.dart';
+
 import '../productDetails_page.dart';
 import '../../../components/badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -488,14 +490,14 @@ class _PastryPageState extends State<PastryPage> {
                 GestureDetector(
                   onTap: () {
                     // Navigate to the special order form
-                    /*Navigator.push(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AvailableSpecialOrderOptionsPage(
                           storeId: widget.storeId,
                         ),
                       ),
-                    );*/
+                    );
                   },
                   child: Container(
                     width: double.infinity,

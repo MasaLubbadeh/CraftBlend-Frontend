@@ -1,11 +1,17 @@
+// lib/pages/special_orders/special_orders_page.dart
+
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../components/datePicker.dart';
 import '../../../configuration/config.dart';
-import 'specialOrderOptions.dart';
+import '../../../models/custom__field.dart';
+import '../../../models/order_option.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../storeOrders_page.dart';
+import 'EditCustomFieldPage.dart';
+import 'ManageSpecialOrderOptionsPage.dart';
 
 class SpecialOrdersPage extends StatefulWidget {
   final String category;
@@ -17,39 +23,26 @@ class SpecialOrdersPage extends StatefulWidget {
 }
 
 class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
+  Map<String, TextEditingController> _photoUploadPromptControllers = {};
+  Map<String, TextEditingController> _descriptionControllers = {};
   bool specialOrdersEnabled =
       true; // Indicates if the store allows special orders
-  bool isEditing = false; // Tracks whether the user is editing
-  Map<String, bool> selectedOrderOptions = {
-    'Custom-Made Cake': false,
-    'Large Orders': false,
-  }; // Tracks the selection state of each option
+  bool isSpecialOrderEnabled = false;
 
-  @override
-  void initState() {
-    _initializeOrderOptions(); // Replace 'Bakery' with the actual category
-  }
-
+  // Define the categories and their default options
   Map<String, List<String>> categoryDefaultOptions = {
     'Phone Accessories': ['Personalized designs', 'Large orders'],
     'Pottery': ['Custom Pottery Design', 'Bulk orders'],
-    'Gift Items': [
-      'Personalized Gift Packaging',
-      'Custom Gift Set Design',
-    ],
-    'Crochet & Knitting': [
-      'Personalized designs',
-      'Large quantities',
-    ],
+    'Gift Items': ['Personalized Gift Packaging', 'Custom Gift Set Design'],
+    'Crochet & Knitting': ['Personalized designs', 'Large quantities'],
     'Flowers': [
-      'Personalized designs',
       'Event-specific bulk arrangements',
+      'Personalized designs',
     ],
-    'Pastry & Bakery': [
-      'Custom-Made Cake',
-      'Large Orders',
-    ],
+    'Pastry & Bakery': ['Custom-Made Cake', 'Large Orders'],
   };
+
+  // Function to get image path for a given option and category
   String _getImageForOption(String option, String category) {
     Map<String, Map<String, String>> categoryImages = {
       'Pastry & Bakery': {
@@ -81,138 +74,983 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
     return categoryImages[category]?[option] ?? 'assets/images/notes.png';
   }
 
-  void _initializeOrderOptions() {
+  // Example function to retrieve the token
+  Future<String?> getToken() async {
+    // Use SharedPreferences or secure storage to retrieve the token
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  // Navigate to the Review Special Orders Page
+  void _navigateToReviewSpecialOrdersPage() {
+    /*  Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ReviewSpecialOrdersPage()),
+    );*/
+  }
+
+  // Define the selectedOrderOptions map
+  Map<String, OrderOption> selectedOrderOptions = {};
+
+  bool isLoading = true; // Indicates if data is being loaded
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfAllowSpecialOrders();
+    _fetchStoreSpecialOrderOptions(); // Fetch existing options from backend
+  }
+
+  @override
+  void dispose() {
+    // Dispose of all photo upload prompt controllers
+    _photoUploadPromptControllers.forEach((key, controller) {
+      controller.dispose();
+    });
+
+    // Dispose of all description controllers
+    _descriptionControllers.forEach((key, controller) {
+      controller.dispose();
+    });
+    super.dispose();
+  }
+
+  Future<void> _checkIfAllowSpecialOrders() async {
+    try {
+      final token = await getToken(); // Fetch the authentication token
+      if (token == null) {
+        _showSnackBar("Authentication token not found.");
+        return;
+      }
+
+      // Call the API to get the current special order status
+      final response = await http.get(
+        Uri.parse(getIfSpecialOrdersAllowed), // Replace with your API endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the response to get the current status
+        final data = json.decode(response.body);
+        final bool status = data['allowSpecialOrders'] ?? false;
+
+        // Update the switch's state
+        setState(() {
+          isSpecialOrderEnabled = status;
+        });
+      } else {
+        _showSnackBar("Failed to fetch special order status.");
+      }
+    } catch (e) {
+      print("Error fetching special order status: $e");
+      _showSnackBar("An error occurred while fetching special order status.");
+    }
+  }
+
+  // Method to fetch existing Special Order Options from backend
+  Future<void> _fetchStoreSpecialOrderOptions() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final token = await getToken();
+      if (token == null) {
+        _showSnackBar("Authentication token not found.");
+        _initializeWithDefaults();
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(getStoreSpecialOrderOptions), // Ensure this URL is correct
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List && data.isNotEmpty) {
+          // Assuming the response is a list of configurations
+          List<OrderOption> fetchedOptions =
+              List<OrderOption>.from(data.map((x) => OrderOption.fromMap(x)));
+          // Flag each fetched option as selected
+          for (var option in fetchedOptions) {
+            option.isSelected = true;
+            print(
+                'Fetched Option: ${option.name}, isSelected: ${option.isSelected}');
+          }
+          setState(() {
+            selectedOrderOptions.clear(); // Clear previous entries
+            for (var option in fetchedOptions) {
+              selectedOrderOptions[option.name] = option;
+              // Initialize controllers
+              _photoUploadPromptControllers[option.name] =
+                  TextEditingController(text: option.photoUploadPrompt);
+              _descriptionControllers[option.name] =
+                  TextEditingController(text: option.description);
+            }
+            isLoading = false;
+          });
+        } else {
+          // No existing configurations, initialize with defaults
+          _initializeWithDefaults();
+        }
+      } else {
+        // Handle server error
+        _showSnackBar("Failed to fetch previous configurations.");
+        _initializeWithDefaults();
+      }
+    } on http.ClientException catch (e) {
+      _showSnackBar("Client error: ${e.message}");
+      _initializeWithDefaults();
+    } on TimeoutException {
+      _showSnackBar("Request timed out. Please try again.");
+      _initializeWithDefaults();
+    } catch (e) {
+      _showSnackBar("An unexpected error occurred: $e");
+      _initializeWithDefaults();
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // Initialize with default options if no existing configurations are found
+  void _initializeWithDefaults() {
     final defaultOptions = categoryDefaultOptions[widget.category] ?? [];
     setState(() {
-      selectedOrderOptions = {for (var option in defaultOptions) option: false};
+      selectedOrderOptions = {
+        for (var option in defaultOptions)
+          option: OrderOption(
+            id: '', name: option, isSelected: true, // Flag as selected
+          ),
+      };
+      // Initialize controllers for each option
+      selectedOrderOptions.forEach((key, option) {
+        _photoUploadPromptControllers[key] =
+            TextEditingController(text: option.photoUploadPrompt);
+        _descriptionControllers[key] =
+            TextEditingController(text: option.description);
+      });
+      isLoading = false;
     });
   }
 
+  // Method to show SnackBars
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Method to confirm and remove an option
+  void _confirmRemoveOption(String optionTitle) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Option'),
+        content: Text('Are you sure you want to remove "$optionTitle"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                // Remove the option from selectedOrderOptions
+                selectedOrderOptions.remove(optionTitle);
+                // Dispose and remove controllers
+                _descriptionControllers[optionTitle]?.dispose();
+                _descriptionControllers.remove(optionTitle);
+                _photoUploadPromptControllers[optionTitle]?.dispose();
+                _photoUploadPromptControllers.remove(optionTitle);
+              });
+              Navigator.pop(context); // Close the dialog
+              _showSnackBar('"$optionTitle" has been removed.');
+            },
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build the list of special order options with expandable configuration cards
   Widget _buildSpecialOrderOptions() {
     if (selectedOrderOptions.isEmpty) {
-      return const Center(child: Text('No special order options available.'));
+      return const Center(
+        child: Text('No special order options available.'),
+      );
     }
 
     return ListView.builder(
       shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(), // Prevent nested scrolling
       itemCount: selectedOrderOptions.length,
       itemBuilder: (context, index) {
         final optionTitle = selectedOrderOptions.keys.elementAt(index);
-        final isSelected = selectedOrderOptions[optionTitle] ?? false;
-        final imagePath = _getImageForOption(
-            optionTitle, widget.category); // Use dynamic category
+        final orderOption = selectedOrderOptions[optionTitle]!;
+        final isSelected = orderOption.isSelected;
+        final imagePath = _getImageForOption(optionTitle, widget.category);
 
-        return Card(
-          elevation: 3,
-          margin: const EdgeInsets.symmetric(vertical: 15),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset(
-                  imagePath,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
+        return Column(
+          children: [
+            // Option Card with Checkbox and Delete Button
+            Card(
+              elevation: 3,
+              margin: const EdgeInsets.symmetric(vertical: 15),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.asset(
+                      imagePath,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        // Log the error if needed
+                        print('Error loading image: $imagePath');
+                        // Return a placeholder image or an icon
+                        return Image.asset(
+                          'assets/images/placeholder.png', // Ensure you have a placeholder image
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                  ),
+                  title: Text(
+                    optionTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color:
+                          myColor, // Ensure `myColor` is defined in your code
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Checkbox
+                      Checkbox(
+                        value: isSelected,
+                        activeColor: myColor, // Replace with your desired color
+                        onChanged: (value) {
+                          setState(() {
+                            orderOption.isSelected = value ?? false;
+                            if (!orderOption.isSelected) {
+                              // Optionally clear description and photo instructions when deselected
+                              _descriptionControllers[optionTitle]?.text = '';
+                              _photoUploadPromptControllers[optionTitle]?.text =
+                                  '';
+                            }
+                          });
+                        },
+                      ),
+                      // Delete Button
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _confirmRemoveOption(optionTitle);
+                        },
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    setState(() {
+                      orderOption.isSelected = !orderOption.isSelected;
+                      if (!orderOption.isSelected) {
+                        // Optionally clear description and photo instructions when deselected
+                        _descriptionControllers[optionTitle]?.text = '';
+                        _photoUploadPromptControllers[optionTitle]?.text = '';
+                      }
+                    });
+                  },
                 ),
               ),
-              title: Text(optionTitle,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              trailing: Checkbox(
-                value: isSelected,
-                activeColor: myColor,
-                onChanged: (value) {
-                  setState(() {
-                    selectedOrderOptions[optionTitle] = value ?? false;
-                  });
-                },
-              ),
             ),
-          ),
+            // Explanatory Text Between Option and Configuration
+            if (isSelected)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Text(
+                  "Configure the details for this option below. Here, you can add specific choices, questions, and any important information you need from your customers to fulfill their orders effectively.",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    letterSpacing: 1,
+                  ),
+                  textAlign: TextAlign.justify,
+                ),
+              ),
+            // Configuration Card (visible only when selected)
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.0),
+                child: Card(
+                  color: myColor, // Ensure `myColor` is defined in your code
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 15),
+                  child: ExpansionTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    iconColor: Colors.white70,
+                    collapsedIconColor: Colors.white70,
+                    backgroundColor: myColor,
+                    title: const Text(
+                      'Configure Order Form',
+                      style: TextStyle(color: Colors.white70, letterSpacing: 2),
+                    ),
+                    initiallyExpanded: true,
+                    children: [
+                      const Divider(),
+                      // Description Field
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: TextFormField(
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(color: Colors.white70),
+                          decoration: InputDecoration(
+                            labelText: 'Description',
+                            hintText: 'Enter a description for this option',
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            hintStyle: const TextStyle(color: Colors.white70),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white70),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.white70, width: 2.0),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              orderOption.description = value;
+                            });
+                          },
+                          controller: _descriptionControllers[optionTitle],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Divider(),
+                      const SizedBox(height: 10),
+                      // Switch to require photo upload
+                      SwitchListTile(
+                        activeColor: Colors.white70,
+                        title: const Text(
+                          'Allow Photo Upload',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        value: orderOption.requiresPhotoUpload,
+                        onChanged: (value) {
+                          setState(() {
+                            orderOption.requiresPhotoUpload = value;
+                            if (!value) {
+                              orderOption.photoUploadPrompt = '';
+                              _photoUploadPromptControllers[optionTitle]?.text =
+                                  '';
+                            }
+                          });
+                        },
+                      ),
+                      // TextField for photo upload prompt (simplified statement)
+                      if (orderOption.requiresPhotoUpload)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: TextFormField(
+                            textDirection: TextDirection.ltr,
+                            style: const TextStyle(color: Colors.white70),
+                            decoration: const InputDecoration(
+                              labelText: 'Photo Instructions',
+                              hintText:
+                                  'e.g., Upload a similar design or your photo on the product',
+                              labelStyle: TextStyle(color: Colors.white70),
+                              hintStyle: TextStyle(color: Colors.white70),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white70),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.white70, width: 2.0),
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                orderOption.photoUploadPrompt = value;
+                              });
+                            },
+                            controller:
+                                _photoUploadPromptControllers[optionTitle],
+                          ),
+                        ),
+                      const SizedBox(height: 10),
+                      const Divider(),
+                      // Dynamic Custom Fields
+                      ...orderOption.customFields.map((field) {
+                        Widget fieldWidget;
+                        switch (field.type) {
+                          case FieldType.text:
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: TextField(
+                                textDirection: TextDirection.ltr,
+                                decoration: InputDecoration(
+                                  labelText: field.label,
+                                  hintText: field.isRequired
+                                      ? 'Required'
+                                      : 'Optional',
+                                  labelStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  enabledBorder: const UnderlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.white70),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.white70, width: 2.0),
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  // Handle changes to the text field
+                                },
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            );
+                            break;
+                          case FieldType.number:
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  labelText: field.label,
+                                  hintText: field.isRequired
+                                      ? 'Required'
+                                      : 'Optional',
+                                  labelStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  enabledBorder: const UnderlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.white70),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.white70, width: 2.0),
+                                  ),
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                onChanged: (value) {
+                                  // Handle changes to the number field
+                                },
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            );
+                            break;
+                          case FieldType.dropdown:
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: DropdownButtonFormField<String>(
+                                decoration: InputDecoration(
+                                  labelText: field.label,
+                                  hintText: field.isRequired
+                                      ? 'Please select'
+                                      : 'Optional',
+                                  labelStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white70),
+                                  enabledBorder: const UnderlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.white70),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.white70, width: 2.0),
+                                  ),
+                                ),
+                                dropdownColor: Colors.grey[800],
+                                style: const TextStyle(color: Colors.white70),
+                                icon: const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.white70,
+                                ),
+                                items: field.options!
+                                    .map(
+                                      (option) => DropdownMenuItem(
+                                        value: option.value,
+                                        child: Text(
+                                          '${option.value} (+\$${option.extraCost.toStringAsFixed(2)})',
+                                          style: const TextStyle(
+                                              color: Colors.white70),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  // Handle dropdown selection
+                                },
+                                validator: (value) {
+                                  if (field.isRequired && value == null) {
+                                    return 'Please select an option';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            );
+                            break;
+                          case FieldType.checkbox:
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: Column(
+                                children: field.options!.map((option) {
+                                  return CheckboxListTile(
+                                    title: Text(
+                                      '${option.value} (+\$${option.extraCost.toStringAsFixed(2)})',
+                                      style: const TextStyle(
+                                          color: Colors.white70),
+                                    ),
+                                    value: false, // Handle state accordingly
+                                    onChanged: (bool? value) {
+                                      // Handle checkbox changes
+                                    },
+                                    activeColor: Colors.white70,
+                                    checkColor:
+                                        Colors.black, // For better visibility
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                            break;
+                          case FieldType.date:
+                            fieldWidget = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: DatePickerField(
+                                label: field.label,
+                                isRequired: field.isRequired,
+                                // Implement onDateSelected if needed
+                              ),
+                            );
+                            break;
+                          default:
+                            fieldWidget = const SizedBox.shrink();
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            fieldWidget,
+                            const SizedBox(height: 10),
+                            const Divider(
+                              color: Colors.white70,
+                              thickness: 1,
+                              height: 20,
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                      // Adding a new custom field dynamically
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Navigate to management page or open a dialog to add a new custom field
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditCustomFieldPage(
+                                  onSave: (newField) {
+                                    setState(() {
+                                      orderOption.customFields.add(newField);
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.add, color: Colors.white70),
+                          label: const Text(
+                            'Add Custom Field',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                myColor, // Ensure `myColor` is defined
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
   }
 
-/*
-  Widget _buildSpecialOrderOptions() {
-    if (selectedOrderOptions.isEmpty) {
-      return const Center(child: Text('No special order options available.'));
-    }
-
-    return Column(
-      children: selectedOrderOptions.entries.map((entry) {
-        return CheckboxListTile(
-          title: Text(entry.key),
-          value: entry.value,
-          onChanged: (value) {
-            setState(() {
-              selectedOrderOptions[entry.key] = value ?? false;
-            });
-          },
-          activeColor: myColor,
-        );
-      }).toList(),
-    );
-  }
-*/
+  // Build the "Add Option" button
   Widget _buildAddOptionButton() {
     final TextEditingController _newOptionController = TextEditingController();
 
-    return ElevatedButton.icon(
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Add Special Order Option'),
-            content: TextField(
-              controller: _newOptionController,
-              decoration: const InputDecoration(hintText: 'Enter new option'),
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Add Special Order Option'),
+              content: TextField(
+                controller: _newOptionController,
+                decoration: const InputDecoration(hintText: 'Enter new option'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final newOptionName = _newOptionController.text.trim();
+                    if (newOptionName.isNotEmpty) {
+                      final token = await getToken();
+                      if (token == null) {
+                        _showSnackBar("Authentication token not found.");
+                        return;
+                      }
+
+                      // Show a loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      // Prepare the payload
+                      Map<String, dynamic> payload = {
+                        'name': newOptionName,
+                        'description': '',
+                        'requiresPhotoUpload': false,
+                        'photoUploadPrompt': '',
+                        'customFields': [],
+                      };
+
+                      try {
+                        final response = await http
+                            .post(
+                              Uri.parse(createStoreSpecialOrderOption),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer $token',
+                              },
+                              body: json.encode(payload),
+                            )
+                            .timeout(const Duration(seconds: 10));
+
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+
+                        if (response.statusCode == 201) {
+                          final data = json.decode(response.body);
+                          final createdOption = OrderOption.fromMap(data);
+                          createdOption.isSelected =
+                              true; // Ensure it's selected
+                          setState(() {
+                            selectedOrderOptions[createdOption.name] =
+                                createdOption;
+                            _photoUploadPromptControllers[createdOption.name] =
+                                TextEditingController(
+                                    text: createdOption.photoUploadPrompt);
+                            _descriptionControllers[createdOption.name] =
+                                TextEditingController(
+                                    text: createdOption.description);
+                            // Optionally, add the new option to categoryDefaultOptions
+                            categoryDefaultOptions[widget.category]
+                                ?.add(createdOption.name);
+                          });
+
+                          _showSnackBar("New option added successfully!");
+                          _newOptionController.clear(); // Clear the input field
+
+                          // Refresh the list by re-fetching from backend
+                          await _fetchStoreSpecialOrderOptions();
+                        } else {
+                          _showSnackBar("Failed to add new option.");
+                        }
+                      } on http.ClientException catch (e) {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("Client error: ${e.message}");
+                      } on TimeoutException {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("Request timed out. Please try again.");
+                      } catch (e) {
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // Dismiss loading
+                        _showSnackBar("An unexpected error occurred: $e");
+                      }
+                    }
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final newOption = _newOptionController.text.trim();
-                  if (newOption.isNotEmpty) {
-                    setState(() {
-                      selectedOrderOptions[newOption] = false;
-                    });
-                  }
-                  Navigator.pop(context);
+          );
+        },
+        icon: const Icon(Icons.add, color: Colors.white70),
+        label: const Text(
+          'Add Option',
+          style: TextStyle(color: Colors.white70),
+        ),
+        style: ElevatedButton.styleFrom(backgroundColor: myColor),
+      ),
+    );
+  }
+
+  // Method to save configurations to backend
+  Future<void> _saveSpecialOrderConfigurations() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Authentication token not found.")),
+        );
+        return;
+      }
+
+      // Show a loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Iterate through each selected order option
+      for (var entry in selectedOrderOptions.entries) {
+        final optionTitle = entry.key;
+        final orderOption = entry.value;
+
+        if (!orderOption.isSelected) continue;
+
+        // Prepare the payload based on the StoreSpecialOrderOption schema
+        Map<String, dynamic> payload = {
+          'name': orderOption.name,
+          'description': _descriptionControllers[optionTitle]?.text ?? '',
+          'requiresPhotoUpload': orderOption.requiresPhotoUpload,
+          'photoUploadPrompt':
+              _photoUploadPromptControllers[optionTitle]?.text ?? '',
+          'customFields': orderOption.customFields.map((field) {
+            return {
+              'id': field.id, // Ensure that 'id' is handled by the backend
+              'label': field.label,
+              'type': field.type
+                  .toString()
+                  .split('.')
+                  .last
+                  .toLowerCase(), // e.g., 'text', 'dropdown'
+              'isRequired': field.isRequired,
+              'options': field.options?.map((option) {
+                return {
+                  'value': option.value,
+                  'extraCost': option.extraCost,
+                };
+              }).toList(),
+              'extraCost': field.extraCost,
+            };
+          }).toList(),
+        };
+        print('payload $payload');
+
+        // Determine if the option is new or existing
+        bool isNewOption = orderOption.id.isEmpty;
+
+        Uri uri;
+        if (isNewOption) {
+          // Endpoint to create a new option
+          uri = Uri.parse(createStoreSpecialOrderOption);
+        } else {
+          // Endpoint to update an existing option
+          uri = Uri.parse('$updateStoreSpecialOrderOption/${orderOption.id}');
+          // Ensure that 'updateStoreSpecialOrderOption' is a base URL without trailing slash
+        }
+
+        // Choose POST for creating new options and PUT for updating existing ones
+        http.Response response;
+        if (isNewOption) {
+          response = await http
+              .post(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
                 },
-                child: const Text('Add'),
+                body: json.encode(payload),
+              )
+              .timeout(const Duration(seconds: 10));
+        } else {
+          response = await http
+              .put(
+                uri,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: json.encode(payload),
+              )
+              .timeout(const Duration(seconds: 10));
+        }
+
+        print('response ${response.body}');
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Option created or updated successfully
+          final updatedOption = OrderOption.fromMap(json.decode(response.body));
+          updatedOption.isSelected = true; // Ensure it's selected
+          setState(() {
+            selectedOrderOptions[updatedOption.name] = updatedOption;
+            _photoUploadPromptControllers[updatedOption.name]?.text =
+                updatedOption.photoUploadPrompt;
+            _descriptionControllers[updatedOption.name]?.text =
+                updatedOption.description;
+          });
+        } else {
+          // Handle failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Failed to save option '${orderOption.name}': ${response.reasonPhrase}",
               ),
-            ],
+            ),
+          );
+          print('Failed to save option ${orderOption.name}: ${response.body}');
+        }
+      }
+
+      // Dismiss the loading indicator
+      Navigator.of(context, rootNavigator: true).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Configurations saved successfully!")),
+      );
+    } on http.ClientException catch (e) {
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Client error: ${e.message}")),
+      );
+    } on TimeoutException {
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Request timed out. Please try again.")),
+      );
+    } catch (e) {
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An unexpected error occurred: $e")),
+      );
+    }
+  }
+
+  Future<bool> _updateSpecialOrderState(bool isEnabled) async {
+    final token = await getToken(); // Get the authentication token
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Authentication token not found.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse(updateIfAllowSpecialOrder), // Replace with your API URL
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'allowSpecialOrders': isEnabled}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEnabled
+                  ? 'Special orders enabled successfully!'
+                  : 'Special orders disabled successfully!',
+            ),
+            //  backgroundColor: Colors.green,
           ),
         );
-      },
-      icon: const Icon(Icons.add, color: Colors.white70),
-      label: const Text(
-        'Add Option',
-        style: TextStyle(color: Colors.white70),
-      ),
-      style: ElevatedButton.styleFrom(backgroundColor: myColor),
-    );
+        return true; // API call succeeded
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to update special order status: ${response.body}',
+            ),
+            // backgroundColor: Colors.red,
+          ),
+        );
+        return false; // API call failed
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating special order status: $e'),
+          //  backgroundColor: Colors.red,
+        ),
+      );
+      return false; // API call failed
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
+    // Obtain screen width and height for responsive design
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Determine padding based on screen size
+    final horizontalPadding = screenWidth * 0.05; // 5% of screen width
+    final verticalPadding = screenHeight * 0.02; // 2% of screen height
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: myColor,
         elevation: 0,
-        toolbarHeight: appBarHeight,
+        toolbarHeight: screenHeight * 0.1, // 10% of screen height
         title: const Text(
-          'Special Orders',
+          'Special Orders Management',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),
@@ -222,6 +1060,28 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageSpecialOrderOptionsPage(),
+                ),
+              ).then((_) {
+                // Refresh the page after returning from ManageSpecialOrderOptionsPage
+                _fetchStoreSpecialOrderOptions();
+              });
+            },
+            tooltip: 'Manage Special Order Options',
+          ),
+          IconButton(
+            icon: const Icon(Icons.receipt, color: Colors.white),
+            onPressed: _navigateToReviewSpecialOrdersPage,
+            tooltip: 'Review Special Orders',
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -238,352 +1098,106 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
             ),
           ),
           SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            /*child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildReviewOrderRequestsCard(),
-                const SizedBox(height: 10),
-                _buildReviewSpecialRequestsCard(), // New Card for Review Requests
-
-                _buildSpecialOrdersSwitchCard(),
-                const SizedBox(height: 10),
-                //if (specialOrdersEnabled)
-                const SizedBox(height: 16),
-                if (specialOrdersEnabled) _buildOrderOptionsSelectionCard(),
-                const SizedBox(height: 24),
-                if (specialOrdersEnabled) _buildManageFormsButton(),
-              ],
-            ),*/
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Special Order Options',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  color: myColor2, // Background color for the switch tile
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile(
+                        title: const Text(
+                          'Enable Special Order',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        activeColor: myColor, // Switch active color
+                        value: isSpecialOrderEnabled, // State of the switch
+                        onChanged: (bool value) async {
+                          // Update the state of the switch
+                          setState(() {
+                            isSpecialOrderEnabled = value;
+                          });
+
+                          // Call API to update the state
+                          final success = await _updateSpecialOrderState(value);
+                          if (!success) {
+                            // Revert the state if the API call fails
+                            setState(() {
+                              isSpecialOrderEnabled = !value;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Failed to update special order status. Please try again.'),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: Text(
+                          'Note: Disabling special orders will prevent customers from making new special orders. '
+                          'Your previous configurations will remain saved, if any.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54, // Adjust color as needed
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                _buildSpecialOrderOptions(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildAddOptionButton(),
+
+                const SizedBox(height: 20),
+                const Padding(
+                  padding: EdgeInsets.only(top: 10.0),
+                  child: Text(
+                    'Special Order Options',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5),
+                  ),
                 ),
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildSpecialOrderOptions(),
+                SizedBox(height: verticalPadding),
+                // Add Option Button
+                _buildAddOptionButton(),
+                SizedBox(height: verticalPadding),
+                // Save Configurations Button
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Container(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveSpecialOrderConfigurations,
+                      icon: const Icon(Icons.save, color: Colors.white70),
+                      label: const Text(
+                        'Save Configurations',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: myColor),
+                    ),
+                  ),
+                ),
+                SizedBox(height: verticalPadding),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // Special Orders Switch Card
-  Widget _buildSpecialOrdersSwitchCard() {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Allow Special Orders',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: myColor,
-              ),
-            ),
-            Switch(
-              activeColor: myColor,
-              value: specialOrdersEnabled,
-              onChanged: (value) {
-                setState(() {
-                  specialOrdersEnabled = value;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // New Card for Navigating to Review Requests
-  Widget _buildReviewSpecialRequestsCard() {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        leading: const Icon(Icons.receipt, color: myColor),
-        title: const Text(
-          'Review Special Order Requests',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: myColor,
-          ),
-        ),
-        onTap:
-            _navigateToReviewRequestsPage, // Navigate to review requests page
-      ),
-    );
-  }
-
-  // Review Requests Page Navigation
-  void _navigateToReviewRequestsPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ReviewSpecialOrdersPage()),
-    );
-  }
-
-  Widget _buildReviewOrderRequestsCard() {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        leading: const Icon(Icons.receipt, color: myColor),
-        title: const Text(
-          'Review Orders',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: myColor,
-          ),
-        ),
-        onTap: () async {
-          // Get the token from secure storage or SharedPreferences
-          String? token =
-              await getToken(); // Replace with your token retrieval logic
-          if (token != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => StoreOrdersPage(
-                    // Pass the token to the orders page
-                    ),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Authentication token not found!")),
-            );
-          }
-        },
-      ),
-    );
-  }
-
-// Example function to retrieve the token
-  Future<String?> getToken() async {
-    // Use SharedPreferences or secure storage to retrieve the token
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-// Order Options Selection Card
-  Widget _buildOrderOptionsSelectionCard() {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Select Special Order Options:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: myColor,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    isEditing ? Icons.check : Icons.edit,
-                    color: myColor,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isEditing = !isEditing;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-                return GridView.count(
-                  crossAxisCount: crossAxisCount,
-                  shrinkWrap: true,
-                  crossAxisSpacing: 16.0,
-                  mainAxisSpacing: 16.0,
-                  childAspectRatio: 0.8,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildOrderOptionTile(
-                      'Custom-Made Cake',
-                      'assets/images/cake.png',
-                      selectedOrderOptions['Custom-Made Cake'] ?? false,
-                      (value) {
-                        if (isEditing) {
-                          setState(() {
-                            selectedOrderOptions['Custom-Made Cake'] =
-                                value ?? false;
-                          });
-                        }
-                      },
-                    ),
-                    _buildOrderOptionTile(
-                      'Large Orders',
-                      'assets/images/bulkBuying.png',
-                      selectedOrderOptions['Large Orders'] ?? false,
-                      (value) {
-                        if (isEditing) {
-                          setState(() {
-                            selectedOrderOptions['Large Orders'] =
-                                value ?? false;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            Container(
-              alignment: Alignment.center,
-              child: ElevatedButton.icon(
-                onPressed: isEditing ? _navigateToSetupFormPage : null,
-                icon: const Icon(Icons.add, color: Colors.white70),
-                label: const Text(
-                  'Add new option',
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isEditing
-                      ? myColor
-                      : myColor
-                          .withOpacity(0.5), // Reduced opacity when disabled
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0, horizontal: 30.0),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderOptionTile(
-      String title, String imagePath, bool value, Function(bool?) onChanged) {
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10.0),
-          child: Image.asset(
-            imagePath,
-            height: MediaQuery.of(context).size.height * 0.15,
-            width: double.infinity,
-            fit: BoxFit.contain,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Checkbox(
-              value: value,
-              activeColor: myColor,
-              onChanged: isEditing ? onChanged : null,
-            ),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: myColor,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildManageFormsButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: _navigateToSetupFormPage,
-        icon: const Icon(Icons.settings, color: Colors.white70),
-        label: const Text(
-          'Manage Special Order Forms',
-          style: TextStyle(color: Colors.white),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: myColor,
-          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-        ),
-      ),
-    );
-  }
-
-  void _navigateToSetupFormPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => const SpecialOrdersOverviewPage()),
-    );
-  }
-}
-
-// Placeholder for the ReviewSpecialOrdersPage
-class ReviewSpecialOrdersPage extends StatelessWidget {
-  const ReviewSpecialOrdersPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: myColor,
-        elevation: 0,
-        toolbarHeight: appBarHeight,
-        title: const Text(
-          'Review Special Requests',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: const Center(
-        child: Text(
-          'Here, the store owner will be able to see and review all the special order requests.',
-          style: TextStyle(fontSize: 16),
-        ),
       ),
     );
   }

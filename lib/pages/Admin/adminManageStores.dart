@@ -80,21 +80,31 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
         ),
         centerTitle: true,
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : categoriesData != null
-              ? ListView.builder(
-                  itemCount: categoriesData!.length,
-                  itemBuilder: (context, index) {
-                    String categoryName = categoriesData!.keys.elementAt(index);
-                    List stores = categoriesData![categoryName];
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [myColor.withOpacity(0.9), Colors.blueGrey.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : categoriesData != null
+                ? ListView.builder(
+                    itemCount: categoriesData!.length,
+                    itemBuilder: (context, index) {
+                      String categoryName =
+                          categoriesData!.keys.elementAt(index);
+                      List stores = categoriesData![categoryName];
 
-                    return _buildCategorySection(categoryName, stores);
-                  },
-                )
-              : const Center(
-                  child: Text('No data found'),
-                ),
+                      return _buildCategorySection(categoryName, stores);
+                    },
+                  )
+                : const Center(
+                    child: Text('No data found'),
+                  ),
+      ),
     );
   }
 
@@ -109,7 +119,7 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
         title: Text(
           categoryName,
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: myColor,
           ),
@@ -121,44 +131,67 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
   }
 
   Widget _buildStoreCard(Map<String, dynamic> store) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ListTile(
-        leading: ClipOval(
-          child: store['logo'] != null && store['logo'].isNotEmpty
-              ? Image.network(
-                  store['logo'], // Replace with the actual key for the logo URL
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.store,
-                      color: myColor,
-                      size: 50,
-                    ); // Fallback icon if image fails to load
-                  },
-                )
-              : const Icon(
-                  Icons.store,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Card(
+        //color: Colors.white70,
+        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: ListTile(
+          leading: ClipOval(
+            child: store['logo'] != null && store['logo'].isNotEmpty
+                ? Image.network(
+                    store[
+                        'logo'], // Replace with the actual key for the logo URL
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.store,
+                        color: myColor,
+                        size: 50,
+                      ); // Fallback icon if image fails to load
+                    },
+                  )
+                : const Icon(
+                    Icons.store,
+                    color: myColor,
+                    size: 50,
+                  ), // Fallback icon if no logo URL is provided
+          ),
+          title: Text(
+            store['storeName'] ?? 'Store Name',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: myColor,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Email: ${store['contactEmail'] ?? 'N/A'}',
+                style: TextStyle(
+                  //fontSize: 18,
+                  // fontWeight: FontWeight.bold,
                   color: myColor,
-                  size: 50,
-                ), // Fallback icon if no logo URL is provided
-        ),
-        title: Text(
-          store['storeName'] ?? 'Store Name',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Email: ${store['contactEmail'] ?? 'N/A'}'),
-            Text('Phone: ${store['phoneNumber'] ?? 'N/A'}'),
-          ],
+                ),
+              ),
+              Text(
+                'Phone: ${store['phoneNumber'] ?? 'N/A'}',
+                style: TextStyle(
+                  //fontSize: 18,
+                  // fontWeight: FontWeight.bold,
+                  color: myColor,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

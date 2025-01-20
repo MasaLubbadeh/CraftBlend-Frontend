@@ -128,7 +128,9 @@ class _HomePageState extends State<HomePage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userType = prefs.getString('userType');
       final response = await http.get(
-        Uri.parse('getNotifications?userType=$userType'), // Your API endpoint
+
+        Uri.parse('$getNotifications?userType=$userType'), // Your API endpoint
+
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -280,7 +282,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-/*
   Future<void> _fetchWishlistItems() async {
     try {
       // Fetch data for wishlist items
@@ -320,7 +321,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-*/
+
   Future<void> _fetchMostSearchedItems() async {
     try {
       // Fetch data for most searched items
@@ -1252,7 +1253,7 @@ class _HomePageState extends State<HomePage> {
         if (!notification['isRead']) {
           final notificationId = notification['_id'];
           final response = await http.patch(
-            Uri.parse('markNotificationAsRead/$notificationId'),
+            Uri.parse('$markNotificationAsRead/$notificationId'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -1282,7 +1283,8 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final response = await http.patch(
-        Uri.parse('markNotificationAsRead/$notificationId'),
+
+        Uri.parse('$markNotificationAsRead/$notificationId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

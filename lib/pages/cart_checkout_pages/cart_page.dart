@@ -22,18 +22,23 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage>
     with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> cartData = [];
+  List<Map<String, dynamic>> specialOrders = []; // New list for special orders
+
   bool isLoading = true;
   String? token;
   late TabController _tabController;
+
   List<Map<String, dynamic>> getInstantItems() {
     return cartData
-        .where((item) => item['productId']['deliveryType'] == 'instant')
+        .where((item) => item['productId']?['deliveryType'] == 'instant')
         .toList();
   }
 
   List<Map<String, dynamic>> getScheduledItems() {
     return cartData
-        .where((item) => item['productId']['deliveryType'] == 'scheduled')
+        .where((item) =>
+            item['productId']?['deliveryType'] == 'scheduled' ||
+            (item['isSpecialOrder'] ?? false))
         .toList();
   }
 
@@ -46,7 +51,14 @@ class _CartPageState extends State<CartPage>
 
   Future<void> _initializeData() async {
     await _fetchToken();
-    await fetchCartData();
+    await Future.wait([
+      fetchCartData(),
+      fetchSpecialOrders()
+    ]); // Fetch both cart and special orders
+    _mergeSpecialOrdersIntoCart();
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _fetchToken() async {
@@ -54,6 +66,7 @@ class _CartPageState extends State<CartPage>
     token = prefs.getString('token');
     if (token == null) {
       print('Token not found. User might not be logged in.');
+      // Optionally, navigate to the login page or show an alert
     }
   }
 
@@ -70,12 +83,10 @@ class _CartPageState extends State<CartPage>
         if (data['cart'] != null && data['cart']['items'] != null) {
           setState(() {
             cartData = List<Map<String, dynamic>>.from(data['cart']['items']);
-            isLoading = false;
           });
         } else {
           setState(() {
             cartData = [];
-            isLoading = false;
           });
         }
       } else {
@@ -83,21 +94,92 @@ class _CartPageState extends State<CartPage>
       }
     } catch (e) {
       print('Error fetching cart data: $e');
-      setState(() {
-        cartData = [];
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          cartData = [];
+        });
+      }
+      // Optionally, display a snackbar or alert to inform the user
     }
   }
 
-/*
-  double calculateCartTotal() {
-    if (cartData.isEmpty) return 0.0;
-    return cartData.fold(
-      0.0,
-      (sum, item) => sum + (item['totalPriceWithQuantity'] ?? 0.0),
-    );
-  }*/
+  Future<void> fetchSpecialOrders() async {
+    if (token == null) return;
+    try {
+      final response =
+          await http.get(Uri.parse(getUserSpecialOrders), headers: {
+        'Authorization': 'Bearer $token',
+      });
+      print(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['orders'] != null) {
+          setState(() {
+            specialOrders = List<Map<String, dynamic>>.from(data['orders']);
+          });
+        } else {
+          setState(() {
+            specialOrders = [];
+          });
+        }
+      } else {
+        throw Exception('Failed to fetch special orders');
+      }
+    } catch (e) {
+      print('Error fetching special orders: $e');
+      setState(() {
+        specialOrders = [];
+      });
+      // Optionally, display a snackbar or alert to inform the user
+    }
+  }
+
+  void _mergeSpecialOrdersIntoCart() {
+    for (var order in specialOrders) {
+      String specialName = '';
+
+      // Extract names from all orderItems
+      if (order['orderItems'] != null && order['orderItems'] is List) {
+        List<dynamic> orderItems = order['orderItems'];
+        specialName = orderItems
+            .map((item) => item['optionId']?['name'] ?? 'Unknown')
+            .join(', '); // Combine names if there are multiple
+      }
+      // Create a cart-like map for consistency
+      Map<String, dynamic> specialOrderItem = {
+        'isSpecialOrder': true, // Flag to identify special orders
+        'orderId': order['_id'],
+        'storeId':
+            order['storeId'], // Already populated with storeName and icon
+        'productId': null, // Not applicable for special orders
+        'specialName': specialName, // Identifier
+        'image': order['photoUrl'] ??
+            'assets/images/specialicon.png', // Placeholder image
+        'pricePerUnitWithOptionsCost': (order['status'] == 'Confirmed'
+                ? (order['totalPrice'] ?? 0)
+                : (order['estimatedPrice'] ?? 0))
+            .toDouble(),
+        'totalPriceWithQuantity': (order['status'] == 'Confirmed'
+                ? (order['totalPrice'] ?? 0)
+                : (order['estimatedPrice'] ?? 0))
+            .toDouble(),
+
+        'quantity': 1, // Typically, special orders have a quantity of 1
+        'selectedOptions': {}, // Or any relevant data
+        'status': order['status'] ?? 'Pending', // 'Pending' or 'Confirmed'
+      };
+      if (specialOrderItem['status'] == 'Pending' ||
+          specialOrderItem['status'] == 'Confirmed')
+        cartData.add(specialOrderItem);
+    }
+  }
+
+  Future<String?> _getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs
+        .getString('token'); // Adjust the key based on your implementation
+  }
+
   double calculateInstantTotal() {
     final instantItems = getInstantItems();
     return instantItems.fold(
@@ -176,7 +258,8 @@ class _CartPageState extends State<CartPage>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => UserOrdersPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const UserOrdersPage()),
                 );
               },
               tooltip: 'Manage Orders',
@@ -300,54 +383,6 @@ class _CartPageState extends State<CartPage>
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchInstantItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) throw Exception('User not logged in.');
-
-    try {
-      final response =
-          await http.get(Uri.parse(fetchInstantCartItems), headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return List<Map<String, dynamic>>.from(data['items']);
-      } else {
-        throw Exception('Failed to fetch instant items');
-      }
-    } catch (e) {
-      print('Error fetching instant items: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> fetchScheduledItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) throw Exception('User not logged in.');
-
-    try {
-      final response =
-          await http.get(Uri.parse(fetchScheduledCartItems), headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return List<Map<String, dynamic>>.from(data['items']);
-      } else {
-        throw Exception('Failed to fetch scheduled items');
-      }
-    } catch (e) {
-      print('Error fetching scheduled items: $e');
-      return [];
-    }
-  }
-
   Widget _buildGroupedCartListView(List<Map<String, dynamic>> items) {
     final groupedData = groupByStore(items);
 
@@ -359,10 +394,7 @@ class _CartPageState extends State<CartPage>
         final storeItems = groupedData[storeId]!;
         final storeName = storeItems.first['storeName'];
         final storeIcon = storeItems.first['storeIcon'];
-        final storeSubtotal = storeItems.fold(
-          0.0,
-          (sum, item) => sum + (item['totalPriceWithQuantity'] ?? 0.0),
-        );
+        final storeSubtotal = calculateStoreSubtotal(storeItems);
 
         return Card(
           elevation: 5,
@@ -372,6 +404,7 @@ class _CartPageState extends State<CartPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Store Header
                 Row(
                   children: [
                     storeIcon != null
@@ -394,6 +427,7 @@ class _CartPageState extends State<CartPage>
                   ],
                 ),
                 const Divider(),
+                // List of Items
                 ...storeItems.map((item) => _buildCartItem(item)).toList(),
                 const Divider(),
                 Container(
@@ -416,238 +450,418 @@ class _CartPageState extends State<CartPage>
   }
 
   Widget _buildCartItem(Map<String, dynamic> item) {
-    final product = item['productId'];
-    final productName = product?['name'] ?? 'No Name';
-    final productImage = product?['image'];
+    final bool isSpecialOrder = item['isSpecialOrder'] ?? false;
 
-    final unitPrice = item['pricePerUnitWithOptionsCost'] ?? 0;
-    final itemTotalPrice = item['totalPriceWithQuantity'] ?? 0;
-    final quantity = item['quantity'] ?? 0;
-    final selectedOptions = item['selectedOptions'] ?? {};
+    if (isSpecialOrder) {
+      // Handle Special Order
+      final String storeName = item['storeId']['storeName'] ?? 'Unnamed Store';
+      final String? storeIcon = item['storeId']['icon'];
+      final String status = item['status'] ?? 'Pending';
+      final String specialName = item['specialName'] ?? 'Special Order';
+      print('itemspecialName ');
+      print(item['storeId']['specialName']);
+      final double estimatedPrice =
+          (item['pricePerUnitWithOptionsCost'] ?? 0).toDouble();
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailPage(product: product),
-          ),
-        ).then((_) {
-          // Re-fetch the cart data when returning from the detail page
-          fetchCartData();
-        });
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Image
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: productImage != null
-                      ? NetworkImage(productImage)
-                      : const AssetImage('assets/images/pastry.jpg')
-                          as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Product Details
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      // Determine the image provider
+      ImageProvider imageProvider;
+      if (item['image'] != null &&
+          item['image'].toString().startsWith('http')) {
+        imageProvider = NetworkImage(item['image']);
+      } else {
+        imageProvider = const AssetImage('assets/images/specialicon.png');
+      }
+
+      return Card(
+        color: status == 'Pending'
+            ? const Color.fromARGB(171, 243, 229, 245)
+            : const Color.fromARGB(171, 243, 229, 245), // Dim color if pending
+        elevation: 5,
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Removed Store Header to avoid redundancy
+
+              // Status Indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    productName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: status == 'Pending'
+                          ? Colors.orangeAccent
+                          : Colors
+                              .greenAccent.shade700, // Color based on status
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    overflow: TextOverflow.ellipsis, // Prevent overflow
-                    maxLines: 1,
-                  ),
-                  const SizedBox(height: 7),
-                  Wrap(
-                    spacing: 5,
-                    children: selectedOptions.entries.map<Widget>((entry) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 2),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: myColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${entry.key}: ${entry.value}',
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 15),
-                  // Quantity Selector
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Quantity:',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                        ),
+                    child: Text(
+                      status,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 10),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              if (quantity > 1) {
-                                setState(() {
-                                  item['quantity'] -= 1;
-                                  updateCart(item);
-                                });
-                              } else {
-                                // Confirm deletion before removing the item
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text("Remove Item"),
-                                      content: const Text(
-                                          "Do you want to remove this item from your cart?"),
-                                      actions: [
-                                        TextButton(
-                                          child: const Text("Cancel"),
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                        ),
-                                        TextButton(
-                                          child: const Text("Remove"),
-                                          onPressed: () {
-                                            setState(() {
-                                              item['quantity'] = 0;
-                                              updateCart(item);
-                                            });
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: quantity > 1
-                                    ? Colors.grey[300]
-                                    : Colors.grey,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Icon(
-                                quantity > 1 ? Icons.remove : Icons.delete,
-                                size: 15,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 35,
-                            height: 25,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            child: Center(
-                              child: Text(
-                                '$quantity',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => setState(() {
-                              item['quantity'] += 1;
-                              updateCart(item);
-                            }),
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: myColor.withOpacity(.7),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: const Icon(
-                                Icons.add,
-                                size: 15,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
+
+              const Divider(),
+
+              // Special Order Details
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Special Order Image
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image:
+                            imageProvider, // Use the determined image provider
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Special Order Info
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          specialName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        /*  Text(
+                          'Status: $status',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: status == 'Pending'
+                                ? Colors.orange
+                                : Colors.green,
+                          ),
+                        ),*/
+                        const SizedBox(height: 15),
+                        // Display Estimated Price if Pending
+                        if (status == 'Pending')
+                          Text(
+                            'Estimated Price: ${estimatedPrice.toStringAsFixed(2)}₪',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Pricing Details (if Confirmed)
+                  if (status == 'Confirmed')
+                    Flexible(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${item['totalPriceWithQuantity'].toStringAsFixed(2)}₪',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              // Disable actions if Pending
+              if (status == 'Confirmed')
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Quantity Selector
+                      // Remove Button
+                      Text(
+                        'To remove this order, please contact the store owner.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Handle Regular Cart Item
+      final String productName = item['productId']['name'] ?? 'No Name';
+      final String? productImage = item['productId']['image'];
+      final double unitPrice =
+          (item['pricePerUnitWithOptionsCost'] ?? 0).toDouble();
+      final double itemTotalPrice =
+          (item['totalPriceWithQuantity'] ?? 0).toDouble();
+      final int quantity = item['quantity'] ?? 0;
+      final Map<String, dynamic> selectedOptions =
+          item['selectedOptions'] ?? {};
+
+      // Determine the image provider
+      ImageProvider imageProvider;
+      if (productImage != null && productImage.toString().startsWith('http')) {
+        imageProvider = NetworkImage(productImage);
+      } else {
+        imageProvider = const AssetImage('assets/images/pastry.jpg');
+      }
+
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailPage(product: item['productId']),
             ),
-            const SizedBox(width: 10),
-            // Pricing Details
-            Flexible(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
+          ).then((_) {
+            // Re-fetch the cart data when returning from the detail page
+            fetchCartData();
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product Image
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: imageProvider, // Use the determined image provider
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Product Details
+              Expanded(
+                flex: 2,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      ' ${itemTotalPrice.toStringAsFixed(2)}₪',
+                      productName,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
                       ),
-                      overflow: TextOverflow.ellipsis, // Handle long text
-                      maxLines: 1, // Limit to 1 line
+                      overflow: TextOverflow.ellipsis, // Prevent overflow
+                      maxLines: 1,
                     ),
-                    const SizedBox(height: 4), // Add spacing between lines
-                    Text(
-                      ' ${unitPrice.toStringAsFixed(2)}₪',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black54,
-                      ),
-                      overflow: TextOverflow.ellipsis, // Handle long text
-                      maxLines: 1, // Limit to 1 line
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 5,
+                      children: selectedOptions.entries.map<Widget>((entry) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: myColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${entry.key}: ${entry.value ?? 'None'}',
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 15),
+                    // Quantity Selector
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Quantity:',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (quantity > 1) {
+                                  setState(() {
+                                    item['quantity'] -= 1;
+                                    updateCart(item);
+                                  });
+                                } else {
+                                  // Confirm deletion before removing the item
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text("Remove Item"),
+                                        content: const Text(
+                                            "Do you want to remove this item from your cart?"),
+                                        actions: [
+                                          TextButton(
+                                            child: const Text("Cancel"),
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
+                                          ),
+                                          TextButton(
+                                            child: const Text("Remove"),
+                                            onPressed: () {
+                                              setState(() {
+                                                cartData.remove(item);
+                                                updateCart(item);
+                                              });
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: quantity > 1
+                                      ? Colors.grey[300]
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Icon(
+                                  quantity > 1 ? Icons.remove : Icons.delete,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 35,
+                              height: 25,
+                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              child: Center(
+                                child: Text(
+                                  '$quantity',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                item['quantity'] += 1;
+                                updateCart(item);
+                              }),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: myColor.withOpacity(.7),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              // Pricing Details
+              Flexible(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        ' ${itemTotalPrice.toStringAsFixed(2)}₪',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Handle long text
+                        maxLines: 1, // Limit to 1 line
+                      ),
+                      const SizedBox(height: 4), // Add spacing between lines
+                      Text(
+                        ' ${unitPrice.toStringAsFixed(2)}₪',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Handle long text
+                        maxLines: 1, // Limit to 1 line
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void updateCart(Map<String, dynamic> updatedItem) async {
     setState(() {
       // Replace the updated item in the cartData list
       final index = cartData.indexWhere((item) =>
-          item['productId']['_id'] == updatedItem['productId']['_id']);
+          (item['productId']?['_id'] == updatedItem['productId']?['_id']) ||
+          (item['orderId'] ==
+              updatedItem['orderId'])); // Adjust condition for special orders
       if (index != -1) {
         cartData[index] = updatedItem;
       }
@@ -660,7 +874,9 @@ class _CartPageState extends State<CartPage>
 
       // Prepare the payload
       final payload = {
-        'productId': updatedItem['productId']['_id'],
+        'productId': updatedItem['productId'] != null
+            ? updatedItem['productId']['_id']
+            : null,
         'quantity': updatedItem['quantity'],
         'selectedOptions': updatedItem['selectedOptions'],
       };
@@ -678,10 +894,8 @@ class _CartPageState extends State<CartPage>
       if (response.statusCode == 200) {
         setState(() {
           fetchCartData();
+          fetchSpecialOrders();
         });
-        /*ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cart updated successfully')),
-        );*/
         print('Cart updated successfully');
       } else {
         // Handle errors
@@ -708,6 +922,20 @@ class _CartPageState extends State<CartPage>
     List<Map<String, dynamic>> selectedItems =
         type == 'instant' ? getInstantItems() : getScheduledItems();
 
+    // Filter out pending special orders
+    List<Map<String, dynamic>> filteredItems = selectedItems.where((item) {
+      if (item['isSpecialOrder'] == true) {
+        return item['status'] == 'Confirmed';
+      }
+      return true; // Regular items are always included
+    }).toList();
+
+    // Calculate the total after filtering
+    double filteredTotal = filteredItems.fold(
+      0.0,
+      (sum, item) => sum + (item['totalPriceWithQuantity'] ?? 0.0),
+    );
+
     return Container(
       color: myColor.withOpacity(.8),
       padding: const EdgeInsets.all(10.0),
@@ -715,7 +943,7 @@ class _CartPageState extends State<CartPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${total.toStringAsFixed(2)}₪',
+            'Total: ${filteredTotal.toStringAsFixed(2)}₪',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -723,19 +951,22 @@ class _CartPageState extends State<CartPage>
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Navigate to CheckoutPage with the selected cart items
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CheckoutPage(
-                    type: type,
-                    total: total,
-                    cartItems: selectedItems, // Pass cart items here
-                  ),
-                ),
-              );
-            },
+            onPressed: filteredItems.isEmpty
+                ? null // Disable button if no items to checkout
+                : () {
+                    // print('cartItems $filteredItems');
+                    // Navigate to CheckoutPage with the selected cart items
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CheckoutPage(
+                          type: type,
+                          total: filteredTotal,
+                          cartItems: filteredItems, // Pass filtered cart items
+                        ),
+                      ),
+                    );
+                  },
             style: ElevatedButton.styleFrom(
               elevation: 5,
               shape: RoundedRectangleBorder(

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../Store/ownerChooseSubscription_Page.dart';
 import 'addPastryProduct.dart';
 import '../../../configuration/config.dart';
 import '../EditPastryProduct.dart';
@@ -165,6 +166,12 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           final jsonResponse = json.decode(response.body);
           setState(() {
             businessName = jsonResponse['storeName'] ?? businessName;
+
+            // Check for chosenSubscriptionPlan
+            if (jsonResponse['chosenSubscriptionPlan'] == null ||
+                jsonResponse['chosenSubscriptionPlan'].isEmpty) {
+              _redirectToSubscriptionPlanPage(context);
+            }
           });
         } else {
           throw Exception('Failed to load store details');
@@ -173,6 +180,100 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     } catch (e) {
       print('Error fetching store details: $e');
     }
+  }
+
+  void _redirectToSubscriptionPlanPage(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                  20.0), // Rounded corners for the entire dialog
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top section with custom background color
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: const BoxDecoration(
+                    color: myColor, // Background color for the first section
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20.0),
+                      topRight: Radius.circular(20.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Activate Your Account',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+                // Rest of the dialog
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15.0),
+                  decoration: const BoxDecoration(
+                    color: Color.fromARGB(178, 239, 227,
+                        241), // Background color for the lower section
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(10.0),
+                      bottomRight: Radius.circular(10.0),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: const Text(
+                          'To activate your account, you need to choose a subscription plan.',
+                          style: TextStyle(
+                              fontSize: 16, color: myColor, letterSpacing: 1),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 20.0),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ChooseSubscriptionPage(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Choose Plan',
+                            style: TextStyle(
+                              color: myColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
   }
 
   Future<void> fetchPastries() async {

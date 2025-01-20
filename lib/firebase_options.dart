@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -65,4 +62,12 @@ class DefaultFirebaseOptions {
     storageBucket: 'craftblend-fa31e.firebasestorage.app',
     iosBundleId: 'com.example.craftBlendProject',
   );
+  static const FirebaseOptions web = FirebaseOptions(
+      apiKey: "AIzaSyDIEoh7cEsOTbMrPSZKpe3pYmRTX4l5Z6s",
+      authDomain: "craftblend-c388a.firebaseapp.com",
+      projectId: "craftblend-c388a",
+      storageBucket: "craftblend-c388a.firebasestorage.app",
+      messagingSenderId: "607198615953",
+      appId: "1:607198615953:web:5d7bfa57ab2faa3c962230",
+      measurementId: "G-9RPVNG7G43");
 }

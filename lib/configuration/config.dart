@@ -2,6 +2,7 @@ import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
 const String url = 'http://192.168.1.34:3000/';
+
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -27,6 +28,12 @@ const String getWishlistProducts = '${url}wishlist/getList';
 
 const String getRecommendedStoresByCategory =
     '${url}getRecommendedStoresByCategory';
+
+///user points////
+const String addPoints = '${url}addPoints';
+const String removePoints = '${url}removePoints';
+const String getAllPoints = '${url}getAllPoints';
+const String getPointsForStore = '${url}getPointsForStore';
 
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
@@ -56,7 +63,18 @@ const String getAllStores = '${url}store/getAllStores';
 const String checkIfAllowSpecialOrders =
     '${url}store/checkIfAllowSpecialOrders';
 const String rateStore = '${url}store/rateStore';
-
+const String chooseSubscription = '${url}store/chooseSubscription';
+const String getSubscriptionDetails = '${url}store/getSubscriptionDetails';
+const String getStoreCategory = '${url}store/getStoreCategory';
+const String getIfSpecialOrdersAllowed =
+    '${url}store/getIfSpecialOrdersAllowed';
+const String updateIfAllowSpecialOrder =
+    '${url}store/updateIfAllowSpecialOrder';
+/////
+const String getShekelPerPoint = '${url}store/getShekelPerPoint';
+const String updateShekelPerPoint = '${url}store/updateShekelPerPoint';
+////
+///
 const String addNewCartItem = '${url}cart/addNewCartItem';
 const String getCartData = '${url}cart/getCartData';
 const String updateCartItem = '${url}cart/updateCartItem';
@@ -115,9 +133,40 @@ const String getStoreName = '${url}store/fetchProfileInfo';
 
 const String createSale = '${url}sale/createSale';
 const String saleUpdate = '${url}product/saleUpdate';
+
+const String addSubscriptionPlan = '${url}subscriptionPlan/add';
+const String getSubscriptionPlans = '${url}subscriptionPlan/getPlans';
+
+///////////FMC TOKEN/////////////
+const String saveFMCToken = '${url}fcmToken/saveToken';
+const String deleteFMCToken = '${url}fcmToken/deleteToken';
+const String getFMCToken = '${url}fcmToken/getToken';
+const String getAllFMCTokens = '${url}fcmToken/getAllTokens';
+
+/////////notification/////////
+const String addNotification = '${url}notification/addNotification';
+const String getNotifications = '${url}notification/getNotifications';
+const String markNotificationAsRead = '${url}notification/markAsRead';
+
+const String createStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/create';
+const String getStoreSpecialOrderOptions =
+    '${url}storeSpecialOrderOption/getStoreOptions';
+const String updateStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/update';
+const String deleteStoreSpecialOrderOption =
+    '${url}storeSpecialOrderOption/delete';
+
+const String createSpecialOrder = '${url}specialOrder/create';
+const String getStoreSpecialOrders = '${url}specialOrder/getStoreSpecialOrders';
+const String getSpecialOrderById = '${url}specialOrder/getByID';
+const String updateSpecialOrderStatus = '${url}specialOrder/updateStatus';
+const String getUserSpecialOrders = '${url}specialOrder/getUserSpecialOrders';
+const String checkoutSpecialOrder = '${url}specialOrder';
+
 const Color myColor = Color.fromARGB(
     255, 122, 104, 135); //Color(0xff6B4F4F); //Color(0xff456268);
-const myColor2 = myColor;
+const myColor2 = Color.fromARGB(171, 243, 229, 245);
 
 const Color primaryColor = Color(0xffA47551); // A warm brown color
 const Color accentColor = Color(0xffD9C4B1); // A lighter beige accent
