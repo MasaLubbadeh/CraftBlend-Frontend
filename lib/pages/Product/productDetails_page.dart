@@ -579,7 +579,8 @@ class _DetailPageState extends State<DetailPage> {
       onPressed: (availableStock == 0) && (!widget.product['isUponOrder'])
           ? null // Disable button if out of stock
           : () async {
-              if (_quantity > availableStock) {
+              if ((_quantity > availableStock) &&
+                  (!widget.product['isUponOrder'])) {
                 // Show alert if requested quantity exceeds available stock
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -669,7 +670,9 @@ class _DetailPageState extends State<DetailPage> {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      child: Text(availableStock == 0 ? 'Out of Stock' : 'Add to Cart'),
+      child: Text((availableStock == 0 && !widget.product['isUponOrder'])
+          ? 'Out of Stock'
+          : 'Add to Cart'),
     );
   }
 

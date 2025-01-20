@@ -135,9 +135,9 @@ class AllChats extends StatelessWidget {
   Widget _buildUserListItem(
       Map<String, dynamic> userData, BuildContext context) {
     final currentUser = _authService.getCurrentUser();
-    if (currentUser == null || userData["email"] == currentUser.email) {
+    /*  if (currentUser == null || userData["email"] == currentUser.email) {
       return const SizedBox(); // Skip displaying the current user
-    }
+    }*/
 
     return GestureDetector(
       onTap: () async {

@@ -33,7 +33,6 @@ dependencies:
   http: ^1.2.2
   image_picker: ^1.1.2
   #  image_picker: ^0.8.7+3
-  image_cropper: ^5.0.1
   line_awesome_flutter: ^1.0.2
   shared_preferences: ^2.0.0
   path_provider: ^2.0.14
@@ -60,11 +59,16 @@ dependencies:
   googleapis_auth: ^1.6.0
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
-  
+  provider: ^6.0.3
+  video_player: ^2.7.1
+  url_launcher: ^6.1.7
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  google_maps_flutter_web: ^0.5.10
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -79,7 +79,10 @@ class _ReviewSuggestionsPageState extends State<ReviewSuggestionsPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.lightbulb_outline),
+                    const Icon(
+                      Icons.lightbulb_outline,
+                      color: myColor,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       suggestion['categoryName'],
@@ -219,21 +222,30 @@ class _ReviewSuggestionsPageState extends State<ReviewSuggestionsPage> {
           },
         ),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : suggestions.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No suggestions available.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [myColor.withOpacity(0.9), Colors.blueGrey.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : suggestions.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No suggestions available.',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: suggestions.length,
+                    itemBuilder: (context, index) {
+                      return _buildSuggestionCard(suggestions[index]);
+                    },
                   ),
-                )
-              : ListView.builder(
-                  itemCount: suggestions.length,
-                  itemBuilder: (context, index) {
-                    return _buildSuggestionCard(suggestions[index]);
-                  },
-                ),
+      ),
     );
   }
 }

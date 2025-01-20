@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../services/Notifications/notification_helper.dart';
+
 class OrderDetailsPage extends StatefulWidget {
   final dynamic order;
 
@@ -22,7 +24,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   void initState() {
     super.initState();
     order = widget.order;
-    print("Received order id: ${order['orderId']}"); // Debug print
+    print("Received orderrrrrrrrrrr id: ${order}"); // Debug print
   }
 
   Future<String?> _fetchToken() async {
@@ -64,37 +66,94 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Order Summary
             _buildOrderSummary(),
             const SizedBox(height: 20),
+
+            // Products Title
             const Text(
               "Products:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
+
+            // Products List
             Expanded(
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return _buildProductCard(item);
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth > 600) {
+                    // Grid view for larger screens
+                    return GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, // Number of columns
+                        mainAxisSpacing: 16.0, // Vertical spacing
+                        crossAxisSpacing: 16.0, // Horizontal spacing
+                        childAspectRatio: 3 / 2, // Adjust card aspect ratio
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return _buildProductCard(item);
+                      },
+                    );
+                  } else {
+                    // List view for smaller screens
+                    return ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return _buildProductCard(item);
+                      },
+                    );
+                  }
                 },
               ),
             ),
             const SizedBox(height: 20),
-            _buildStatusButton(),
+
+            // Status Button
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width *
+                    0.8, // Responsive button
+                child: _buildStatusButton(),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  String _formatDateTime(String isoDateTime) {
+    try {
+      final dateTime = DateTime.parse(isoDateTime); // Parse the ISO date string
+      return "${dateTime.toLocal()}"
+          .split('.')[0]; // Format as local time without milliseconds
+    } catch (e) {
+      return "Invalid date"; // Fallback if parsing fails
+    }
+  }
+
   Widget _buildOrderSummary() {
+    final items = order['items'] ?? [];
+    print(items.runtimeType); // Debug: Check if it's a List
+    print(order);
     // Group items by store to calculate totals
     Map<String, Map<String, dynamic>> storeTotals = {};
+    // Extract customer's first and last name
+    final firstName = order['userId']['firstName'] ?? '';
+    print(firstName);
+
+    final lastName = order['userId']['lastName'] ?? '';
+    print(lastName);
+
+    final customerName = "$firstName $lastName".trim();
 
     for (var item in order['items'] ?? []) {
       final storeId = item['storeId']?.toString(); // Ensure storeId is a String
-
       if (storeId == null) continue;
 
       if (!storeTotals.containsKey(storeId)) {
@@ -111,113 +170,131 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           (item['storeDeliveryCost'] ?? 0.0);
     }
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: 5,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.shopping_basket, color: myColor),
-                const SizedBox(width: 10),
-                Text(
-                  "Order #: ${order['userOrderNumber'] ?? 'N/A'}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Customer Info Card
+          Card(
+            color: myColor2,
+            elevation: 4,
+            child: ListTile(
+              leading: const Icon(
+                Icons.account_circle,
+                size: 40,
+                color: myColor,
+              ),
+              title: Text(
+                customerName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
-              ],
-            ),
-            const Divider(),
-            const SizedBox(height: 8),
-            Text(
-              "Status: ${order['status'] ?? 'Unknown'}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            if (order['paymentDetails'] != null &&
-                order['paymentDetails']['method'] != null)
-              Column(
+              ),
+              subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Payment Method: ",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 10),
+                  const Divider(),
                   Text(
-                    "${order['paymentDetails']['method']}",
+                    "Delivery Details:",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
+                  Text(
+                    "City: ${order['deliveryDetails']['city'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "Street: ${order['deliveryDetails']['street'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "Contact: ${order['deliveryDetails']['contactNumber'] ?? 'N/A'}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "Payment Details:",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "Method: ${order['paymentDetails']['method']}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  if (order['createdAt'] != null) const SizedBox(height: 5),
+                  if (order['createdAt'] != null)
+                    Text(
+                      "Ordered at: ${_formatDateTime(order['createdAt'])}",
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  Divider(),
                 ],
               ),
-            const Text(
-              "Delivery Details:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 8),
-            Text("City: ${order['deliveryDetails']['city']}"),
-            Text("Street: ${order['deliveryDetails']['street']}"),
-            Text("Contact: ${order['deliveryDetails']['contactNumber']}"),
-            const SizedBox(height: 10),
-            Text(
-              "Total Price: ${order['totalPrice']?.toStringAsFixed(2) ?? '0.00'} ₪",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Store Totals:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            ...storeTotals.entries.map((entry) {
-              final storeId = entry.key;
-              final totals = entry.value;
-              final storeTotal = totals['storeTotal'] ?? 0.0;
-              final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
+          ),
+          const SizedBox(height: 20),
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const CircleAvatar(
-                      child: Icon(Icons.store, color: myColor),
-                      radius: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
+          // Store Totals Section
+          // Store Totals Section
+          Card(
+            color: myColor2,
+            elevation: 4,
+            child: ListTile(
+              leading: const Icon(
+                Icons.store,
+                size: 40,
+                color: myColor,
+              ),
+              title: const Text(
+                "",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
+                  ...storeTotals.entries.map((entry) {
+                    final storeId = entry.key;
+                    final totals = entry.value;
+                    final storeTotal = totals['storeTotal'] ?? 0.0;
+                    final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Store ID: $storeId",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
                             "Total: ${storeTotal.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
+                          const SizedBox(height: 5),
                           Text(
                             "Delivery Cost: ${deliveryCost.toStringAsFixed(2)} ₪",
                             style: const TextStyle(fontSize: 14),
                           ),
+                          const SizedBox(height: 5),
+                          Text(
+                            "Status: ${order['status'] ?? 'Unknown'}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const Divider(),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
-        ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -238,6 +315,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     final selectedOptions = item['selectedOptions'] ?? {};
 
     return Card(
+      color: myColor2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 5,
       shape: RoundedRectangleBorder(
@@ -412,6 +490,88 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 
+  Future<void> sendOrderStatusNotification(
+      dynamic updatedOrder, String newStatus) async {
+    try {
+      print('updatedOrder in sendOrderStatusNotification $updatedOrder');
+
+      // Step 1: Fetch the token from SharedPreferences
+      final token = await _fetchToken();
+      if (token == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final storeName = prefs.getString('storeName');
+
+      // Step 2: Fetch the user's FCM token from the backend
+      final userId = updatedOrder['userId'];
+      final storeId =
+          updatedOrder['items']?[0]['storeId']; // Access from items array
+      print('Extracted User ID: $userId, Store ID: $storeId');
+
+      if (userId == null || storeId == null || storeName == null) {
+        print('User ID, Store ID, or Store Name not found');
+        return;
+      }
+
+      final fcmTokenUrl =
+          '$getFMCToken?userId=$userId'; // API to fetch FCM token
+      final fcmTokenResponse = await http.get(
+        Uri.parse(fcmTokenUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (fcmTokenResponse.statusCode != 200) {
+        print('Failed to fetch FCM token: ${fcmTokenResponse.body}');
+        return;
+      }
+
+      final fcmTokenData = json.decode(fcmTokenResponse.body);
+      if (fcmTokenData['tokens'] == null || fcmTokenData['tokens'].isEmpty) {
+        print('No FCM token found for the user');
+        return;
+      }
+
+      final userDeviceToken = fcmTokenData['tokens'][0]['fcmToken'];
+      print('User Device Token: $userDeviceToken');
+
+      // Step 3: Send notification to the user's device using Firebase
+      final title = "Your order from '$storeName' is now $newStatus";
+      final body =
+          "Thank you for shopping with us! Your order status has been updated to $newStatus.";
+      await NotificationService.sendNotification(userDeviceToken, title, body);
+
+      // Step 4: Add notification to the database
+      final notificationResponse = await http.post(
+        Uri.parse(addNotification),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'senderId': storeId, // Store ID as required by backend
+          'senderType': 'store',
+          'recipientId': userId,
+          'recipientType': 'user',
+          'title': title,
+          'message': body,
+          'metadata': {'orderId': updatedOrder['_id'], 'status': newStatus},
+        }),
+      );
+
+      if (notificationResponse.statusCode == 200) {
+        print('Notification added to database successfully');
+      } else {
+        print(
+            'Failed to save notification to database: ${notificationResponse.body}');
+      }
+    } catch (e) {
+      print('Error sending notification: $e');
+    }
+  }
+
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
       setState(() {
@@ -432,13 +592,21 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         },
         body: jsonEncode({"newStatus": newStatus}),
       );
-
+      print("Raw response status: ${response.statusCode}");
+      print("Raw response body: ${response.body}");
       if (response.statusCode == 200) {
         // Update the order status in the UI
         final updatedOrder = json.decode(response.body)['order'];
         setState(() {
           order = updatedOrder; // Refresh the current order details
         });
+
+        final responseData = json.decode(response.body);
+        print("responseData: $responseData");
+
+        print("updatedOrder: $updatedOrder");
+        // Send a notification to the user
+        await sendOrderStatusNotification(updatedOrder, newStatus);
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(

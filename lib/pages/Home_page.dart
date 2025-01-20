@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:craft_blend_project/components/addressWidget.dart';
 import 'package:craft_blend_project/configuration/config.dart';
 import 'package:craft_blend_project/pages/Product/Pastry/pastryUser_page.dart';
@@ -26,6 +28,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<String> adImages = []; // Initialize as empty list
   bool isLoadingAds = true;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool isDrawerOpen = false;
 
   final CarouselSliderController buttonCarouselController =
       CarouselSliderController();
@@ -42,13 +46,19 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> recentlyViewedProducts = [];
   List<Map<String, dynamic>> recommendedStores = [];
   List<Map<String, dynamic>> suggestedProducts = [];
+  List<Map<String, dynamic>> notifications = [];
 
+  bool isLoadingNotification = true;
   bool isLoadingRecommendedStores = true;
   bool isLoadingSuggested = true;
   bool isLoadingRecentlyViewed = true;
   bool isLoadingFavorites = true;
   bool isLoadingWishlist = true;
   bool isLoadingMostSearched = true;
+
+  List<Map<String, dynamic>> pastries = [];
+  late Timer _timer;
+
   @override
   void initState() {
     super.initState();
@@ -62,11 +72,88 @@ class _HomePageState extends State<HomePage> {
     _fetchRecentlyViewedProducts();
     _fetchRecommendedStores();
     _fetchSuggestedProducts();
+    _fetchNotifications();
+
+    // Set up the timer to update the remaining time for each pastry every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        for (var pastry in pastries) {
+          if (pastry['onSale'] == true && pastry['endDate'] != null) {
+            try {
+              DateTime endDate = DateTime.parse(pastry['endDate']);
+              pastry['remainingTime'] = _calculateRemainingTime(endDate);
+            } catch (e) {
+              print("Invalid endDate format for pastry: ${pastry['endDate']}");
+              pastry['remainingTime'] = 'Invalid Date';
+            }
+          } else {
+            pastry['remainingTime'] = 'Not on Sale';
+          }
+        }
+      });
+    });
+  }
+
+  String _calculateRemainingTime(DateTime endDate) {
+    DateTime currentDate = DateTime.now();
+    Duration difference = endDate.difference(currentDate);
+
+    if (difference.isNegative) {
+      return 'Sale Ended';
+    } else {
+      return '${difference.inDays}d ${difference.inHours % 24}h ${difference.inMinutes % 60}m ${difference.inSeconds % 60}s';
+    }
   }
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  void _handleDrawerStateChange() {
+    if (isDrawerOpen && !_scaffoldKey.currentState!.isDrawerOpen) {
+      // The drawer was open and now it's closed
+      _markNotificationsAsRead();
+    }
+    isDrawerOpen = _scaffoldKey.currentState!.isDrawerOpen;
+  }
+
+  Future<void> _fetchNotifications() async {
+    try {
+      // Replace with the correct token retrieval logic
+      final String? token = await _getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found.');
+      }
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userType = prefs.getString('userType');
+      final response = await http.get(
+        Uri.parse('$getNotifications?userType=$userType'), // Your API endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          notifications =
+              List<Map<String, dynamic>>.from(responseData['notifications']);
+          isLoadingNotification = false;
+        });
+      } else {
+        throw Exception(
+            'Failed to fetch notifications. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      if (mounted) {
+        setState(() {
+          isLoadingNotification = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchSuggestedProducts() async {
@@ -193,7 +280,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-/*
   Future<void> _fetchWishlistItems() async {
     try {
       // Fetch data for wishlist items
@@ -233,7 +319,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-*/
+
   Future<void> _fetchMostSearchedItems() async {
     try {
       // Fetch data for most searched items
@@ -326,6 +412,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProductCard(Map<String, dynamic> product) {
+    // pastries = product as List<Map<String, dynamic>>;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -347,7 +435,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Product image with badge overlay
               AspectRatio(
-                aspectRatio: 1.09, // Square aspect ratio
+                aspectRatio: 1.5, // Square aspect ratio
                 child: Stack(
                   children: [
                     // Product Image
@@ -412,6 +500,33 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
+
+                    if (product['onSale'] ==
+                        true) // Check if the product is on sale
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color.fromARGB(
+                                180, 255, 0, 0), // Fully transparent
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${product['saleAmount']}% SALE ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     if (product['inStock'] == true)
                       Positioned(
                         top: 8,
@@ -447,13 +562,43 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               // Product price
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  '${product['price']?.toStringAsFixed(2) ?? '0.00'}₪',
-                  style: const TextStyle(color: Colors.grey),
+              if (product['onSale'] == true) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${product['oldPrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          decoration:
+                              TextDecoration.lineThrough, // Strike-through
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${product['salePrice']?.toStringAsFixed(2) ?? '0.00'}₪',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.red, // Highlight sale price
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ] else ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    '${product['price']?.toStringAsFixed(2) ?? '0.00'}₪',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               // Store information
               if (product['store'] != null && product['store'] is Map)
@@ -623,7 +768,10 @@ class _HomePageState extends State<HomePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? location = prefs.getString('selectedLocation');
     if (location == null || location.isEmpty) {
-      Navigator.pushReplacementNamed(context, '/map');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MapPage()),
+      );
     }
   }
 
@@ -1071,6 +1219,90 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp); // Parse the timestamp
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inDays > 1) {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year} at ${dateTime.hour}:${dateTime.minute}';
+      } else if (difference.inDays == 1) {
+        return 'Yesterday at ${dateTime.hour}:${dateTime.minute}';
+      } else if (difference.inHours >= 1) {
+        return '${difference.inHours} hour(s) ago';
+      } else if (difference.inMinutes >= 1) {
+        return '${difference.inMinutes} minute(s) ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (e) {
+      print('Error formatting timestamp: $e');
+      return 'Unknown Time';
+    }
+  }
+
+  Future<void> _markNotificationsAsRead() async {
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      for (var notification in notifications) {
+        if (!notification['isRead']) {
+          final notificationId = notification['_id'];
+          final response = await http.patch(
+            Uri.parse('$markNotificationAsRead/$notificationId'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          );
+
+          if (response.statusCode == 200) {
+            setState(() {
+              notification['isRead'] = true;
+            });
+            print('Notification $notificationId marked as read.');
+          } else {
+            print(
+                'Failed to mark notification $notificationId as read: ${response.body}');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error marking notifications as read: $e');
+    }
+  }
+
+  // Function to mark a single notification as read
+  Future<void> _markSingleNotificationAsRead(String notificationId) async {
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$markNotificationAsRead/$notificationId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          notifications
+              .firstWhere((n) => n['_id'] == notificationId)['isRead'] = true;
+        });
+        print('Notification $notificationId marked as read.');
+      } else {
+        print(
+            'Failed to mark notification $notificationId as read: ${response.body}');
+      }
+    } catch (e) {
+      print('Error marking notification $notificationId as read: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -1088,13 +1320,48 @@ class _HomePageState extends State<HomePage> {
           onTap: _showLocationOptions, // Pass the method to handle tap
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.menu,
-            color: Colors.white70,
-          ), // Menu icon
-          onPressed: () {
-            // Handle menu actions
+        leading: Builder(
+          builder: (BuildContext context) {
+            // Check if there are unread notifications
+            final hasUnreadNotifications = notifications
+                .any((notification) => notification['isRead'] == false);
+
+            return IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none, // Allow overflow for the badge
+                children: [
+                  Icon(
+                    hasUnreadNotifications
+                        ? Icons.notifications_active // Active notification icon
+                        : Icons.notifications, // Default notification icon
+                    color: Colors.white,
+                  ),
+                  if (hasUnreadNotifications)
+                    Positioned(
+                      right: -3, // Adjust position of the badge
+                      top: -3,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Text(
+                          '!', // A simple badge indicator
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              onPressed: () {
+                Scaffold.of(context).openDrawer(); // Open the custom drawer
+              },
+            );
           },
         ),
         actions: [
@@ -1146,6 +1413,191 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+      ///////////////////////////////////////////////////////
+      ///// Add the notification drawer here
+      drawer: Drawer(
+        width: MediaQuery.of(context).size.width * 0.86, // Set drawer width
+        elevation: 10, // Add some elevation for a shadow effect
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(30),
+            bottomRight: Radius.circular(0),
+          ),
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height *
+              0.7, // Limit drawer height to 70% of the screen
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(30),
+              bottomRight: Radius.circular(0),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header for the drawer
+              Container(
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * 0.135,
+                decoration: const BoxDecoration(
+                  color: myColor,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: MediaQuery.of(context).size.width * 0.06,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+              //const Divider(),
+
+              // Notifications list
+              Expanded(
+                child: isLoadingNotification
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : notifications.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                'No notifications available.',
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 15),
+                            itemCount: notifications.length,
+                            itemBuilder: (context, index) {
+                              final notification = notifications[index];
+                              final timestamp = notification[
+                                  'createdAt']; // Ensure 'createdAt' is present
+                              final formattedTime = timestamp != null
+                                  ? _formatTimestamp(timestamp)
+                                  : 'Unknown Time';
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 16),
+                                  leading: Icon(
+                                    notification['isRead']
+                                        ? Icons.notifications_active
+                                        : Icons.notifications_active,
+                                    color: notification['isRead']
+                                        ? myColor.withOpacity(.5)
+                                        : myColor,
+                                    size: 28,
+                                  ),
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text(
+                                      notification['title'] ?? 'No Title',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: myColor,
+                                      ),
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        notification['message'] ?? 'No Message',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        _formatTimestamp(
+                                            notification['createdAt']),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () async {
+                                    final notificationId = notification['_id'];
+                                    await _markSingleNotificationAsRead(
+                                        notificationId);
+                                  },
+                                ),
+                              );
+                            },
+                            separatorBuilder: (context, index) =>
+                                const Divider(),
+                          ),
+              ),
+
+              // Clear notifications button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      notifications
+                          .clear(); // Clear the notification list locally
+                    });
+                  },
+                  icon: const Icon(Icons.clear_all, color: Colors.white70),
+                  label: const Text(
+                    'Clear All',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: myColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+//////////
+      onDrawerChanged: (isOpened) {
+        setState(() {
+          isDrawerOpen = isOpened;
+        });
+        if (!isOpened) {
+          // Drawer closed, mark notifications as read
+          _markNotificationsAsRead();
+        }
+      },
+
       body: SingleChildScrollView(
         child: Column(
           children: [
