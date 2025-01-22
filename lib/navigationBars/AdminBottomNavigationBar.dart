@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import '../configuration/config.dart';
+import '../pages/Admin/adminStatisticsPage.dart';
 import '../pages/Admin/adminDashboard.dart';
-import '../pages/Admin/adminManageStores.dart';
+import '../pages/User/profile.dart';
 import '../pages/chatting/allChats.dart';
-//import '../pages/Admin/manageUsers.dart';
-//import '../pages/Admin/manageStores.dart';
 
 class AdminBottomNavigationBar extends StatefulWidget {
   const AdminBottomNavigationBar({super.key});
@@ -16,11 +16,11 @@ class AdminBottomNavigationBar extends StatefulWidget {
 class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
   int _currentIndex = 0;
 
-  // List of pages corresponding to the bottom navigation items
+  // List of admin pages
   final List<Widget> _adminPages = [
-    const AdminDashboardPage(), // Admin Dashboard
-    //ManageUsersPage(), // Manage Users
-    const AdminManageStoresPage(), // Manage Stores
+    const AdminStatisticsPage(),
+    const AdminDashboardPage(),
+    const ProfileScreen(),
     AllChats(),
   ];
 
@@ -37,16 +37,16 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Statistics',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          /* BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Manage Users',
-          ),*/
           BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Manage Stores',
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat),
@@ -54,7 +54,8 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
           ),
         ],
         currentIndex: _currentIndex,
-        selectedItemColor: myColor,
+        selectedItemColor: myColor, // Color for the selected item
+        unselectedItemColor: Colors.black54, // Color for unselected items
         backgroundColor: Colors.white70,
         onTap: _onItemTapped,
       ),
