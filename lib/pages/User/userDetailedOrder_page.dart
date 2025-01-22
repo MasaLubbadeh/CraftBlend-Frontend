@@ -613,51 +613,55 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
                 StatusBadge.getBadge(storeStatus),
               ],
             ),
-            //if (storeStatus = 'Delivered')
-            Column(
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    onPressed: hasRated
-                        ? null // Disable button if hasRated is true
-                        : () {
-                            _showRatingModal(context, storeDetails, storeItems);
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hasRated ? Colors.grey : myColor, // Gray if disabled
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+            if (storeStatus == 'Delivered')
+              Column(
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: hasRated
+                          ? null // Disable button if hasRated is true
+                          : () {
+                              _showRatingModal(
+                                  context, storeDetails, storeItems);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasRated
+                            ? Colors.grey
+                            : myColor, // Gray if disabled
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            hasRated
+                                ? "Already Rated"
+                                : "Rate Store & Products",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          hasRated ? "Already Rated" : "Rate Store & Products",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
             const SizedBox(height: 10),
             Column(

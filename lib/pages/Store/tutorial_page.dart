@@ -14,7 +14,7 @@ class TutorialListPage extends StatelessWidget {
       {
         'title': 'Add New Product',
         'description': 'Learn how to add new products to your store.',
-        'videoFile': 'addNewProduct.mp4',
+        'videoFile': 'addProduct.mp4',
       },
       {
         'title': 'Manage Orders',
@@ -36,7 +36,13 @@ class TutorialListPage extends StatelessWidget {
       {
         'title': 'Add an Advertisement to Home Page',
         'description': 'Learn how to place a promotional ad on the home page.',
-        'videoFile': 'trackDeliveries.mp4',
+        'videoFile': 'ADs.mp4',
+      },
+      {
+        'title': 'Manage Delivery Locations',
+        'description':
+            'Learn how to allow delivery to cetain cities and provide the shipping fee.',
+        'videoFile': 'manageDelivery.mp4',
       },
     ];
 

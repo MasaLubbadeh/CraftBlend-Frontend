@@ -170,132 +170,130 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           (item['storeDeliveryCost'] ?? 0.0);
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Customer Info Card
-          Card(
-            color: myColor2,
-            elevation: 4,
-            child: ListTile(
-              leading: const Icon(
-                Icons.account_circle,
-                size: 40,
-                color: myColor,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Customer Info Card
+        Card(
+          color: myColor2,
+          elevation: 4,
+          child: ListTile(
+            leading: const Icon(
+              Icons.account_circle,
+              size: 40,
+              color: myColor,
+            ),
+            title: Text(
+              customerName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
-              title: Text(
-                customerName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(),
+                Text(
+                  "Delivery Details:",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 5),
+                Text(
+                  "City: ${order['deliveryDetails']['city'] ?? 'N/A'}",
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Street: ${order['deliveryDetails']['street'] ?? 'N/A'}",
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Contact: ${order['deliveryDetails']['contactNumber'] ?? 'N/A'}",
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Payment Details:",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Method: ${order['paymentDetails']['method']}",
+                  style: const TextStyle(fontSize: 14),
+                ),
+                if (order['createdAt'] != null) const SizedBox(height: 5),
+                if (order['createdAt'] != null)
+                  Text(
+                    "Ordered at: ${_formatDateTime(order['createdAt'])}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                Divider(),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Store Totals Section
+        // Store Totals Section
+        Card(
+          color: myColor2,
+          elevation: 4,
+          child: ListTile(
+            leading: const Icon(
+              Icons.store,
+              size: 40,
+              color: myColor,
+            ),
+            title: const Text(
+              "",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Divider(),
-                  Text(
-                    "Delivery Details:",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "City: ${order['deliveryDetails']['city'] ?? 'N/A'}",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "Street: ${order['deliveryDetails']['street'] ?? 'N/A'}",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "Contact: ${order['deliveryDetails']['contactNumber'] ?? 'N/A'}",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "Payment Details:",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "Method: ${order['paymentDetails']['method']}",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  if (order['createdAt'] != null) const SizedBox(height: 5),
-                  if (order['createdAt'] != null)
-                    Text(
-                      "Ordered at: ${_formatDateTime(order['createdAt'])}",
-                      style: const TextStyle(fontSize: 14),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(),
+                ...storeTotals.entries.map((entry) {
+                  final storeId = entry.key;
+                  final totals = entry.value;
+                  final storeTotal = totals['storeTotal'] ?? 0.0;
+                  final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Total: ${storeTotal.toStringAsFixed(2)} ₪",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          "Delivery Cost: ${deliveryCost.toStringAsFixed(2)} ₪",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          "Status: ${order['status'] ?? 'Unknown'}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const Divider(),
+                      ],
                     ),
-                  Divider(),
-                ],
-              ),
+                  );
+                }).toList(),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Store Totals Section
-          // Store Totals Section
-          Card(
-            color: myColor2,
-            elevation: 4,
-            child: ListTile(
-              leading: const Icon(
-                Icons.store,
-                size: 40,
-                color: myColor,
-              ),
-              title: const Text(
-                "",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Divider(),
-                  ...storeTotals.entries.map((entry) {
-                    final storeId = entry.key;
-                    final totals = entry.value;
-                    final storeTotal = totals['storeTotal'] ?? 0.0;
-                    final deliveryCost = totals['storeDeliveryCost'] ?? 0.0;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Total: ${storeTotal.toStringAsFixed(2)} ₪",
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            "Delivery Cost: ${deliveryCost.toStringAsFixed(2)} ₪",
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            "Status: ${order['status'] ?? 'Unknown'}",
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const Divider(),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -502,8 +500,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final prefs = await SharedPreferences.getInstance();
       final storeName = prefs.getString('storeName');
 
+      print('updatedOrder $updatedOrder');
       // Step 2: Fetch the user's FCM token from the backend
-      final userId = updatedOrder['userId'];
+      final userId = updatedOrder['userId']['_id'];
       final storeId =
           updatedOrder['items']?[0]['storeId']; // Access from items array
       print('Extracted User ID: $userId, Store ID: $storeId');

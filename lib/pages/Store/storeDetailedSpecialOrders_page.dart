@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../services/Notifications/notification_helper.dart';
+
 class DetailedSpecialOrderPage extends StatefulWidget {
   final Map<String, dynamic> specialOrder;
 
@@ -23,6 +25,147 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs
         .getString('token'); // Adjust the key based on your implementation
+  }
+
+  Future<void> sendSpecialOrderStatusNotification(
+      Map<String, dynamic> specialOrder, String newStatus) async {
+    try {
+      // Step 1: Fetch the token from SharedPreferences
+      final token = await _getToken();
+      if (token == null) {
+        print('Authentication token not found');
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final storeName = prefs.getString('storeName');
+
+      if (storeName == null) {
+        print('Store Name not found');
+        return;
+      }
+
+      // Step 2: Extract user ID and store ID
+      final userId = specialOrder['customerId']?['_id'];
+      final storeId =
+          specialOrder['storeId']; // Adjust based on your data structure
+
+      print('User of special orders: $userId');
+
+      if (userId == null || storeId == null) {
+        print('User ID or Store ID not found');
+        return;
+      }
+
+      // Step 3: Fetch the user's FCM token from the backend
+      final fcmTokenUrl =
+          '$getFMCToken?userId=$userId'; // Ensure your API expects userId as a path parameter
+      final fcmTokenResponse = await http.get(
+        Uri.parse(fcmTokenUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (fcmTokenResponse.statusCode != 200) {
+        print('Failed to fetch FCM token: ${fcmTokenResponse.body}');
+        return;
+      }
+
+      final fcmTokenData = json.decode(fcmTokenResponse.body);
+      if (fcmTokenData['tokens'] == null || fcmTokenData['tokens'].isEmpty) {
+        print('No FCM token found for the user');
+        return;
+      }
+
+      final userDeviceToken = fcmTokenData['tokens'][0]['fcmToken'];
+      print('User Device Token: $userDeviceToken');
+
+      // Step 4: Send notification to the user's device using Firebase
+      final title = "Your special order from '$storeName' has been confirmed!";
+      final body =
+          "Your special request from '$storeName' was confirmed and the total price is now set. You can proceed to checkout from your 'scheduled orders' section in your cart.";
+      await NotificationService.sendNotification(userDeviceToken, title, body);
+
+      // Step 5: Add notification to the database
+      final notificationResponse = await http.post(
+        Uri.parse(addNotification),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'senderId': storeId, // Store ID as required by backend
+          'senderType': 'store',
+          'recipientId': userId,
+          'recipientType': 'user',
+          'title': title,
+          'message': body,
+          'metadata': {'orderId': specialOrder['_id'], 'status': newStatus},
+        }),
+      );
+
+      if (notificationResponse.statusCode >= 200 &&
+          notificationResponse.statusCode < 300) {
+        print('Notification added to database successfully');
+      } else {
+        print(
+            'Failed to save notification to database: ${notificationResponse.body}');
+      }
+    } catch (e) {
+      print('Error sending notification: $e');
+    }
+  }
+
+  Widget _buildStatusButton() {
+    String currentStatus = widget.specialOrder['status'] ?? 'Unknown';
+
+    String buttonLabel;
+    VoidCallback? onPressed;
+
+    switch (currentStatus) {
+      case 'Pending':
+        buttonLabel = "Confirm Order & Set Price";
+        onPressed = _confirmOrder;
+        break;
+      case 'Confirmed':
+        buttonLabel = "Mark as Shipped";
+        onPressed = _confirmOrder;
+        break;
+      case 'Shipped':
+        buttonLabel = "Mark as Delivered";
+        onPressed = _confirmOrder;
+        break;
+      case 'Delivered':
+        return SizedBox.shrink(); // No button needed
+      default:
+        return SizedBox.shrink(); // Handle unknown statuses
+    }
+
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : onPressed,
+      icon: _isLoading
+          ? SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.0,
+              ),
+            )
+          : Icon(Icons.check_circle, color: Colors.white),
+      label: _isLoading
+          ? SizedBox.shrink()
+          : Text(
+              buttonLabel,
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: myColor,
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+      ),
+    );
   }
 
   Future<void> _confirmOrder() async {
@@ -58,7 +201,26 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
       );
 
       if (response.statusCode == 200) {
-        _showSuccessDialog("Order confirmed successfully!");
+        //  final responseData = json.decode(response.body);
+        // final updatedSpecialOrder =
+        //   responseData['specialOrder']; // Adjust based on your API response
+
+        // Send notification
+        await sendSpecialOrderStatusNotification(
+            widget.specialOrder, 'Confirmed');
+
+        // Update the local special order
+        setState(() {
+          widget.specialOrder['status'] = 'Confirmed';
+          widget.specialOrder['realPrice'] = parsedPrice;
+        });
+
+        // Show success dialog
+        _showSuccessDialog(
+            "Order confirmed successfully! and user has notified!");
+
+        // Navigate back and signal the previous page to refresh
+        Navigator.pop(context, true);
       } else {
         _showErrorDialog('Failed to confirm order.');
       }
@@ -76,6 +238,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
 
     return showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true, // 1. Enable scroll control
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.0),
@@ -84,61 +247,71 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
       ),
       builder: (BuildContext context) {
         return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Set Real Price',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _priceController,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  hintText: 'Enter the real price',
-                  border: const OutlineInputBorder(),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: myColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: myColor, width: 2.0),
+          padding: EdgeInsets.only(
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom, // 2. Adjust padding
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+          ),
+          child: SingleChildScrollView(
+            // 3. Wrap with SingleChildScrollView
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Set Real Price',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.grey),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _priceController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter the real price',
+                    border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: myColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: myColor, width: 2.0),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(_priceController.text.trim());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: myColor,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 24.0),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ),
-                    child: const Text(
-                      'Confirm',
-                      style: TextStyle(color: Colors.white),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(_priceController.text.trim());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: myColor,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12.0, horizontal: 24.0),
+                      ),
+                      child: const Text(
+                        'Confirm',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -246,6 +419,8 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
 
   String _formatDateTime(String isoDateTime) {
     try {
+      // print('speciaaal');
+      // print(widget.specialOrder);
       final dateTime = DateTime.parse(isoDateTime); // Parse the ISO date string
       return "${dateTime.toLocal()}"
           .split('.')[0]; // Format as local time without milliseconds
@@ -265,7 +440,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
 
     final orderItems =
         widget.specialOrder['orderItems'] as List<dynamic>? ?? [];
-    final totalPrice = widget.specialOrder['totalPrice'] ?? 0.0;
+    final totalPrice = widget.specialOrder['estimatedPrice'] ?? 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -283,7 +458,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true),
         ),
       ),
       body: Stack(
@@ -335,15 +510,15 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
                                     fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                "City: ${widget.specialOrder['deliveryDetails']['city']}",
+                                "City: ${widget.specialOrder['deliveryDetails']?['city'] ?? 'Not yet'}",
                                 style: const TextStyle(fontSize: 14),
                               ),
                               Text(
-                                "Street: ${widget.specialOrder['deliveryDetails']['street']}",
+                                "Street: ${widget.specialOrder['deliveryDetails']?['street'] ?? 'Not yet'}",
                                 style: const TextStyle(fontSize: 14),
                               ),
                               Text(
-                                "Contact: ${widget.specialOrder['deliveryDetails']['contactNumber']}",
+                                "Contact: ${widget.specialOrder['deliveryDetails']?['contactNumber'] ?? 'Not yet'}",
                                 style: const TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 5),
@@ -353,7 +528,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
                                     fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                "Method: ${widget.specialOrder['paymentDetails']['method']}",
+                                "Method: ${widget.specialOrder['paymentDetails']?['method'] ?? 'Not yet'}",
                                 style: const TextStyle(fontSize: 14),
                               ),
                               if (widget.specialOrder['createdAt'] != null)
@@ -460,7 +635,8 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton.icon(
+        child: _buildStatusButton(),
+/* ElevatedButton.icon(
           onPressed: _confirmOrder,
           icon: const Icon(Icons.check_circle, color: Colors.white70),
           label: const Text(
@@ -472,6 +648,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
+      */
       ),
     );
   }

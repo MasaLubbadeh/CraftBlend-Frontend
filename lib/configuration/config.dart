@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.34:3000/';
+const String url = 'http://192.168.1.16:3000/';
 
 bool isLoggedIn = false;
 const String login = '${url}login';
