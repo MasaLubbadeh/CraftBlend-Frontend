@@ -73,24 +73,26 @@ class _HomePageState extends State<HomePage> {
     _fetchRecommendedStores();
     _fetchSuggestedProducts();
     _fetchNotifications();
-
     // Set up the timer to update the remaining time for each pastry every second
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        for (var pastry in pastries) {
-          if (pastry['onSale'] == true && pastry['endDate'] != null) {
-            try {
-              DateTime endDate = DateTime.parse(pastry['endDate']);
-              pastry['remainingTime'] = _calculateRemainingTime(endDate);
-            } catch (e) {
-              print("Invalid endDate format for pastry: ${pastry['endDate']}");
-              pastry['remainingTime'] = 'Invalid Date';
+      if (mounted) {
+        setState(() {
+          for (var pastry in pastries) {
+            if (pastry['onSale'] == true && pastry['endDate'] != null) {
+              try {
+                DateTime endDate = DateTime.parse(pastry['endDate']);
+                pastry['remainingTime'] = _calculateRemainingTime(endDate);
+              } catch (e) {
+                print(
+                    "Invalid endDate format for pastry: ${pastry['endDate']}");
+                pastry['remainingTime'] = 'Invalid Date';
+              }
+            } else {
+              pastry['remainingTime'] = 'Not on Sale';
             }
-          } else {
-            pastry['remainingTime'] = 'Not on Sale';
           }
-        }
-      });
+        });
+      }
     });
   }
 
@@ -128,7 +130,6 @@ class _HomePageState extends State<HomePage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userType = prefs.getString('userType');
       final response = await http.get(
-
         Uri.parse('$getNotifications?userType=$userType'), // Your API endpoint
 
         headers: {
@@ -1283,7 +1284,6 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final response = await http.patch(
-
         Uri.parse('$markNotificationAsRead/$notificationId'),
         headers: {
           'Authorization': 'Bearer $token',

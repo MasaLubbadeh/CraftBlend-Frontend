@@ -4,6 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../configuration/config.dart';
 
 class NotificationService {
   /// Get access token for Google Cloud Console
@@ -120,5 +123,26 @@ class NotificationService {
   static Future<void> sendNotificationToSingleRecipient(
       String deviceToken, String title, String body) async {
     await sendNotification(deviceToken, title, body);
+  }
+
+  /// Fetch device tokens for all users
+  static Future<List<String>> fetchDeviceTokens() async {
+    // Replace with your API endpoint to get device tokens
+    const String apiUrl = getAllFMCTokens;
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token'); // Retrieve the stored token
+
+    final response = await http.get(Uri.parse(apiUrl), headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token', // Replace with actual token
+    });
+
+    if (response.statusCode == 200) {
+      print(response.body);
+      List<dynamic> tokens = jsonDecode(response.body);
+      return tokens.cast<String>();
+    } else {
+      throw Exception('Failed to fetch device tokens: ${response.body}');
+    }
   }
 }

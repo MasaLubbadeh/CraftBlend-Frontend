@@ -30,6 +30,7 @@ class StoreProfilePage extends StatefulWidget {
 class _StoreProfilePageState extends State<StoreProfilePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
   //fetching posts
   List<dynamic> posts = [];
   List<dynamic> feedbacks = [];
@@ -388,7 +389,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
           ),
         ),
         child: SingleChildScrollView(
-          // Added to make the Drawer scrollable
           child: Column(
             children: [
               Stack(
@@ -418,8 +418,12 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       ),
                       child: CircleAvatar(
                         radius: mediaSize.height * 0.07,
-                        backgroundImage:
-                            const AssetImage('assets/images/profilePURPLE.jpg'),
+                        backgroundImage: (storeData?['logo'] != null &&
+                                storeData!['logo'].isNotEmpty)
+                            ? NetworkImage(storeData!['logo'])
+                            : const AssetImage(
+                                    'assets/images/profilePURPLE.jpg')
+                                as ImageProvider,
                         backgroundColor: Colors.white,
                       ),
                     ),
@@ -429,7 +433,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               SizedBox(height: mediaSize.height * 0.09),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.delivery_dining, color: myColor),
+                leading: const Icon(Icons.account_box_outlined, color: myColor),
                 title: const Text(
                   "Your Account",
                   style: TextStyle(
@@ -446,6 +450,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 },
               ),
               const Divider(),
+
               ListTile(
                 leading: const Icon(Icons.delivery_dining, color: myColor),
                 title: const Text(
@@ -494,6 +499,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 ),
                 onTap: () {
                   final category = storeData?['category'];
+                  print('category $category');
                   if (category != null) {
                     Navigator.push(
                       context,
@@ -512,20 +518,19 @@ class _StoreProfilePageState extends State<StoreProfilePage>
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(LineAwesomeIcons.key, color: myColor),
+                leading: const Icon(Icons.emoji_events, color: myColor),
                 title: const Text(
-                  "Change Password",
+                  "Manage Store's point system",
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: myColor,
-                      letterSpacing: 1),
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ResetPasswordPage(),
-                    ),
+                        builder: (context) => const ManagePointsPage()),
                   );
                 },
               ),
@@ -549,7 +554,61 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                 },
               ),
               const Divider(),
-              const SizedBox(height: 20), // Optional spacing
+              ListTile(
+                leading: const Icon(Icons.subscriptions, color: myColor),
+                title: const Text(
+                  "Manage your subscription",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManageSubscriptionPage()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(LineAwesomeIcons.key, color: myColor),
+                title: const Text(
+                  "Change Password",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: myColor,
+                      letterSpacing: 1),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ResetPasswordPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.lightbulb, color: myColor),
+                title: const Text(
+                  "Tutorial",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  /* Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TutorialListPage()),
+                  );*/
+                },
+              ),
+              const Divider(),
+              // const SizedBox(height: 20), // Optional spacing
               ListTile(
                 leading: const Icon(LineAwesomeIcons.alternate_sign_out,
                     color: myColor),
@@ -652,13 +711,17 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                         const SizedBox(width: 5),
                         ElevatedButton(
                           onPressed: () {
+                            final String userID =
+                                widget.userID; // Get the userID from the widget
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => DashboardPage()),
+                                  builder: (context) =>
+                                      InsightsPage(userID: userID!)),
                             );
                           },
-                          child: const Text('Dashboard'),
+                          child: const Text('View Insights'),
                         ),
                       ],
                     ),
