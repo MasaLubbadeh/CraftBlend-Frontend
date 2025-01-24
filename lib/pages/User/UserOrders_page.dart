@@ -227,6 +227,10 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
                   // style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               const SizedBox(height: 4),
+              Text(
+                "Order Date: ${DateTime.parse(order['createdAt']).toLocal().toString().split(' ')[0]}",
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
               if (isDelivered)
                 const Row(
                   children: [

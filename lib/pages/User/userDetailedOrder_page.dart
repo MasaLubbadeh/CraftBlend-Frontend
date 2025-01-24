@@ -430,6 +430,14 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
   }
 
   Widget _buildBottomButton() {
+    // Check if all items are delivered
+    final allDelivered = (order['status'] == 'Delivered');
+
+    if (allDelivered) {
+      // If all are delivered, do not show the "Mark as Received" button
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: const Color.fromARGB(171, 243, 229, 245),
@@ -571,6 +579,7 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
         ? storeData['items'][0]['storeStatus'] ?? 'Unknown'
         : 'Unknown';
     final storeItems = storeData['items'];
+    final allItemsRated = storeItems.every((item) => item['hasRated'] == true);
 
     return Card(
       color: const Color.fromARGB(171, 243, 229, 245),
