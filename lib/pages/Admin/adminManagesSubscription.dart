@@ -68,7 +68,7 @@ class _AdminManageSubscriptionsPageState
         title: const Text(
           'Manage Subscriptions',
           style: TextStyle(
-            fontSize: 25,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),

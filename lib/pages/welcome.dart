@@ -1,8 +1,7 @@
 import 'package:craft_blend_project/pages/User/login_page.dart';
-import 'package:craft_blend_project/services/Notifications/notification_helper.dart';
-import 'package:craft_blend_project/services/authentication/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../configuration/config.dart';
+import 'signUp/account_type_selection_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -17,21 +16,11 @@ class WelcomePage extends StatelessWidget {
           const SizedBox(height: 80),
 
           // Title
-          /*   const Text(
-            "Welcome to",
-            style: TextStyle(
-              fontSize: 24,
-             // fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
-          ),*/
           Image.asset(
             "assets/images/welcome1.png", // Replace with your image asset
             height: 100, // Adjust height as needed
             fit: BoxFit.contain,
           ),
-          //  const SizedBox(height: 20),
 
           // Centered Illustration
           Image.asset(
@@ -41,28 +30,14 @@ class WelcomePage extends StatelessWidget {
           ),
           const SizedBox(height: 0),
 
-          // Privacy Policy Text
-          /*  const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
-              "Read our Privacy Policy. Tap Agree and Continue to accept the Terms of Services.",
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          
-          */
           const Spacer(),
 
-          // "Agree & Continue" Button
+          // "Login" Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () async {
-                // Navigate to the next page or perform any action
+                // Navigate to the Login Page
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const LoginPage(),
@@ -81,7 +56,7 @@ class WelcomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Continue",
+                    "Login",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -95,6 +70,46 @@ class WelcomePage extends StatelessWidget {
               ),
             ),
           ),
+
+          // "Create an Account" Button
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () async {
+                // Navigate to the Account Type Selection Page
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AccountTypeSelectionPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: myColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_add, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text(
+                    "Create an Account",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 20),
         ],
       ),

@@ -166,7 +166,7 @@ class _EditCustomFieldPageState extends State<EditCustomFieldPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: myColor, // Preserved style
             side: const BorderSide(color: Colors.white70),
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20),
             textStyle: const TextStyle(fontSize: 16),
           ),
         ),

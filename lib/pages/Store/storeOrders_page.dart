@@ -493,7 +493,9 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Total Price: ${totalPrice.toStringAsFixed(2)} ₪",
+                          totalPrice == 0
+                              ? "Total Price: Not yet"
+                              : "Total Price: ${totalPrice.toStringAsFixed(2)} ₪",
                           style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 4),

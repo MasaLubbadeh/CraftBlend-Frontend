@@ -1001,7 +1001,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ],
 
         // Apple Pay Option
-        _buildPaymentOption('Apple Pay', 'Apple Pay', 'apple pay'),
+        _buildPaymentOption('Apple Pay', 'Reflect', 'apple pay'),
 
         // Add New Card Option
         GestureDetector(
@@ -1049,7 +1049,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
         const SizedBox(height: 10),
         const Text(
-          'Paying by card allows you to earn points, which can be redeemed for discounts on future orders.',
+          'When you make a purchase from a store, you earn points based on the store’s point system. These points can later be redeemed for discounts on future orders.',
           style: TextStyle(fontSize: 14, color: Colors.black54),
           textAlign: TextAlign.center,
         ),
@@ -1065,7 +1065,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } else if (type == 'visa') {
       cardIcon = const Icon(LineAwesomeIcons.visa_credit_card, color: myColor);
     } else if (type == 'apple pay') {
-      cardIcon = const Icon(LineAwesomeIcons.apple_pay, color: myColor);
+      cardIcon = const Icon(LineAwesomeIcons.visa_credit_card, color: myColor);
     } else {
       cardIcon = const Icon(Icons.payment, color: myColor);
     }

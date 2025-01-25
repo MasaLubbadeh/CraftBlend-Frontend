@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/Notifications/notification_helper.dart'; // Adjust the path as needed
 
 class SpecialOrderFormPage extends StatefulWidget {
   final OrderOption option;
@@ -37,6 +38,96 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
   void initState() {
     super.initState();
     _initializeFormData();
+  }
+
+  Future<void> _sendNotificationToStore(
+      Map<String, dynamic> specialOrder) async {
+    try {
+      // Step 1: Retrieve the authentication token
+      final token = await _getToken();
+      if (token == null) {
+        _showSnackBar('Authentication token not found.');
+        return;
+      }
+
+      // Step 2: Fetch the store owner's user ID
+      // Assuming the store owner's user ID is stored in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final storeId =
+          specialOrder['storeId']; // Ensure 'storeId' is stored during login
+      // final storeName = prefs.getString('storeName') ?? 'Your Store';
+      print('stor eid $storeId');
+      if (storeId == null || storeId.isEmpty) {
+        _showSnackBar('Store ID not found.');
+        return;
+      }
+
+      // Step 3: Fetch the store owner's FCM token from the backend
+      final fcmTokenUrl =
+          '$getFMCToken?storeId=$storeId'; // Replace with your actual endpoint
+      final fcmTokenResponse = await http.get(
+        Uri.parse(fcmTokenUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (fcmTokenResponse.statusCode != 200) {
+        _showSnackBar('Failed to fetch store FCM token.');
+        print('FCM Token Fetch Error: ${fcmTokenResponse.body}');
+        return;
+      }
+
+      final fcmTokenData = json.decode(fcmTokenResponse.body);
+      if (fcmTokenData['tokens'] == null || fcmTokenData['tokens'].isEmpty) {
+        _showSnackBar('No FCM token found for the store.');
+        return;
+      }
+
+      final storeDeviceToken = fcmTokenData['tokens'][0]['fcmToken'];
+      print('Store Device Token: $storeDeviceToken');
+
+      // Step 4: Prepare the notification details
+      final title = "New Special Order Received!";
+      final body =
+          "You have received a new special order. Check your orders for more details.";
+
+      // Step 5: Send the notification via Firebase
+      await NotificationService.sendNotification(storeDeviceToken, title, body);
+
+      // Step 6: Optionally, log the notification in the backend database
+      final addNotificationResponse = await http.post(
+        Uri.parse(addNotification), // Replace with your actual endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'senderId':
+              specialOrder['customerId'], // Assuming customerId is available
+          'senderType': 'user',
+          'recipientId': storeId,
+          'recipientType': 'store',
+          'title': title,
+          'message': body,
+          'metadata': {
+            'orderId': specialOrder['_id'],
+            'status': 'Received',
+          },
+        }),
+      );
+
+      if (addNotificationResponse.statusCode >= 200 &&
+          addNotificationResponse.statusCode < 300) {
+        print('Notification logged successfully.');
+      } else {
+        print('Failed to log notification: ${addNotificationResponse.body}');
+      }
+    } catch (e) {
+      _showSnackBar('Error sending notification: $e');
+      print('Notification Sending Error: $e');
+    }
   }
 
   void _initializeFormData() {
@@ -207,6 +298,13 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
         body: json.encode(payload),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        final specialOrder =
+            responseData; // Directly assign the entire response
+
+        print('Special Order Response: $specialOrder');
+        // Send notification to the store
+        await _sendNotificationToStore(specialOrder);
         // Show a stylized confirmation dialog
         showDialog(
           context: context,
