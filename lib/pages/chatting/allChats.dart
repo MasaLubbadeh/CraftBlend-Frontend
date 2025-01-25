@@ -136,6 +136,10 @@ class AllChats extends StatelessWidget {
           itemCount: userList.length,
           itemBuilder: (context, index) {
             final userData = userList[index];
+            if (userData['userType'] == 'S') {
+              userData["profilePicture"] =
+                  'https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4';
+            }
             return _buildUserListItem(userData, context);
           },
         );
@@ -178,6 +182,11 @@ class AllChats extends StatelessWidget {
                     lastName: userData["lastName"] ?? "NAME",
                     fullName: userData["storeName"] ?? "NAME",
                     userType: userData["userType"] ?? "NOTYPE",
+                    profileImageUrl: (userData["profilePicture"] != null &&
+                            userData["profilePicture"].isNotEmpty)
+                        ? NetworkImage(userData["profilePicture"])
+                        : const AssetImage('assets/images/profilePURPLE.jpg')
+                            as ImageProvider,
                   ),
                 ),
               );
@@ -194,10 +203,11 @@ class AllChats extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 24,
-                      backgroundImage: NetworkImage(
-                        userData["profilePicture"] ??
-                            'https://picsum.photos/400/400', // Default placeholder
-                      ),
+                      backgroundImage: (userData["profilePicture"] != null &&
+                              userData["profilePicture"].isNotEmpty)
+                          ? NetworkImage(userData["profilePicture"])
+                          : const AssetImage('assets/images/profilePURPLE.jpg')
+                              as ImageProvider,
                     ),
                     const SizedBox(width: 16),
                     Column(

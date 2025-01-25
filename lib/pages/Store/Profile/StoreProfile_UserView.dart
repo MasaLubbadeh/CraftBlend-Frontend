@@ -78,7 +78,10 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
           // Loop through the user data and look for the match
           for (var user in userList) {
             print("User data: ${user['email']}");
-
+            if (user["userType"] == 'S') {
+              user["profilePicture"] =
+                  "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4";
+            }
             // If a match for the userID is found, navigate
             if (user['email'] == _contactEmail) {
               // Ensure the context is valid and the widget is still mounted
@@ -93,6 +96,11 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                       lastName: user["lastName"] ?? "NAME",
                       fullName: user["storeName"] ?? "NAME",
                       userType: user["userType"] ?? "NOTYPE",
+                      profileImageUrl: (user["profilePicture"] != null &&
+                              user["profilePicture"].isNotEmpty)
+                          ? NetworkImage(user["profilePicture"])
+                          : const AssetImage('assets/images/profilePURPLE.jpg')
+                              as ImageProvider,
                     ),
                   ),
                 );
@@ -414,11 +422,9 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                   const SizedBox(height: 10),
                   CircleAvatar(
                     radius: mediaSize.height * 0.07,
-                    backgroundImage: (_profileImage != null &&
-                            _profileImage.isNotEmpty)
-                        ? NetworkImage(_profileImage)
-                        : const AssetImage('assets/images/profilePURPLE.jpg')
-                            as ImageProvider,
+                    backgroundImage: _profilePicture.startsWith('http')
+                        ? NetworkImage(_profilePicture) as ImageProvider
+                        : AssetImage(_profilePicture),
                     backgroundColor: Colors.white,
                   ),
                   const SizedBox(height: 5),
@@ -511,7 +517,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           itemBuilder: (context, index) {
                             final post = posts[index];
                             return PostCard(
-                              profileImageUrl: 'https://picsum.photos/400/400',
+                              profileImageUrl: post['profileImageUrl'] ?? '',
                               username: '${post['fullName']}',
                               content: post['content'],
                               likes: post['likes'] ?? 0,
@@ -562,7 +568,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           itemBuilder: (context, index) {
                             final feedback = feedbacks[index];
                             return PostCard(
-                              profileImageUrl: 'https://picsum.photos/400/400',
+                              profileImageUrl:
+                                  feedback['profileImageUrl'] ?? '',
                               username: '${feedback['fullName']}',
                               content: feedback['content'],
                               likes: feedback['likes'] ?? 0,

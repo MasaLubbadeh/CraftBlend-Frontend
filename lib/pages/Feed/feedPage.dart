@@ -321,7 +321,7 @@ class _FeedPageState extends State<FeedPage> {
 
         print('sent the request');
         print(
-            'this is the status code for the feetch favorite:${response.statusCode}');
+            'this is the status code for the feetch favorite:${response.body}');
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
 
@@ -369,7 +369,7 @@ class _FeedPageState extends State<FeedPage> {
                       final post = posts[index];
 
                       return PostCard(
-                        profileImageUrl: 'https://picsum.photos/400/400',
+                        profileImageUrl: post['profileImageUrl'] ?? '',
                         username: '${post['fullName']}',
                         content: post['content'],
                         likes: post['likes'] ?? 0,
