@@ -676,6 +676,9 @@ class _AddPastryProductState extends State<AddPastryProduct> {
       onChanged: (value) {
         setState(() {
           selectedAvailability = value;
+          if (selectedAvailability == 'Upon Order') {
+            deliveryType = 'scheduled';
+          }
         });
       },
     );

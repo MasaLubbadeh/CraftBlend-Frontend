@@ -642,61 +642,47 @@ class _SearchPageState extends State<SearchPage> {
                                                     ),
 
                                                     // Store Information for Products
+                                                    // Store Information for Products
                                                     if (!isStore)
                                                       Row(
                                                         children: [
                                                           // Store Logo
-                                                          Container(
-                                                            width: 20,
-                                                            height: 20,
-                                                            margin:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    right: 8.0,
-                                                                    top: 6.0),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              image:
-                                                                  DecorationImage(
+                                                          if (item['store'] !=
+                                                                  null &&
+                                                              item['store']
+                                                                  is Map)
+                                                            Container(
+                                                              width: 20,
+                                                              height: 20,
+                                                              margin:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      right:
+                                                                          8.0,
+                                                                      top: 6.0),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                shape: BoxShape
+                                                                    .circle,
                                                                 image:
-                                                                    NetworkImage(
-                                                                  allStores
-                                                                          .firstWhere(
-                                                                        (store) =>
-                                                                            store['_id'] ==
-                                                                            item['store'],
-                                                                        orElse:
-                                                                            () {
-                                                                          print(
-                                                                              "Store not found for product: ${item['name']}"); // Debugging
-                                                                          return {};
-                                                                        },
-                                                                      )['logo'] ??
-                                                                      '', // Fallback if logo is missing
+                                                                    DecorationImage(
+                                                                  image: NetworkImage(
+                                                                      item['store']
+                                                                              [
+                                                                              'logo'] ??
+                                                                          ''),
+                                                                  fit: BoxFit
+                                                                      .cover,
                                                                 ),
-                                                                fit: BoxFit
-                                                                    .cover,
                                                               ),
                                                             ),
-                                                          ),
                                                           // Store Name
                                                           Text(
-                                                            allStores
-                                                                    .firstWhere(
-                                                                  (store) =>
-                                                                      store[
-                                                                          '_id'] ==
-                                                                      item[
-                                                                          'store'],
-                                                                  orElse: () {
-                                                                    print(
-                                                                        "Store not found for product: ${item['name']}"); // Debugging
-                                                                    return {};
-                                                                  },
-                                                                )['storeName'] ??
-                                                                'No Store', // Fallback if storeName is missing
+                                                            item['store'] is Map
+                                                                ? item['store'][
+                                                                        'storeName'] ??
+                                                                    ''
+                                                                : '', // Fallback for non-Map store
                                                             style:
                                                                 const TextStyle(
                                                               fontSize: 14,

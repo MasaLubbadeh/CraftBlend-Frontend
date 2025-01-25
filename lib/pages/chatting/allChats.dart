@@ -158,7 +158,7 @@ class AllChats extends StatelessWidget {
           // While loading, show a placeholder or nothing
           return const SizedBox();
         }
-    /*  if (currentUser == null || userData["email"] == currentUser.email) {
+        /*  if (currentUser == null || userData["email"] == currentUser.email) {
       return const SizedBox(); // Skip displaying the current user
     }*/
 

@@ -1,6 +1,7 @@
 import 'package:craft_blend_project/services/authentication/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import '../aboutUs_page.dart';
 import 'PointsPage.dart';
 import 'editProfile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -397,6 +398,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+              Divider(),
+              if (isUser)
+                ListTile(
+                  leading: const Icon(Icons.info, color: myColor),
+                  title: const Text(
+                    "About us",
+                    style: TextStyle(
+                      color: myColor,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AboutUsPage()),
+                    );
+                  },
+                ),
             ],
           ),
         ),
@@ -446,47 +465,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        '${userData?['user']['firstName'] ?? 'First Name'} ${userData?['user']['lastName'] ?? 'Last Name'}',
-                        style: const TextStyle(
-                            fontSize: 24.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            letterSpacing: 1),
-                      ),
-                      const SizedBox(height: 10),
-
-                      Align(
-                        // alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            // await _updateRate(shekelPerPoint);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PointsPage(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.emoji_events,
-                              color: Colors.white),
-                          label: const Text(
-                            'Check Your Points',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: myColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                      isUser
+                          ? Text(
+                              '${userData?['user']['firstName'] ?? 'First Name'} ${userData?['user']['lastName'] ?? 'Last Name'}',
+                              style: const TextStyle(
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 1),
+                            )
+                          : Text(
+                              '${userData?['user']['firstName'] ?? 'First Name'}',
+                              style: const TextStyle(
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 1),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical:
-                                  8, // Reduced vertical padding for a thinner button
+                      const SizedBox(height: 10),
+                      if (isUser)
+                        Align(
+                          // alignment: Alignment.centerRight,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              // await _updateRate(shekelPerPoint);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PointsPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.emoji_events,
+                                color: Colors.white),
+                            label: const Text(
+                              'Check Your Points',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: myColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical:
+                                    8, // Reduced vertical padding for a thinner button
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
                       const SizedBox(height: 15),
 

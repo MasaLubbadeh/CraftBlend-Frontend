@@ -102,7 +102,7 @@ class _ReviewSuggestionsPageState extends State<ReviewSuggestionsPage> {
                 suggestion['description'].isNotEmpty)
               Text(
                 suggestion['description'],
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
+                style: const TextStyle(fontSize: 16, color: myColor),
               ),
             const SizedBox(height: 10),
             Row(
@@ -205,7 +205,7 @@ class _ReviewSuggestionsPageState extends State<ReviewSuggestionsPage> {
         title: const Text(
           'Review Suggestions',
           style: TextStyle(
-            fontSize: 26,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),

@@ -73,12 +73,16 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
         title: const Text(
           'Manage Stores',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -110,6 +114,7 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
 
   Widget _buildCategorySection(String categoryName, List stores) {
     return Card(
+      color: myColor2,
       margin: const EdgeInsets.all(10),
       elevation: 3,
       shape: RoundedRectangleBorder(
@@ -134,6 +139,7 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Card(
+        color: myColor2,
         //color: Colors.white70,
         margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
         elevation: 2,
@@ -197,9 +203,3 @@ class _AdminManageStoresPageState extends State<AdminManageStoresPage> {
     );
   }
 }
-
-// Replace this with your actual endpoint URL
-const String getCategoriesAndStoresEndpoint = "YOUR_API_ENDPOINT_HERE";
-
-// Replace myColor with your app's main color constant
-const Color myColor = Color(0xFF7D648F);

@@ -141,7 +141,7 @@ class _StoreSignUpLogoPageState extends State<StoreSignUpLogoPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Profile Photo',
+          'Store Logo',
           style: TextStyle(
               fontWeight: FontWeight.w900, fontSize: screenWidth * .06),
         ),

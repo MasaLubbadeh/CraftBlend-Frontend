@@ -174,6 +174,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print(data);
         if (data is List && data.isNotEmpty) {
           // Assuming the response is a list of configurations
           List<OrderOption> fetchedOptions =
@@ -228,7 +229,7 @@ class _SpecialOrdersPageState extends State<SpecialOrdersPage> {
       selectedOrderOptions = {
         for (var option in defaultOptions)
           option: OrderOption(
-            id: '', name: option, isSelected: true, // Flag as selected
+            id: '', name: option, isSelected: false, // Flag as selected
           ),
       };
       // Initialize controllers for each option

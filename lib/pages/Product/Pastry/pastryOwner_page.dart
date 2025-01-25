@@ -9,6 +9,8 @@ import '../../Store/ownerChooseSubscription_Page.dart';
 import 'addPastryProduct.dart';
 import '../../../configuration/config.dart';
 import '../EditPastryProduct.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PastryOwnerPage extends StatefulWidget {
   const PastryOwnerPage({super.key});
@@ -27,6 +29,15 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
   final TextEditingController _searchController = TextEditingController();
   late Timer _timer;
   String _remainingTime = '';
+  bool _showNoProductsOverlay = true; // New state variable
+// Notifications state variables
+  List<Map<String, dynamic>> notifications = [];
+  bool isLoadingNotifications = true;
+  int unreadNotificationsCount = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  bool isDrawerOpen = false;
+
   /* @override
   void initState() {
     super.initState();
@@ -80,6 +91,8 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     super.initState();
     _fetchStoreDetails();
     fetchPastries();
+    _fetchNotifications(); // Fetch notifications
+
     // Set up the timer to update the remaining time for each pastry every second
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
@@ -100,6 +113,11 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     });
   }
 
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
   String _calculateRemainingTime(DateTime endDate) {
     DateTime currentDate = DateTime.now();
     Duration difference = endDate.difference(currentDate);
@@ -116,6 +134,55 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     // Cancel the timer when the widget is disposed
     _timer.cancel();
     super.dispose();
+  }
+
+  void _handleDrawerStateChange() {
+    if (isDrawerOpen && !_scaffoldKey.currentState!.isDrawerOpen) {
+      // The drawer was open and now it's closed
+      _markNotificationsAsRead();
+    }
+    isDrawerOpen = _scaffoldKey.currentState!.isDrawerOpen;
+  }
+
+  Future<void> _fetchNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Authentication token not found.');
+      }
+      String? userType = prefs.getString('userType');
+
+      final response = await http.get(
+        Uri.parse(
+            '$getNotifications?userType=$userType'), // Replace with your actual endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        setState(() {
+          notifications =
+              List<Map<String, dynamic>>.from(jsonResponse['notifications']);
+          unreadNotificationsCount = notifications
+              .where((notification) => notification['isRead'] == false)
+              .length;
+          isLoadingNotifications = false;
+        });
+      } else {
+        throw Exception(
+            'Failed to fetch notifications. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      setState(() {
+        isLoadingNotifications = false;
+      });
+    }
   }
 
   String _updateRemainingTime(DateTime endDate) {
@@ -456,6 +523,118 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
     }
   }
 */
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp); // Parse the timestamp
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inDays > 1) {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year} at ${dateTime.hour}:${dateTime.minute}';
+      } else if (difference.inDays == 1) {
+        return 'Yesterday at ${dateTime.hour}:${dateTime.minute}';
+      } else if (difference.inHours >= 1) {
+        return '${difference.inHours} hour(s) ago';
+      } else if (difference.inMinutes >= 1) {
+        return '${difference.inMinutes} minute(s) ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (e) {
+      print('Error formatting timestamp: $e');
+      return 'Unknown Time';
+    }
+  }
+
+  Future<void> _markNotificationsAsRead() async {
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      for (var notification in notifications) {
+        if (!notification['isRead']) {
+          final notificationId = notification['_id'];
+          final response = await http.patch(
+            Uri.parse('$markNotificationAsRead/$notificationId'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          );
+
+          if (response.statusCode == 200) {
+            setState(() {
+              notification['isRead'] = true;
+            });
+            print('Notification $notificationId marked as read.');
+          } else {
+            print(
+                'Failed to mark notification $notificationId as read: ${response.body}');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error marking notifications as read: $e');
+    }
+  }
+
+  Future<void> _markSingleNotificationAsRead(String notificationId) async {
+    final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.patch(
+        Uri.parse(
+            '$markNotificationAsRead/$notificationId'), // Replace with your endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          final index =
+              notifications.indexWhere((n) => n['_id'] == notificationId);
+          if (index != -1) {
+            notifications[index]['isRead'] = true;
+            unreadNotificationsCount--;
+          }
+        });
+      } else {
+        throw Exception('Failed to mark notification as read.');
+      }
+    } catch (e) {
+      print('Error marking notification as read: $e');
+    }
+  }
+
+  Future<void> _clearAllNotifications() async {
+    /* final token = await _getToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$clearAllNotifications'), // Replace with your endpoint
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          notifications.clear();
+          unreadNotificationsCount = 0;
+        });
+      } else {
+        throw Exception('Failed to clear all notifications.');
+      }
+    } catch (e) {
+      print('Error clearing all notifications: $e');
+    }*/
+  }
+
   @override
   Widget build(BuildContext context) {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
@@ -475,6 +654,46 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           ),
         ),
         centerTitle: true,
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none, // Allow overflow for the badge
+                children: [
+                  const Icon(
+                    Icons.notifications,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  if (unreadNotificationsCount > 0)
+                    Positioned(
+                      right: -3, // Adjust position of the badge
+                      top: -3,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$unreadNotificationsCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              onPressed: () {
+                Scaffold.of(context)
+                    .openDrawer(); // Open the notification drawer
+              },
+            );
+          },
+        ),
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -493,6 +712,188 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
           ),
         ],
       ),
+      drawer: Drawer(
+        width: MediaQuery.of(context).size.width * 0.86, // Set drawer width
+        elevation: 10, // Add some elevation for a shadow effect
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(30),
+            bottomRight: Radius.circular(0),
+          ),
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height *
+              0.7, // Limit drawer height to 70% of the screen
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(30),
+              bottomRight: Radius.circular(0),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header for the drawer
+              Container(
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * 0.135,
+                decoration: const BoxDecoration(
+                  color: myColor,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: MediaQuery.of(context).size.width * 0.06,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+              //const Divider(),
+
+              // Notifications list
+              Expanded(
+                child: isLoadingNotifications
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : notifications.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                'No notifications available.',
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 15),
+                            itemCount: notifications.length,
+                            itemBuilder: (context, index) {
+                              final notification = notifications[index];
+                              final timestamp = notification[
+                                  'createdAt']; // Ensure 'createdAt' is present
+                              final formattedTime = timestamp != null
+                                  ? _formatTimestamp(timestamp)
+                                  : 'Unknown Time';
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 16),
+                                  leading: Icon(
+                                    notification['isRead']
+                                        ? Icons.notifications_active
+                                        : Icons.notifications_active,
+                                    color: notification['isRead']
+                                        ? myColor.withOpacity(.5)
+                                        : myColor,
+                                    size: 28,
+                                  ),
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text(
+                                      notification['title'] ?? 'No Title',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: myColor,
+                                      ),
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        notification['message'] ?? 'No Message',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        _formatTimestamp(
+                                            notification['createdAt']),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () async {
+                                    final notificationId = notification['_id'];
+                                    await _markSingleNotificationAsRead(
+                                        notificationId);
+                                  },
+                                ),
+                              );
+                            },
+                            separatorBuilder: (context, index) =>
+                                const Divider(),
+                          ),
+              ),
+
+              // Clear notifications button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      notifications
+                          .clear(); // Clear the notification list locally
+                    });
+                  },
+                  icon: const Icon(Icons.clear_all, color: Colors.white70),
+                  label: const Text(
+                    'Clear All',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: myColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+//////////
+      onDrawerChanged: (isOpened) {
+        setState(() {
+          isDrawerOpen = isOpened;
+        });
+        if (!isOpened) {
+          // Drawer closed, mark notifications as read
+          _markNotificationsAsRead();
+        }
+      },
       body: Column(
         children: [
           if (_isSearching) // Show the search box only when searching
@@ -766,6 +1167,61 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                     );
                   },
                 ),
+                // Inside the Stack's children in the build method
+                if (!isLoading &&
+                    filteredPastries.isEmpty &&
+                    _showNoProductsOverlay)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black
+                          .withOpacity(0.5), // Semi-transparent dark background
+                      child: Center(
+                        child: Container(
+                          margin: const EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.all(0.0),
+                          decoration: BoxDecoration(
+                            color: Colors
+                                .white, // Slightly opaque white background
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/images/tutorial1.jpg', // Ensure this image exists
+                                height: MediaQuery.of(context).size.height *
+                                    0.4, // 30% of screen height
+                                fit: BoxFit.contain,
+                              ),
+                              SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showNoProductsOverlay =
+                                          false; // Dismiss the overlay
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        myColor, // Use your existing color
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Got it!',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

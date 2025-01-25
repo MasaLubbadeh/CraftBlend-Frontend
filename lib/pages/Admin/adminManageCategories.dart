@@ -363,7 +363,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         title: const Text(
           'Manage Categories',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),

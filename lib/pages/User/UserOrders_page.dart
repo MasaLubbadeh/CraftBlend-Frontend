@@ -167,6 +167,9 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
       if (_selectedStatus.toLowerCase() == "shipped") {
         return status == "shipped" || status == "partially shipped";
       }
+      if (_selectedStatus.toLowerCase() == "delivered") {
+        return status == "delivered" || status == "partially delivered";
+      }
 
       // Default case: match the selected status
       return status == _selectedStatus.toLowerCase();
@@ -224,6 +227,10 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
                   // style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               const SizedBox(height: 4),
+              Text(
+                "Order Date: ${DateTime.parse(order['createdAt']).toLocal().toString().split(' ')[0]}",
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
               if (isDelivered)
                 const Row(
                   children: [
@@ -278,7 +285,11 @@ class _UserOrdersPageState extends State<UserOrdersPage> {
           children: options.map((option) {
             return ListTile(
               title: Text(
-                option == 'Shipped' ? 'Shipped & Partially shipped' : option,
+                option == 'Shipped'
+                    ? 'Shipped & Partially Shipped'
+                    : option == 'Delivered'
+                        ? 'Delivered & Partially Delivered'
+                        : option,
                 style: TextStyle(
                   color: option == _selectedStatus ? myColor : Colors.black,
                   fontWeight: option == _selectedStatus

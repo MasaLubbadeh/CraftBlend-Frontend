@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../components/post.dart';
 import '../../User/login_page.dart';
 import '../../User/resetPassword.dart';
+import '../../aboutUs_page.dart';
 import '../ManageAdvertisement_Page.dart';
 import '../Sales/productSelection.dart';
 import '../manageDeliveryLocations_page.dart';
@@ -601,10 +602,11 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                   ),
                 ),
                 onTap: () {
-                  /* Navigator.push(
+
+                  Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TutorialListPage()),
-                  );*/
+                  );
                 },
               ),
               const Divider(),
@@ -634,6 +636,23 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                     const SnackBar(
                       content: Text('You have logged out successfully.'),
                     ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.info, color: myColor),
+                title: const Text(
+                  "About us",
+                  style: TextStyle(
+                    color: myColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AboutUsPage()),
                   );
                 },
               ),

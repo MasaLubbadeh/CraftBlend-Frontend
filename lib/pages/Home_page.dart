@@ -137,7 +137,8 @@ class _HomePageState extends State<HomePage> {
           'Content-Type': 'application/json',
         },
       );
-
+      print('notification body');
+      print(response.body);
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         setState(() {

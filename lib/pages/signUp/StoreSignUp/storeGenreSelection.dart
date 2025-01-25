@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import '../../../configuration/config.dart'; // Assuming configuration includes the registration endpoint
 import '../../../models/store_sign_up_data.dart';
@@ -22,6 +23,155 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
   void initState() {
     super.initState();
     _fetchGenres();
+  }
+
+  void _showSuggestionForm(BuildContext context) {
+    // Declare controllers outside the builder to retain their state
+    final TextEditingController categoryController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    String? errorMessage; // Error message for category validation
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Suggest a New Category",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: myColor,
+                        letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: categoryController,
+                    decoration: InputDecoration(
+                      labelText: "Category Name",
+                      border: const OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(10.0))),
+                      errorText: errorMessage, // Show the error message
+                    ),
+                    onChanged: (_) {
+                      setState(() {
+                        errorMessage = null; // Clear error on input
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(
+                      labelText:
+                          "Why should we add this category?\n (Optional)",
+                      border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(10.0))),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the modal
+                        },
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: myColor),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          final category = categoryController.text.trim();
+                          final description = descriptionController.text.trim();
+
+                          if (category.isEmpty) {
+                            setState(() {
+                              errorMessage = "Category name cannot be empty.";
+                            });
+                            return;
+                          }
+
+                          _submitCategorySuggestion(
+                              category, description); // Submit the suggestion
+                          Navigator.pop(context); // Close the modal
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: myColor, // Set the background color
+                          foregroundColor: Colors.white, // Set the text color
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12), // Optional padding
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                30), // Optional rounded corners
+                          ),
+                        ),
+                        child: const Text(
+                          "Submit",
+                          style: TextStyle(
+                              fontWeight:
+                                  FontWeight.bold), // Additional text styling
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitCategorySuggestion(
+      String category, String description) async {
+    try {
+      final response = await http.post(
+        Uri.parse(submitNewSuggestionByStore),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: json.encode({
+          "categoryName": category, // Correct key
+          "description": description,
+          "userType": 'Store', // Assuming UserType is 'User'
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Suggestion submitted successfully!")),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? "Failed to submit suggestion.");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
   }
 
   Future<void> _fetchGenres() async {
@@ -106,7 +256,7 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
         title: const Text(
           'Select your store genre',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white70,
           ),
@@ -116,6 +266,15 @@ class _GenreSelectionScreenState extends State<StoreGenreSelectionScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline, color: Colors.white70),
+            tooltip: "Suggest a Category",
+            onPressed: () {
+              _showSuggestionForm(context); // Open suggestion form
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

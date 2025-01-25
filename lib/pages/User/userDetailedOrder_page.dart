@@ -430,6 +430,14 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
   }
 
   Widget _buildBottomButton() {
+    // Check if all items are delivered
+    final allDelivered = (order['status'] == 'Delivered');
+
+    if (allDelivered) {
+      // If all are delivered, do not show the "Mark as Received" button
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: const Color.fromARGB(171, 243, 229, 245),
@@ -571,6 +579,7 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
         ? storeData['items'][0]['storeStatus'] ?? 'Unknown'
         : 'Unknown';
     final storeItems = storeData['items'];
+    final allItemsRated = storeItems.every((item) => item['hasRated'] == true);
 
     return Card(
       color: const Color.fromARGB(171, 243, 229, 245),
@@ -613,51 +622,55 @@ class _UserOrderDetailsPageState extends State<UserOrderDetailsPage> {
                 StatusBadge.getBadge(storeStatus),
               ],
             ),
-            //if (storeStatus = 'Delivered')
-            Column(
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    onPressed: hasRated
-                        ? null // Disable button if hasRated is true
-                        : () {
-                            _showRatingModal(context, storeDetails, storeItems);
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hasRated ? Colors.grey : myColor, // Gray if disabled
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+            if (storeStatus == 'Delivered')
+              Column(
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: hasRated
+                          ? null // Disable button if hasRated is true
+                          : () {
+                              _showRatingModal(
+                                  context, storeDetails, storeItems);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasRated
+                            ? Colors.grey
+                            : myColor, // Gray if disabled
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            hasRated
+                                ? "Already Rated"
+                                : "Rate Store & Products",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          hasRated ? "Already Rated" : "Rate Store & Products",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
             const SizedBox(height: 10),
             Column(

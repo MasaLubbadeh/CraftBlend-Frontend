@@ -3,6 +3,7 @@ import 'dart:ui';
 // All the URLs that point to the Node.js backend API
 const String url = 'http://192.168.1.13:3000/';
 
+
 bool isLoggedIn = false;
 const String login = '${url}login';
 const String registration = '${url}registration';
@@ -34,6 +35,11 @@ const String addPoints = '${url}addPoints';
 const String removePoints = '${url}removePoints';
 const String getAllPoints = '${url}getAllPoints';
 const String getPointsForStore = '${url}getPointsForStore';
+const String getUserEmailUrl = '${url}getUserEmail';
+const String getAdminsUrl = '${url}getAdmins';
+const String deleteAdminUrl = '${url}deleteAdmin';
+
+const String getUserStoreStatistics = '${url}getStatistics';
 
 const String addNewPastryProduct = '${url}product/addNewPastryProduct';
 const String getAllProducts = '${url}product/getAllProducts';
@@ -76,6 +82,9 @@ const String updateIfAllowSpecialOrder =
 /////
 const String getShekelPerPoint = '${url}store/getShekelPerPoint';
 const String updateShekelPerPoint = '${url}store/updateShekelPerPoint';
+
+const String getMostRatedStore = '${url}store/getMostRatedStore';
+
 ////
 ///
 const String addNewCartItem = '${url}cart/addNewCartItem';
@@ -122,9 +131,13 @@ const String profile = '${url}profile';
 const String getID = '${url}getID';
 const String getAllCities = '${url}city/getAll';
 const String incrementCityStoreCount = '${url}city/';
+const String getCityStatistics = '${url}city/statistics';
 
 const String submitNewSuggestion =
     '${url}categorySuggestion/submitNewSuggestion';
+
+const String submitNewSuggestionByStore =
+    '${url}categorySuggestion/submitNewSuggestionByStore';
 const String getAllSuggestions = '${url}categorySuggestion/getAllSuggestions';
 const String updateSuggestionStatus =
     '${url}categorySuggestion/updateSuggestionStatus';
