@@ -662,7 +662,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Store logo
               AspectRatio(
-                aspectRatio: 1.0, // Square aspect ratio
+                aspectRatio: 2.0, // Square aspect ratio
                 child: ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(12)),
@@ -672,7 +672,7 @@ class _HomePageState extends State<HomePage> {
                           fit: BoxFit.cover,
                         )
                       : const Image(
-                          image: AssetImage('assets/images/default_store.jpg'),
+                          image: AssetImage('assets/images/lavender.jpg'),
                           fit: BoxFit.cover,
                         ),
                 ),

@@ -664,7 +664,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  /* const SizedBox(height: 5),
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -674,8 +674,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                         _buildStatColumn("Feedbacks", _feedbacks.toString()),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 5),
+                  ),*/
+                  const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
@@ -684,7 +684,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Text(
                     'Date Created: $_dateCreated',
                     style: const TextStyle(
@@ -692,7 +692,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       color: Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

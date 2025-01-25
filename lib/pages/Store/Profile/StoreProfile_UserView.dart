@@ -10,6 +10,7 @@ import '../../../components/post.dart';
 import '../../../services/authentication/auth_service.dart';
 import '../../../services/chat/chat_service.dart';
 import '../../Posts/createUserPost.dart';
+import '../../Product/Pastry/pastryUser_page.dart';
 import '../../chatting/chat_page.dart';
 import 'dashboard.dart';
 import 'storeProfile.dart';
@@ -38,6 +39,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
   final AuthService _authService = AuthService();
 
   // Initialize variables with default values
+  String _profileImage = '';
   String _storeName = "Loading...";
   String _contactEmail = '';
   String _bio = "Loading...";
@@ -186,6 +188,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
       }
 
       setState(() {
+        _profileImage = data['logo'] ?? '';
         _storeName = data['storeName'] ?? "No Name";
         _contactEmail = data['contactEmail'] ?? "No Email";
         _bio = data['bio'] ?? "No Bio";
@@ -380,13 +383,25 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
 
   @override
   Widget build(BuildContext context) {
+    var mediaSize = MediaQuery.of(context).size;
+    double appBarHeight = MediaQuery.of(context).size.height * 0.08;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+
+        // backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        elevation: 1,
       ),
       body: _isLoading
           ? const Center(
@@ -398,11 +413,13 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                 children: [
                   const SizedBox(height: 10),
                   CircleAvatar(
-                    radius: 30,
-                    backgroundImage: _profilePicture.startsWith('http')
-                        ? NetworkImage('https://picsum.photos/400/400')
-                            as ImageProvider
-                        : AssetImage('https://picsum.photos/400/400'),
+                    radius: mediaSize.height * 0.07,
+                    backgroundImage: (_profileImage != null &&
+                            _profileImage.isNotEmpty)
+                        ? NetworkImage(_profileImage)
+                        : const AssetImage('assets/images/profilePURPLE.jpg')
+                            as ImageProvider,
+                    backgroundColor: Colors.white,
                   ),
                   const SizedBox(height: 5),
                   Text(
@@ -412,8 +429,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                       fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Center(
+                  const SizedBox(height: 10),
+                  /* Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -422,8 +439,8 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                         _buildStatColumn("Feedbacks", _feedbacks.toString()),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 5),
+                  ),*/
+                  const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
@@ -432,7 +449,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Text(
                     'Date Created: $_dateCreated',
                     style: const TextStyle(
@@ -440,7 +457,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                       color: Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -451,7 +468,11 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => StoreProfileScreen()),
+                                builder: (context) => PastryPage(
+                                  storeId: widget.userID,
+                                  storeName: _storeName,
+                                ),
+                              ),
                             );
                           },
                           child: const Text('View Products'),
