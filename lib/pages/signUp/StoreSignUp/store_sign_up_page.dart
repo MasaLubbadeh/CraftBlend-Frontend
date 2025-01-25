@@ -83,30 +83,38 @@ class _StoreSignUpPageState extends State<StoreSignUpPage> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            Positioned(bottom: -10, child: _buildBottom(myColor)),
-          ],
+        body: SingleChildScrollView(
+          // Makes the entire page scrollable
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context)
+                  .viewInsets
+                  .bottom, // Adjust for keyboard
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                    height: mediaSize.height * 0.07), // Optional top spacing
+                _buildBottom(myColor), // The card with the form
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildBottom(Color myColor) {
-    return SizedBox(
-      width: mediaSize.width,
-      height: mediaSize.height * .93,
-      child: Card(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
+    return Card(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: _buildForm(myColor),
-        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: _buildForm(myColor), // Contains the form
       ),
     );
   }

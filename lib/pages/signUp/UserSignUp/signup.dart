@@ -100,6 +100,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     mediaSize = MediaQuery.of(context).size;
+
     return Container(
       decoration: BoxDecoration(
         color: myColor,
@@ -111,10 +112,26 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset:
+            true, // Ensures content adjusts for the keyboard
         backgroundColor: Colors.transparent,
-        body: Stack(children: [
-          Positioned(bottom: -10, child: _buildBottom()),
-        ]),
+        body: SingleChildScrollView(
+          // Makes the entire page scrollable
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context)
+                  .viewInsets
+                  .bottom, // Adjust for keyboard height
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                    height: mediaSize.height * 0.07), // Optional top spacing
+                _buildBottom(), // Call your bottom card with the form
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
