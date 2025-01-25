@@ -210,7 +210,7 @@ class _ChooseSubscriptionPageState extends State<ChooseSubscriptionPage> {
                             ],
                           ),
                           subtitle: Text(
-                            '${plan['price']}₪ for ${plan['duration']} months',
+                            '${plan['price']}₪ for ${plan['duration']} month/s',
                             style: const TextStyle(color: Colors.black54),
                           ),
                           controlAffinity: ListTileControlAffinity

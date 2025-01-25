@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -6,89 +5,42 @@ import 'package:video_player/video_player.dart';
 import '../../configuration/config.dart';
 
 class VideoPage extends StatefulWidget {
-  const VideoPage({Key? key}) : super(key: key);
+  final String videoFile;
+
+  const VideoPage({Key? key, required this.videoFile}) : super(key: key);
 
   @override
   State<VideoPage> createState() => _VideoPageState();
 }
 
 class _VideoPageState extends State<VideoPage> {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('groups')
-          .doc('groupId')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final data = snapshot.data!;
-        final videoFile = data['videoFile'];
-
-        if (videoFile == null || videoFile.isEmpty) {
-          return const Center(child: Text('No videos found!'));
-        }
-
-        return ListView.builder(
-          itemCount: videoFile.length,
-          itemBuilder: (ctx, index) {
-            return VideoPlayerWidget(videoFileName: videoFile[index]);
-          },
-        );
-      },
-    );
-  }
-}
-
-class VideoPlayerWidget extends StatefulWidget {
-  final String videoFileName;
-
-  const VideoPlayerWidget({Key? key, required this.videoFileName})
-      : super(key: key);
-
-  @override
-  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
-}
-
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   VideoPlayerController? _videoPlayerController;
   Future<void>? _initializeVideoPlayerFuture;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initVideo();
+    _initializeVideo();
   }
 
-  Future<void> _initVideo() async {
-    final url = await _getDownloadURL(widget.videoFileName);
+  Future<void> _initializeVideo() async {
+    final url = await _getDownloadURL(widget.videoFile);
     if (url.isEmpty) {
-      setState(() => _isLoading = false);
-      return;
+      // Fallback to a default video if the URL is empty
+      final fallbackVideo =
+          await _getDownloadURL('addProduct.mp4'); // Default video
+      _videoPlayerController = VideoPlayerController.network(fallbackVideo);
+    } else {
+      _videoPlayerController = VideoPlayerController.network(url);
     }
-
-    _videoPlayerController = VideoPlayerController.network(url);
-
-    _initializeVideoPlayerFuture =
-        _videoPlayerController!.initialize().then((_) {
-      setState(() => _isLoading = false);
-    }).catchError((error) {
-      setState(() => _isLoading = false);
-    });
+    _initializeVideoPlayerFuture = _videoPlayerController!.initialize();
+    setState(() {});
   }
 
   Future<String> _getDownloadURL(String fileName) async {
     try {
       final ref = FirebaseStorage.instance.ref().child('videos/$fileName');
-      final downloadURL = await ref.getDownloadURL();
-      return downloadURL;
+      return await ref.getDownloadURL();
     } catch (_) {
       return '';
     }
@@ -96,62 +48,59 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_videoPlayerController == null) {
-      return const Center(child: Text('Error loading video.'));
-    }
+    double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
-    return FutureBuilder<void>(
-      future: _initializeVideoPlayerFuture,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text('Error initializing video: ${snapshot.error}'),
-          );
-        }
-        if (snapshot.connectionState == ConnectionState.done) {
-          // The video is ready: we use a Stack to float the button on top.
-          return AspectRatio(
-            aspectRatio: _videoPlayerController!.value.aspectRatio,
-            child: Stack(
-              children: [
-                // The video itself
-                VideoPlayer(_videoPlayerController!),
-
-                // A centered play/pause button
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: IconButton(
-                      iconSize: 64,
-                      color: Colors.grey,
-                      icon: Icon(
-                        _videoPlayerController!.value.isPlaying
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_fill,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (_videoPlayerController!.value.isPlaying) {
-                            _videoPlayerController!.pause();
-                          } else {
-                            _videoPlayerController!.play();
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Tutorial Video',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white70,
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+      ),
+      body: _videoPlayerController == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder(
+              future: _initializeVideoPlayerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return AspectRatio(
+                    aspectRatio: _videoPlayerController!.value.aspectRatio,
+                    child: VideoPlayer(_videoPlayerController!),
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
             ),
-          );
-        } else {
-          // Still initializing...
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            if (_videoPlayerController!.value.isPlaying) {
+              _videoPlayerController!.pause();
+            } else {
+              _videoPlayerController!.play();
+            }
+          });
+        },
+        child: Icon(
+          _videoPlayerController!.value.isPlaying
+              ? Icons.pause
+              : Icons.play_arrow,
+        ),
+      ),
     );
   }
 
