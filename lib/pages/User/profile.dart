@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _fetchUserDetails(); // Fetch user data when the screen initializes
-    testSendNotification();
+    //testSendNotification();
   }
 
   void testSendNotification() async {
