@@ -602,7 +602,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                   ),
                 ),
                 onTap: () {
-
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TutorialListPage()),
@@ -767,8 +766,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                           itemBuilder: (context, index) {
                             final post = posts[index];
                             return PostCard(
-                              profileImageUrl:
-                                  'https://via.placeholder.com/100',
+                              profileImageUrl: post['profileImageUrl'] ?? '',
                               username: '${post['fullName']}',
                               content: post['content'],
                               likes: post['likes'] ?? 0,
@@ -819,7 +817,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                             final feedback = feedbacks[index];
                             return PostCard(
                               profileImageUrl:
-                                  'https://via.placeholder.com/100',
+                                  feedback['profileImageUrl'] ?? '',
                               username: '${feedback['fullName']}',
                               content: feedback['content'],
                               likes: feedback['likes'] ?? 0,

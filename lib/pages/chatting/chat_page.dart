@@ -30,6 +30,7 @@ class ChatPage extends StatefulWidget {
     required this.lastName,
     required this.fullName,
     required this.userType,
+    required ImageProvider<Object> profileImageUrl,
   });
 
   @override
@@ -90,8 +91,7 @@ class _ChatPageState extends State<ChatPage> {
   String receiverFirstName = '';
   String receiverLastName = '';
   String recieverFullName = '';
-  String receiverProfileImage =
-      'https://picsum.photos/400/400'; // Default placeholder
+  String receiverProfileImage = ''; // Default placeholder
 
   @override
   void initState() {
@@ -166,8 +166,8 @@ class _ChatPageState extends State<ChatPage> {
           receiverFirstName = userData['firstName'] ?? 'Unknown';
           receiverLastName = userData['lastName'] ?? 'User';
           recieverFullName = widget.fullName;
-          receiverProfileImage = userData['profilePicture'] ??
-              'https://picsum.photos/400/400'; // Default placeholder
+          receiverProfileImage =
+              userData['profilePicture']; // Default placeholder
         });
       } else
         print("user does not exist");
@@ -335,7 +335,11 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             CircleAvatar(
               radius: 18, // Make the profile picture slightly smaller
-              backgroundImage: NetworkImage(receiverProfileImage),
+              backgroundImage: (receiverProfileImage != null &&
+                      receiverProfileImage.isNotEmpty)
+                  ? NetworkImage(receiverProfileImage)
+                  : const AssetImage('assets/images/profilePURPLE.jpg')
+                      as ImageProvider,
             ),
             const SizedBox(width: 8), // Adjust spacing between avatar and text
             Expanded(
@@ -352,7 +356,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ],
         ),
-        actions: [
+        /*   actions: [
           IconButton(
             icon: Icon(
               Icons.call,
@@ -374,7 +378,7 @@ class _ChatPageState extends State<ChatPage> {
             },
           ),
           const SizedBox(width: 8), // Add a little padding at the end
-        ],
+        ],*/
       ),
       body: Container(
         decoration: BoxDecoration(
