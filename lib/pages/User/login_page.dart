@@ -266,13 +266,15 @@ class _LoginPageState extends State<LoginPage> {
       await authService.signInWithEmailPassword(email, pass);
     } catch (err) {
       print("Firebase Login Error: $err"); // Log the exact error for debugging
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Login Failed"),
-          content: Text(err.toString()),
-        ),
-      );
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Login Failed"),
+            content: Text(err.toString()),
+          ),
+        );
+      }
     }
   }
 

@@ -31,6 +31,7 @@ class StoreProfilePage extends StatefulWidget {
 class _StoreProfilePageState extends State<StoreProfilePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
   //fetching posts
   List<dynamic> posts = [];
   List<dynamic> feedbacks = [];
@@ -601,6 +602,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                   ),
                 ),
                 onTap: () {
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TutorialListPage()),
@@ -681,7 +683,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  /* const SizedBox(height: 5),
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -691,8 +693,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                         _buildStatColumn("Feedbacks", _feedbacks.toString()),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 5),
+                  ),*/
+                  const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
@@ -701,7 +703,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Text(
                     'Date Created: $_dateCreated',
                     style: const TextStyle(
@@ -709,7 +711,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       color: Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 10),
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -728,13 +730,17 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                         const SizedBox(width: 5),
                         ElevatedButton(
                           onPressed: () {
+                            final String userID =
+                                widget.userID; // Get the userID from the widget
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => DashboardPage()),
+                                  builder: (context) =>
+                                      InsightsPage(userID: userID!)),
                             );
                           },
-                          child: const Text('Dashboard'),
+                          child: const Text('View Insights'),
                         ),
                       ],
                     ),

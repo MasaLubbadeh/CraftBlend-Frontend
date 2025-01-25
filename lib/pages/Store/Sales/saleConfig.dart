@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../configuration/config.dart';
+import '../../../services/Notifications/notification_helper.dart';
 
 class SaleConfigurationPage extends StatefulWidget {
   final List<String> selectedProductIds;
@@ -81,16 +83,59 @@ class _SaleConfigurationPageState extends State<SaleConfigurationPage> {
       builder: (context) => Center(child: CircularProgressIndicator()),
     );
 
-    await saveSaleToDatabase(
-      productIds: widget.selectedProductIds,
-      saleAmount: amountController.text,
-      startDate: startDateController.text,
-      endDate: endDateController.text,
-      sendPushNotification: sendPushNotification,
-      notificationContent: notificationContentController.text,
-    );
+    try {
+      // Save sale details to the database
+      await saveSaleToDatabase(
+        productIds: widget.selectedProductIds,
+        saleAmount: amountController.text,
+        startDate: startDateController.text,
+        endDate: endDateController.text,
+        sendPushNotification: sendPushNotification,
+        notificationContent: notificationContentController.text,
+      );
 
-    Navigator.pop(context);
+      // Send push notifications if enabled
+      if (sendPushNotification) {
+        // Replace with your API endpoint to get device tokens
+        const String apiUrl = getAllFMCTokens;
+        final prefs = await SharedPreferences.getInstance();
+        final String? token =
+            prefs.getString('token'); // Retrieve the stored token
+
+        final response = await http.get(Uri.parse(apiUrl), headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Replace with actual token
+        });
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        print('jsonResponse:$jsonResponse');
+        if (response.statusCode == 200) {
+          print(response.body);
+          List<String> deviceTokens = List<String>.from(jsonResponse['tokens']);
+
+          //List<String> tokens = jsonDecode(response.body);
+          print('tokens retrieved:$deviceTokens');
+          await NotificationService.sendNotificationToAllUsers(
+            deviceTokens,
+            'New Sale Available!',
+            notificationContentController.text,
+          );
+        } else {
+          throw Exception('Failed to fetch device tokens: ${response.body}');
+        }
+      }
+
+      Navigator.pop(context); // Close the loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sale created and notifications sent!')),
+      );
+    } catch (e) {
+      print('Error: $e');
+
+      Navigator.pop(context); // Close the loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   Future<void> selectDate(

@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 // All the URLs that point to the Node.js backend API
-const String url = 'http://192.168.1.16:3000/';
+const String url = 'http://192.168.1.13:3000/';
+
 
 bool isLoggedIn = false;
 const String login = '${url}login';
@@ -47,6 +48,9 @@ const String deleteProductByID = '${url}product/deleteProduct';
 const String reduceProductQuantity = '${url}product/reduce-quantity';
 const String getMostSearched = '${url}product/getMostSearched';
 const String rateProduct = '${url}product/rateProduct';
+//////////for insights
+const String fetchaProductInsights = '${url}product/';
+const String fetchStoreInsights = '${url}store/';
 
 const String addNewCategory = '${url}category/add';
 const String deleteCategory = '${url}category/delete';

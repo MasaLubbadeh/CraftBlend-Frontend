@@ -187,7 +187,12 @@ class _PostCardState extends State<PostCard> {
             children: [
               ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: NetworkImage(widget.profileImageUrl),
+                  backgroundImage: (widget.profileImageUrl != null &&
+                          widget.profileImageUrl.isNotEmpty)
+                      ? NetworkImage(widget.profileImageUrl)
+                      : const AssetImage('assets/images/profilePURPLE.jpg')
+                          as ImageProvider,
+                  backgroundColor: Colors.white,
                 ),
                 title: GestureDetector(
                   onTap: widget.onUsernameTap,

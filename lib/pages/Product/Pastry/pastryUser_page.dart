@@ -807,6 +807,7 @@ class _PastryPageState extends State<PastryPage> {
         ],
       ),
       // // Sorting dropdown
+
       floatingActionButton: FloatingActionButton(
         onPressed: _confirmToggleFavorite, // Toggles favorite status
         backgroundColor: myColor,

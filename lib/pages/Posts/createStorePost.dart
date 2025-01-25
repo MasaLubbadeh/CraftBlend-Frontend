@@ -244,13 +244,26 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
 
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.08;
+    var mediaSize = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Center(child: const Text("New Store Post")),
-        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        backgroundColor: myColor,
+        elevation: 0,
+        toolbarHeight: appBarHeight,
+        title: const Text(
+          'New Post',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -259,7 +272,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
             child: Text(
               "Post",
               style: TextStyle(
-                color: _isPostButtonEnabled ? myColor : Colors.grey,
+                color: _isPostButtonEnabled ? myColor : Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -270,145 +283,188 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundImage:
-                        NetworkImage('https://via.placeholder.com/150'),
-                  ),
-                  title: Text(
-                    storeName,
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: constraints.maxWidth * 0.04),
-                  child: TextField(
-                    controller: _productDescriptionController,
-                    maxLines: null,
-                    style: const TextStyle(color: Colors.black, fontSize: 18),
-                    decoration: const InputDecoration(
-                      hintText: "Describe your product...",
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
+            child: Center(
+              child: FractionallySizedBox(
+                widthFactor:
+                    0.9, // Makes the content width dynamic and responsive
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Note outside the card
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
+                      child: Text(
+                        "Create a new post by describing your product and adding images (up to 5).",
+                        style: TextStyle(
+                          color: myColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    onChanged: (value) => setState(() {}),
-                  ),
-                ),
-                if (_selectedImages.isNotEmpty)
-                  Column(
-                    children: [
-                      SizedBox(
-                        height: constraints.maxWidth * 0.7,
-                        child: Container(
-                          color: Colors.grey.shade300,
-                          child: PageView.builder(
-                            itemCount: _selectedImages.length,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentPage = index;
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              return Stack(
-                                alignment: Alignment.topRight,
+                    // Card widget
+                    Card(
+                      color: Colors.white, // Set card color to white
+                      margin: const EdgeInsets.all(
+                          16.0), // Adds some space around the card
+                      elevation: 4, // Optional: Adds a shadow effect
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(16), // Rounded corners
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(
+                            16.0), // Padding inside the card
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              leading: const CircleAvatar(
+                                backgroundImage: NetworkImage(
+                                    'https://via.placeholder.com/150'),
+                              ),
+                              title: Text(
+                                storeName,
+                                style: TextStyle(
+                                  color: myColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: constraints.maxWidth * 0.04,
+                              ),
+                              child: TextField(
+                                controller: _productDescriptionController,
+                                maxLines: null,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 18,
+                                ),
+                                decoration: const InputDecoration(
+                                  hintText: "Describe your product...",
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                ),
+                                onChanged: (value) => setState(() {}),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (_selectedImages.isNotEmpty)
+                              Column(
                                 children: [
-                                  GestureDetector(
-                                    onTap: () => _viewImageFullScreen(
-                                        _selectedImages[index]),
-                                    child: Center(
-                                      child: AspectRatio(
-                                        aspectRatio: 1.0,
-                                        child: Container(
-                                          margin: EdgeInsets.symmetric(
-                                              horizontal:
-                                                  constraints.maxWidth * 0.02),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            image: DecorationImage(
-                                              image: FileImage(
-                                                  _selectedImages[index]),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
+                                  SizedBox(
+                                    height: constraints.maxWidth * 0.7,
+                                    child: Container(
+                                      color: Colors.grey.shade300,
+                                      child: PageView.builder(
+                                        itemCount: _selectedImages.length,
+                                        onPageChanged: (index) {
+                                          setState(() {
+                                            _currentPage = index;
+                                          });
+                                        },
+                                        itemBuilder: (context, index) {
+                                          return Stack(
+                                            alignment: Alignment.topRight,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () =>
+                                                    _viewImageFullScreen(
+                                                        _selectedImages[index]),
+                                                child: Center(
+                                                  child: AspectRatio(
+                                                    aspectRatio: 1.0,
+                                                    child: Container(
+                                                      margin:
+                                                          EdgeInsets.symmetric(
+                                                        horizontal: constraints
+                                                                .maxWidth *
+                                                            0.02,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                        image: DecorationImage(
+                                                          image: FileImage(
+                                                              _selectedImages[
+                                                                  index]),
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: GestureDetector(
+                                                  onTap: () => _removeImage(
+                                                      _selectedImages[index]),
+                                                  child: Icon(
+                                                    Icons.cancel,
+                                                    color: Colors.grey,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      _selectedImages.length,
+                                      (index) => Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4.0),
+                                        width:
+                                            _currentPage == index ? 12.0 : 8.0,
+                                        height:
+                                            _currentPage == index ? 12.0 : 8.0,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _currentPage == index
+                                              ? myColor
+                                              : Colors.grey,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () =>
-                                          _removeImage(_selectedImages[index]),
-                                      child: Icon(
-                                        Icons.cancel,
-                                        color: Colors.grey,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
                                 ],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _selectedImages.length,
-                          (index) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                            width: _currentPage == index ? 12.0 : 8.0,
-                            height: _currentPage == index ? 12.0 : 8.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  _currentPage == index ? myColor : Colors.grey,
+                              ),
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: constraints.maxWidth * 0.04,
+                                ),
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickImages,
+                                  icon:
+                                      Icon(Icons.photo_library, color: myColor),
+                                  label: Text(
+                                    "Add Images",
+                                    style: TextStyle(color: myColor),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 16.0), // Space at the bottom
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: constraints.maxWidth * 0.04,
-                      vertical: constraints.maxHeight * 0.02),
-                  child: ElevatedButton(
-                    onPressed: _pickImages,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.all(14),
-                      backgroundColor: myColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(
-                          Icons.add_a_photo,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          "Add Images (Max 5)",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },
