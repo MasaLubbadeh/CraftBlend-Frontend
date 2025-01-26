@@ -95,7 +95,7 @@ class _SaleConfigurationPageState extends State<SaleConfigurationPage> {
       );
 
       // Send push notifications if enabled
-      if (sendPushNotification) {
+      /* if (sendPushNotification) {
         // Replace with your API endpoint to get device tokens
         const String apiUrl = getAllFMCTokens;
         final prefs = await SharedPreferences.getInstance();
@@ -122,7 +122,7 @@ class _SaleConfigurationPageState extends State<SaleConfigurationPage> {
         } else {
           throw Exception('Failed to fetch device tokens: ${response.body}');
         }
-      }
+      }*/
 
       Navigator.pop(context); // Close the loading dialog
       ScaffoldMessenger.of(context).showSnackBar(

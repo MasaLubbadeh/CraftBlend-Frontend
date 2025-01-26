@@ -157,7 +157,7 @@ class _MyAppBarState extends State<MyAppBar> {
               ),
             ),
           ),
-          PopupMenuItem<String>(
+          /*  PopupMenuItem<String>(
             padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
             value: 'Recents',
             child: Container(
@@ -173,7 +173,7 @@ class _MyAppBarState extends State<MyAppBar> {
                 ],
               ),
             ),
-          ),
+          ),*/
         ],
       ),
       actions: [

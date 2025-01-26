@@ -74,37 +74,39 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
         } else {
           print("Fetched ${userList.length} users.");
           print('USERID:${widget.userID}');
-
+          print('the email im searching for:$_contactEmail');
           // Loop through the user data and look for the match
           for (var user in userList) {
             print("User data: ${user['email']}");
-            if (user["userType"] == 'S') {
-              user["profilePicture"] =
-                  "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4";
-            }
+
             // If a match for the userID is found, navigate
             if (user['email'] == _contactEmail) {
-              // Ensure the context is valid and the widget is still mounted
-              if (mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatPage(
-                      recieverEmail: user["email"],
-                      receiverID: user["uid"],
-                      firstName: user["firstName"] ?? "NO",
-                      lastName: user["lastName"] ?? "NAME",
-                      fullName: user["storeName"] ?? "NAME",
-                      userType: user["userType"] ?? "NOTYPE",
-                      profileImageUrl: (user["profilePicture"] != null &&
-                              user["profilePicture"].isNotEmpty)
-                          ? NetworkImage(user["profilePicture"])
-                          : const AssetImage('assets/images/profilePURPLE.jpg')
-                              as ImageProvider,
-                    ),
-                  ),
-                );
+              print("found email");
+              if (user["userType"] == 'S') {
+                user["profilePicture"] =
+                    "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4";
               }
+              // Ensure the context is valid and the widget is still mounted
+              /// if (mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    recieverEmail: user["email"],
+                    receiverID: user["uid"],
+                    firstName: user["firstName"] ?? "NO",
+                    lastName: user["lastName"] ?? "NAME",
+                    fullName: user["storeName"] ?? "NAME",
+                    userType: user["userType"] ?? "NOTYPE",
+                    profileImageUrl: (user["profilePicture"] != null &&
+                            user["profilePicture"].isNotEmpty)
+                        ? NetworkImage(user["profilePicture"])
+                        : const AssetImage('assets/images/profilePURPLE.jpg')
+                            as ImageProvider,
+                  ),
+                ),
+              );
+              //  }
             }
           }
         }
@@ -488,6 +490,7 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                         ),
                         ElevatedButton(
                           onPressed: () {
+                            print("inside on presed");
                             _fetchUserStream();
                           },
                           child: const Text('Message'),
@@ -510,8 +513,9 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                       controller: _tabController,
                       children: [
                         ListView.builder(
-                          physics:
+                          /*physics:
                               NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          */
                           shrinkWrap: true, // Allow ListView to fit its content
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
@@ -561,8 +565,9 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
                           },
                         ),
                         ListView.builder(
-                          physics:
+                          /*physics:
                               NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                         */
                           shrinkWrap: true, // Allow ListView to fit its content
                           itemCount: feedbacks.length,
                           itemBuilder: (context, index) {

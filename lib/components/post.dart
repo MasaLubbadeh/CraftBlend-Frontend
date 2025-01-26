@@ -400,13 +400,6 @@ class _PostCardState extends State<PostCard> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  hintText: 'Your username',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
                 controller: _commentController,
                 decoration: const InputDecoration(
                   hintText: 'Your comment',

@@ -661,8 +661,8 @@ class _StoreProfilePageState extends State<StoreProfilePage>
       ),
       body: _isLoading
           ? const Center(
-              child:
-                  CircularProgressIndicator()) // Show loading indicator while fetching data
+              child: CircularProgressIndicator(),
+            ) // Show loading indicator while fetching data
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -682,17 +682,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       fontSize: 18,
                     ),
                   ),
-                  /* const SizedBox(height: 5),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatColumn("Posts", _posts.toString()),
-                        _buildStatColumn("Upvotes", _upvotes.toString()),
-                        _buildStatColumn("Feedbacks", _feedbacks.toString()),
-                      ],
-                    ),
-                  ),*/
                   const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -715,17 +704,6 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // SizedBox(width: 5),
-                        /* ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => StoreProfileScreen()),
-                            );
-                          },
-                          child: const Text('Edit Profile'),
-                        ),*/
                         const SizedBox(width: 5),
                         ElevatedButton(
                           onPressed: () {
@@ -736,7 +714,7 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      InsightsPage(userID: userID!)),
+                                      InsightsPage(userID: userID)),
                             );
                           },
                           child: const Text('View Insights'),
@@ -759,8 +737,9 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                       controller: _tabController,
                       children: [
                         ListView.builder(
-                          physics:
-                              NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          /*physics:
+                              const NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                         */
                           shrinkWrap: true, // Allow ListView to fit its content
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
@@ -809,8 +788,9 @@ class _StoreProfilePageState extends State<StoreProfilePage>
                           },
                         ),
                         ListView.builder(
-                          physics:
-                              NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          /*physics:
+                              const NeverScrollableScrollPhysics(), // Prevent ListView scrolling
+                          */
                           shrinkWrap: true, // Allow ListView to fit its content
                           itemCount: feedbacks.length,
                           itemBuilder: (context, index) {

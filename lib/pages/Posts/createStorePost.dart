@@ -102,14 +102,13 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
       _productDescriptionController.clear();
       _selectedImages.clear();
     });
-
     // Optionally navigate to another page, e.g., Store Feed page
-    Navigator.of(context).push(
+    /*Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) =>
             FeedPage(), // Change to StoreFeedPage for store-related posts
       ),
-    );
+    );*/
   }
 
   Future<void> sendStorePostToBackend(
@@ -156,7 +155,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
                 children: [
                   Icon(
                     Icons.check_circle,
-                    color: Colors.green,
+                    color: myColor,
                     size: 50,
                   ),
                   SizedBox(height: 10),
@@ -165,7 +164,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: myColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -178,12 +177,19 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
                       Navigator.pop(context); // Close the dialog
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: myColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: Text("OK"),
+                    child: Text(
+                      "OK",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -272,7 +278,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
             child: Text(
               "Post",
               style: TextStyle(
-                color: _isPostButtonEnabled ? myColor : Colors.white,
+                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -322,7 +328,7 @@ class _CreateStorePostPageState extends State<CreateStorePostPage> {
                             ListTile(
                               leading: const CircleAvatar(
                                 backgroundImage: NetworkImage(
-                                    'https://via.placeholder.com/150'),
+                                    "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4"),
                               ),
                               title: Text(
                                 storeName,
