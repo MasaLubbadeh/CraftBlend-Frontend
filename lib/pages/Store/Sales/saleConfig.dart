@@ -175,131 +175,152 @@ class _SaleConfigurationPageState extends State<SaleConfigurationPage> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            elevation: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Create a New Sale',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: myColor,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: amountController,
-                    decoration: InputDecoration(
-                      labelText: 'Sale Amount',
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              color: const Color.fromARGB(255, 233, 227, 236),
+              child: const Text(
+                'Enter your Sale details,Sale amount is in % (if you entered 25 a 25% is applied to products),also choose the the duration of your sale.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                elevation: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Create a New Sale',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: myColor,
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: myColor),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: amountController,
+                        decoration: InputDecoration(
+                          labelText: 'Sale Amount',
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: myColor),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
                       ),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  SizedBox(height: 15),
-                  TextField(
-                    controller: startDateController,
-                    decoration: InputDecoration(
-                      labelText: 'Start Date',
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+                      SizedBox(height: 15),
+                      TextField(
+                        controller: startDateController,
+                        decoration: InputDecoration(
+                          labelText: 'Start Date',
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: myColor),
+                          ),
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        readOnly: true,
+                        onTap: () => selectDate(context, startDateController),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: myColor),
+                      SizedBox(height: 15),
+                      TextField(
+                        controller: endDateController,
+                        decoration: InputDecoration(
+                          labelText: 'End Date',
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: myColor),
+                          ),
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        readOnly: true,
+                        onTap: () => selectDate(context, endDateController),
                       ),
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
-                    readOnly: true,
-                    onTap: () => selectDate(context, startDateController),
-                  ),
-                  SizedBox(height: 15),
-                  TextField(
-                    controller: endDateController,
-                    decoration: InputDecoration(
-                      labelText: 'End Date',
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+                      SizedBox(height: 15),
+                      SwitchListTile(
+                        title: Text(
+                          'Send Push Notification',
+                          style: TextStyle(fontSize: 15),
+                        ),
+                        value: sendPushNotification,
+                        onChanged: (value) =>
+                            setState(() => sendPushNotification = value),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: myColor),
+                      Text(
+                        'Note: The notification will be sent to all users',
+                        style: TextStyle(fontSize: 15),
                       ),
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
-                    readOnly: true,
-                    onTap: () => selectDate(context, endDateController),
-                  ),
-                  SizedBox(height: 15),
-                  SwitchListTile(
-                    title: Text(
-                      'Send Push Notification',
-                      style: TextStyle(fontSize: 15),
-                    ),
-                    value: sendPushNotification,
-                    onChanged: (value) =>
-                        setState(() => sendPushNotification = value),
-                  ),
-                  if (sendPushNotification) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          'Notification Content:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      SizedBox(
+                        height: 8,
+                      ),
+                      if (sendPushNotification) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'Notification Content:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TextField(
+                          controller: notificationContentController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter notification content here...',
+                            border: OutlineInputBorder(),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: myColor),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: submitSale,
+                          child: Text('Submit'),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: myColor,
+                            textStyle: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                            padding: EdgeInsets.symmetric(vertical: 15),
                           ),
                         ),
                       ),
-                    ),
-                    TextField(
-                      controller: notificationContentController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter notification content here...',
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: myColor),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 15),
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: submitSale,
-                      child: Text('Submit'),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: myColor,
-                        textStyle: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

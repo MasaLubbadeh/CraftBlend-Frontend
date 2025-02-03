@@ -74,11 +74,12 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
         } else {
           print("Fetched ${userList.length} users.");
           print('USERID:${widget.userID}');
+          _contactEmail = 'pastryshop@gmail.com';
+
           print('the email im searching for:$_contactEmail');
           // Loop through the user data and look for the match
           for (var user in userList) {
             print("User data: ${user['email']}");
-
             // If a match for the userID is found, navigate
             if (user['email'] == _contactEmail) {
               print("found email");

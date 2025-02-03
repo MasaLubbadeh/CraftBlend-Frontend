@@ -122,12 +122,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
-
+        print(jsonResponse);
         setState(() {
           var fetchedStores = List<Map<String, dynamic>>.from(jsonResponse);
 
           // Filter stores by deliveryCities or existing in the selected city
-          if (selectedCity != null) {
+          /*if (selectedCity != null) {
             fetchedStores = fetchedStores
                 .where((store) =>
                     // Check if the store delivers to the selected city
@@ -137,7 +137,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     // OR check if the store exists in the selected city
                     store['city'] == selectedCity)
                 .toList();
-          }
+          }*/
           print('Filtered Stores: $fetchedStores');
 
           stores = fetchedStores;
