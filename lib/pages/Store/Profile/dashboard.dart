@@ -130,7 +130,7 @@ class _InsightsPageState extends State<InsightsPage> {
                   const Icon(Icons.star, color: Colors.amber, size: 18),
                   const SizedBox(width: 5),
                   Text(
-                    '${product['rating']['average'] ?? 0.0} / 5.0 (${product['rating']['count'] ?? 0} reviews)',
+                    '${product['rating']['average'] ?? 0.0} / 5.0 (${product['rating']['total'] ?? 0} reviews)',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],

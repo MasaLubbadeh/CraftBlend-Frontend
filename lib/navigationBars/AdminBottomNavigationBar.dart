@@ -3,6 +3,7 @@ import '../configuration/config.dart';
 import '../pages/Admin/adminStatisticsPage.dart';
 import '../pages/Admin/adminDashboard.dart';
 import '../pages/User/profile.dart';
+import '../pages/chatting/AdminChats.dart';
 import '../pages/chatting/allChats.dart';
 
 class AdminBottomNavigationBar extends StatefulWidget {
@@ -21,7 +22,7 @@ class _AdminBottomNavigationBarState extends State<AdminBottomNavigationBar> {
     const AdminStatisticsPage(),
     const AdminDashboardPage(),
     const ProfileScreen(),
-    AllChats(),
+    AdminChats(),
   ];
 
   void _onItemTapped(int index) {

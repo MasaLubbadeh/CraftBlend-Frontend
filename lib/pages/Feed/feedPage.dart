@@ -248,8 +248,7 @@ class _FeedPageState extends State<FeedPage> {
                 if (_commentController.text.isNotEmpty) {
                   try {
                     final response = await http.post(
-                      Uri.parse(
-                          'https://your-api-endpoint/posts/$postId/comment'),
+                      Uri.parse('${comments}/posts/$postId/comment'),
                       headers: {'Content-Type': 'application/json'},
                       body: json.encode({
                         'username':

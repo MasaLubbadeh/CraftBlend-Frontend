@@ -165,16 +165,16 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
                 children: [
                   Icon(
                     Icons.check_circle,
-                    color: Colors.green,
+                    color: myColor,
                     size: 50,
                   ),
                   SizedBox(height: 10),
                   Text(
-                    "Posted Successfully",
+                    "Feedback posted Successfully",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: myColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -187,12 +187,19 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
                       Navigator.pop(context); // Close the dialog
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: myColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: Text("OK"),
+                    child: Text(
+                      "OK",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -280,7 +287,7 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
             child: Text(
               "Post",
               style: TextStyle(
-                color: _isPostButtonEnabled ? myColor : Colors.white,
+                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -329,9 +336,8 @@ class _CreateUserPostPageState extends State<CreateUserPostPage> {
                           children: [
                             ListTile(
                               leading: const CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                    'https://via.placeholder.com/150'),
-                              ),
+                                  backgroundImage: AssetImage(
+                                      'assets/images/profilePURPLE.jpg')),
                               title: Text(
                                 "$firstName $lastName",
                                 style: TextStyle(
