@@ -85,8 +85,10 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
         return;
       }
 
-      final storeDeviceToken = fcmTokenData['tokens'][0]['fcmToken'];
-      print('Store Device Token: $storeDeviceToken');
+      String deviceToken =
+          'dpr0kih7TvGhrI0dXDipnA:APA91bHmxGw5BL7EjTqogS7zcJch3tszK0we5E-s052wtdDoqiGZYI7h9A4ZnsGJ4bSQP4ve2coqJRJQe2H3WSSvwPpWOlgRXDnY0-ApKwXutgXWM_nHGyU';
+
+      //    print('Store Device Token: $storeDeviceToken');
 
       // Step 4: Prepare the notification details
       final title = "New Special Order Received!";
@@ -94,7 +96,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
           "You have received a new special order. Check your orders for more details.";
 
       // Step 5: Send the notification via Firebase
-      await NotificationService.sendNotification(storeDeviceToken, title, body);
+      await NotificationService.sendNotification(deviceToken, title, body);
 
       // Step 6: Optionally, log the notification in the backend database
       final addNotificationResponse = await http.post(
@@ -564,7 +566,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
                   value: option.value,
                   child: Text(
                     option.extraCost != 0
-                        ? '${option.value} (+\$${option.extraCost.toStringAsFixed(2)})'
+                        ? '${option.value} (+${option.extraCost.toStringAsFixed(2)})₪'
                         : option.value,
                   ),
                 ),
@@ -763,7 +765,7 @@ class _SpecialOrderFormPageState extends State<SpecialOrderFormPage> {
                 style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
               ),
               Text(
-                '\$${_estimatedPrice.toStringAsFixed(2)}',
+                '${_estimatedPrice.toStringAsFixed(2)}₪',
                 style: const TextStyle(
                     fontSize: 16.0, fontWeight: FontWeight.bold),
               ),

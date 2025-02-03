@@ -179,9 +179,11 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
       }
     } catch (e) {
       print('Error fetching notifications: $e');
-      setState(() {
-        isLoadingNotifications = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingNotifications = false;
+        });
+      }
     }
   }
 
@@ -1168,7 +1170,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                   },
                 ),
                 // Inside the Stack's children in the build method
-                if (!isLoading &&
+                /* if (!isLoading &&
                     filteredPastries.isEmpty &&
                     _showNoProductsOverlay)
                   Positioned.fill(
@@ -1222,6 +1224,7 @@ class _PastryOwnerPageState extends State<PastryOwnerPage> {
                       ),
                     ),
                   ),
+            */
               ],
             ),
           ),

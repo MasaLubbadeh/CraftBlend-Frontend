@@ -29,14 +29,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _fetchUserDetails(); // Fetch user data when the screen initializes
-    //testSendNotification();
+    testSendNotification();
   }
 
   void testSendNotification() async {
     String deviceToken =
-        'eQ0nisM6QLKqorovctSTLw:APA91bEE1_2duYCyCP4zIszqw3X1VdpgSqj2Be6vFbQfnSLVRPXrxds8lFbfvS0pFdko3YsWP_UXcK0AonLRWaz8XlwaVWsWkRvuwsDVk_BAHkO6OvOiLhw'; // Replace with your device token
-    String title = 'Hello from CraftBlend!';
-    String body = 'This is a test notification.';
+        'dpr0kih7TvGhrI0dXDipnA:APA91bHmxGw5BL7EjTqogS7zcJch3tszK0we5E-s052wtdDoqiGZYI7h9A4ZnsGJ4bSQP4ve2coqJRJQe2H3WSSvwPpWOlgRXDnY0-ApKwXutgXWM_nHGyU';
+    String title = 'SALES in pastryShop UP TO 75!';
+    String body = '75% Sale for a limited time!!!';
 
     await NotificationService.sendNotification(deviceToken, title, body);
   }

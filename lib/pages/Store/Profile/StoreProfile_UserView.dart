@@ -78,14 +78,16 @@ class _StoreProfilePage_UserViewState extends State<StoreProfilePage_UserView>
           // Loop through the user data and look for the match
           for (var user in userList) {
             print("User data: ${user['email']}");
-            if (user["userType"] == 'S') {
-              user["profilePicture"] =
-                  "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4";
-            }
+
             // If a match for the userID is found, navigate
             if (user['email'] == _contactEmail) {
               // Ensure the context is valid and the widget is still mounted
               if (mounted) {
+                if (user["userType"] == 'S') {
+                  user["profilePicture"] =
+                      "https://firebasestorage.googleapis.com/v0/b/craftblend-c388a.firebasestorage.app/o/storeLogos_images%2Flogo_1737471224067.jpg?alt=media&token=cb820ccd-863e-430c-a576-d9983b7268f4";
+                }
+                print('inside mounted');
                 Navigator.push(
                   context,
                   MaterialPageRoute(
