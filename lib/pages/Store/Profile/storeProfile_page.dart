@@ -327,6 +327,20 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                       _buildStoreInfoCard("City", storeData?['city'] ?? 'N/A',
                           Icons.location_city),
                     ]),
+                    SizedBox(
+                      width: mediaSize.width * 0.6,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: tPrimaryColor,
+                          shape: const StadiumBorder(),
+                        ),
+                        child: const Text(
+                          'Edit Personal Information',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),

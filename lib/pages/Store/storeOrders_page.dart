@@ -56,9 +56,9 @@ class _StoreOrdersPageState extends State<StoreOrdersPage> {
         "Content-Type": "application/json",
       },
     );
-
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
+      print('regular orders $jsonData');
 
       if (jsonData['orders'] is List) {
         return jsonData['orders'];

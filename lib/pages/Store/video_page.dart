@@ -4,6 +4,12 @@ import 'package:video_player/video_player.dart';
 
 import '../../configuration/config.dart';
 
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+
+import '../../configuration/config.dart';
+
 class VideoPage extends StatefulWidget {
   final String videoFile;
 
@@ -29,11 +35,16 @@ class _VideoPageState extends State<VideoPage> {
       // Fallback to a default video if the URL is empty
       final fallbackVideo =
           await _getDownloadURL('addProduct.mp4'); // Default video
-      _videoPlayerController = VideoPlayerController.network(fallbackVideo);
+      if (fallbackVideo.isNotEmpty) {
+        _videoPlayerController = VideoPlayerController.network(fallbackVideo);
+      }
     } else {
       _videoPlayerController = VideoPlayerController.network(url);
     }
-    _initializeVideoPlayerFuture = _videoPlayerController!.initialize();
+
+    if (_videoPlayerController != null) {
+      _initializeVideoPlayerFuture = _videoPlayerController!.initialize();
+    }
     setState(() {});
   }
 
@@ -41,7 +52,7 @@ class _VideoPageState extends State<VideoPage> {
     try {
       final ref = FirebaseStorage.instance.ref().child('videos/$fileName');
       return await ref.getDownloadURL();
-    } catch (_) {
+    } catch (e) {
       return '';
     }
   }
@@ -71,36 +82,40 @@ class _VideoPageState extends State<VideoPage> {
         centerTitle: true,
       ),
       body: _videoPlayerController == null
-          ? const Center(child: CircularProgressIndicator())
-          : FutureBuilder(
-              future: _initializeVideoPlayerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return AspectRatio(
-                    aspectRatio: _videoPlayerController!.value.aspectRatio,
-                    child: VideoPlayer(_videoPlayerController!),
-                  );
-                } else {
-                  return const Center(child: CircularProgressIndicator());
-                }
-              },
+          ? const Center(child: Text(''))
+          : Center(
+              child: FutureBuilder(
+                future: _initializeVideoPlayerFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return AspectRatio(
+                      aspectRatio: _videoPlayerController!.value.aspectRatio,
+                      child: VideoPlayer(_videoPlayerController!),
+                    );
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                },
+              ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            if (_videoPlayerController!.value.isPlaying) {
-              _videoPlayerController!.pause();
-            } else {
-              _videoPlayerController!.play();
-            }
-          });
-        },
-        child: Icon(
-          _videoPlayerController!.value.isPlaying
-              ? Icons.pause
-              : Icons.play_arrow,
-        ),
-      ),
+      floatingActionButton: _videoPlayerController != null
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  if (_videoPlayerController!.value.isPlaying) {
+                    _videoPlayerController!.pause();
+                  } else {
+                    _videoPlayerController!.play();
+                  }
+                });
+              },
+              child: Icon(
+                _videoPlayerController!.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+              ),
+            )
+          : null,
     );
   }
 

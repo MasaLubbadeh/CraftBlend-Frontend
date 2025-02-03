@@ -652,7 +652,7 @@ class _HomePageState extends State<HomePage> {
         );
       },
       child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.4, // 40% of screen width
+        width: MediaQuery.of(context).size.width * 0.45, // 40% of screen width
         child: Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
