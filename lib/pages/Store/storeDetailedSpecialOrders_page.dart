@@ -129,7 +129,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
         buttonLabel = "Confirm Order & Set Price";
         onPressed = _confirmOrder;
         break;
-      case 'Confirmed':
+      case 'Confirmed' || 'afterCheckout':
         buttonLabel = "Mark as Shipped";
         onPressed = _confirmOrder;
         break;
@@ -434,8 +434,8 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
     double appBarHeight = MediaQuery.of(context).size.height * 0.1;
 
     final customer = widget.specialOrder['customerId'] ?? {};
-    final firstName = customer['firstName'] ?? 'N/A';
-    final lastName = customer['lastName'] ?? 'N/A';
+    final firstName = customer['firstName'] ?? '';
+    final lastName = customer['lastName'] ?? '';
     final userName = "$firstName $lastName";
 
     final orderItems =
@@ -551,7 +551,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
                       const Divider(),
                       // Order Items
                       ...orderItems.map((item) {
-                        final name = item['optionName'] ?? 'N/A';
+                        final name = item['optionName'] ?? '';
                         final selectedFields =
                             item['selectedCustomFields'] as List<dynamic>? ??
                                 [];
@@ -575,7 +575,7 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
                                         size: 20, color: myColor),
                                     const SizedBox(width: 8),
                                     Text(
-                                      name,
+                                      '',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -586,8 +586,8 @@ class _DetailedSpecialOrderPageState extends State<DetailedSpecialOrderPage> {
                                 const Divider(),
                                 // Selected Fields
                                 ...selectedFields.map((field) {
-                                  final label = field['label'] ?? 'N/A';
-                                  final value = field['value'] ?? 'N/A';
+                                  final label = field['label'] ?? '  ';
+                                  final value = field['value'] ?? ' ';
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 4.0),
